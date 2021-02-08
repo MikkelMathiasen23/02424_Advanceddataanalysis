@@ -1,0 +1,56 @@
+---
+title: '02427 Assignment 3'
+author:
+- August Thomas Hjortshøj Schreyer s163716 
+- 
+date: "xx/03/2021"
+output:
+  pdf_document: 
+    fig_caption: yes
+    toc: yes
+header-includes:
+- \usepackage{bm}
+- \usepackage{todonotes}
+- \usepackage[noabbrev,nameinlink,capitalise]{cleveref}
+- \usepackage{float}
+- \usepackage{placeins}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+source('setup.R')
+```
+
+```{r}
+rm(list=ls())
+library(ggplot2)
+library(knitr)
+library(gridExtra)
+library(latex2exp)
+library(tidyverse)
+library(xtable)
+library(directlabels)
+```
+
+```{r child = 'Contribution.Rmd', cache = T}
+```
+\FloatBarrier
+```{r child = 'problemA.Rmd', cache = T}
+```
+\FloatBarrier
+```{r child = 'problemB.Rmd', cache = T}
+```
+\FloatBarrier
+```{r child = 'problemC.Rmd', cache = T}
+```
+\FloatBarrier
+```{r child = 'ProblemD.Rmd', cache = T}
+```
+\FloatBarrier
+```{r child = 'bib.Rmd', cache = T}
+```
+# Appendix: R-code in seperate file. 
+
+
+

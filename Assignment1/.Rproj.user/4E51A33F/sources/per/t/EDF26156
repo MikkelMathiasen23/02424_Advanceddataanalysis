@@ -1,0 +1,32 @@
+{
+    "id": "EDF26156",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1612194747342.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "expression": "test",
+        "caption": "test",
+        "totalObservations": 136,
+        "displayedObservations": 136,
+        "variables": 6,
+        "cacheKey": "38793A0F",
+        "object": "test",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=test&cache_key=38793A0F&max_cols=50",
+        "preview": 0
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2325356369584463965,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1612194747342,
+    "read_only": false,
+    "read_only_alternatives": []
+}
