@@ -1,0 +1,71 @@
+library(ggplot2)
+library(lmtest)
+
+df1=read.csv(file="./Data/clothingFull.csv")
+df2=read.csv(file="./Data/clothingSum.csv")
+
+df3 = df2[,c(3:6)]
+
+
+#Question 2:
+fit2 = lm( clo ~ tOut + tInOp + sex + tInOp*sex,data = df3)
+summary(fit2)
+
+fit3 = lm( clo ~ tOut + tInOp + sex,data = df3)
+summary(fit3)
+
+lrtest(fit2, fit3)
+
+
+### Question 4:
+fit2f = lm( clo ~ tOut + tInOp + sex + tInOp*sex ,data = df3[df3$sex == 'female',])
+summary(fit2f)
+fit2m = lm( clo ~ tOut + tInOp + sex + tInOp*sex,data = df3[df3$sex == 'male',])
+summary(fit2m)
+
+
+df3$residual = NA
+df3[df3$sex == 'female', 5 ] = resid(fit2f)
+df3[df3$sex == 'male', 5 ] = resid(fit2m)
+ggplot(data = df3, aes(x = sex, y= residual))+ geom_boxplot()
+frac = var(resid(fit2f))/var(resid(fit2m))
+
+
+# N(mu, sigma^2) sigma different between two gender 
+res = resid(fit2)
+res[df3$sex == 'female'] = res[df3$sex == 'female']/frac
+qqnorm(res)
+qqline(res)
+
+
+##Question 5:
+#Add also quantiles for tInOp. 
+#Only done for mean right now 
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tInOp=mean(df2$tInOp),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tInOp=mean(df2$tInOp),sex="female")
+new=rbind(tmp_male,tmp_female)
+
+conf = predict(fit2,tmp_male,interval = 'confidence')
+pred = predict(fit2, tmp_male,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
+
+conf = predict(fit2,tmp_female,interval = 'confidence')
+pred = predict(fit2, tmp_female,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
+
+
+
+##### Question 6
+df3$residual_2 = resid(fit2)
+df3$idx = 1:nrow(df3)
+ggplot(data = df3, aes(x = idx, y = residual_2, col = as.factor(df2$subjId))) + geom_point() + geom_line() + facet_wrap(~sex)
+#Can't remove subjId in final model 
+
