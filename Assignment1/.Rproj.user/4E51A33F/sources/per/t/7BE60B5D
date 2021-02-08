@@ -1,6 +1,6 @@
 {
     "id": "7BE60B5D",
-    "path": "C:/Users/August/OneDrive/Studie/Advanced statistical modelling/Assignment1/problemA.Rmd",
+    "path": "C:/Users/August/OneDrive/Studie/Advanced statistical modelling/Assignments/02424_Advanceddataanalysis/Assignment1/problemA.Rmd",
     "project_path": "problemA.Rmd",
     "type": "r_markdown",
     "hash": "2570362132",
@@ -11,15 +11,15 @@
     "relative_order": 2,
     "properties": {
         "chunk_output_type": "console",
-        "cursorPosition": "33,19",
-        "scrollLine": "22"
+        "cursorPosition": "27,11",
+        "scrollLine": "3"
     },
     "folds": "",
     "lastKnownWriteTime": 1612195113,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1612552451225,
+    "last_content_update": 1612781541467,
     "read_only": false,
     "read_only_alternatives": []
 }
