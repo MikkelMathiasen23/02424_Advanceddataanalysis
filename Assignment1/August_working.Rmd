@@ -1,0 +1,206 @@
+---
+  output: html_document
+editor_options: 
+  chunk_output_type: console
+chunk_output_type: console
+---
+  
+  ```{r}
+source('setup.R')
+```
+
+```{r}
+rm(list=ls())
+library(ggplot2)
+library(knitr)
+library(RColorBrewer)
+library(tidyverse)
+library(latex2exp)
+```
+
+# Problem A
+```{r}
+df1=read.csv(file="./Data/clothingFull.csv")
+df2=read.csv(file="./Data/clothingSum.csv")
+names(df2)[5]="tIn"
+str(df1)
+
+str(df2)
+
+```
+
+```{r}
+ggplot(df2,aes(x=tOut,y=clo))+geom_point()+facet_wrap(~sex)
+
+ggplot(df2,aes(x=tOut,y=tIn))+geom_point()+facet_wrap(~sex)
+
+ggplot(df2,aes(x=tOut,y=tIn))+geom_point()+facet_wrap(~sex)
+
+df2$day=as.factor(df2$day)
+df2$subjId=as.factor(df2$subjId)
+ggplot(df2,aes(x=tOut,y=clo,col=subjId))+geom_point()+geom_line()+facet_wrap(~sex)
+ggplot(df2,aes(x=tIn,y=clo,col=subjId))+geom_point()+geom_line()+facet_wrap(~sex)
+
+ggplot(df2,aes(x=tOut-tIn,y=clo,col=subjId))+geom_point()+geom_line()+facet_wrap(~sex)
+
+ggplot(df2,aes(x=tOut,y=tIn,col=subjId))+geom_point()+geom_line()
+ggplot(df2,aes(x=tIn))+geom_histogram()
+
+```
+Temperature is almost a gaussian distribution
+Indoor temperature is obviously higher
+Somewhat relation between indoor and outdoor temperature. 
+
+Temperature vs Clo shows that males use a more constant amount of clothing, while female amount of clothing decrease as the temperature increases. 
+
+```{r}
+# Backwards selection
+fit1=lm(clo~ tOut*tIn*sex,data=df2)
+summary(fit1)
+# We are removing the indoor and outdoor temperature interaction
+fit2=lm(clo~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
+summary(fit2)
+
+fit2=lm(clo~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
+summary(fit2)
+fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df2)
+df2$resid_fit3=resid(fit3)
+ggplot(df2,aes(x=resid_fit3))+geom_histogram()+facet_wrap(~sex)
+
+summary(fit3)
+hist(resid(fit3),nclass=20)
+qqnorm(resid(fit3)[df2$sex=="male"])
+qqline(resid(fit3)[df2$sex=="male"])
+
+qqnorm(resid(fit3)[df2$sex=="female"])
+qqline(resid(fit3)[df2$sex=="female"])
+
+fit4=lm(clo~ tOut+tIn+sex,data=df2)
+summary(fit4)
+hist(resid(fit4),nclass=20)
+qqnorm(resid(fit4))
+qqline(resid(fit4))
+
+library(lme4)
+anova(fit4,fit3,test = 'LRT')
+lrtest(fit4,fit3)
+
+df2$trans=log(df2$clo/(1-df2$clo))
+ggplot(df2,aes(x=tOut,y=trans))+geom_point()+facet_wrap(~sex)
+
+ggplot(df2,aes(x=tIn,y=trans))+geom_point()+facet_wrap(~sex)
+
+
+# Backwards selection
+fit1=lm(trans~ tOut*tIn*sex,data=df2)
+summary(fit1)
+# We are removing the indoor and outdoor temperature interaction
+fit2=lm(trans~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
+summary(fit2)
+
+fit3=lm(trans~ tOut+tIn+tIn:sex+sex,data=df2)
+summary(fit3)
+df2$resid_fit3=resid(fit3)
+df2$resid_fit3
+ggplot(df2,aes(x=sex,y=resid_fit3))+geom_boxplot()
+str(df2)
+hist(resid(fit3),nclass=20)
+qqnorm(resid(fit3))
+qqline(resid(fit3))
+
+fit4=lm(trans~ tOut+tIn+sex,data=df2)
+summary(fit4)
+hist(resid(fit4),nclass=20)
+qqnorm(resid(fit4))
+qqline(resid(fit4))
+
+
+# Backwards selection
+fitm1=lm(clo~ tOut*tIn,data=df2[df2$sex=="male",])
+summary(fitm1)
+
+
+fitm2=lm(clo~ -1+tOut*tIn,data=df2[df2$sex=="male",])
+summary(fitm2)
+hist(resid(fitm2))
+qqnorm((resid(fitm2)))
+qqline((resid(fitm2)))
+
+# Backwards selection
+fitf1=lm(clo~ tOut*tIn,data=df2[df2$sex=="female",])
+summary(fitf1)
+
+fitf2=lm(clo~ tOut+tIn,data=df2[df2$sex=="female",])
+summary(fitf2)
+
+hist(resid(fitf2))
+qqnorm((resid(fitf2)))
+qqline((resid(fitf2)))
+
+# We are removing the indoor and outdoor temperature interaction
+fit2=lm(clo~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
+summary(fit2)
+
+fit2=lm(clo~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
+summary(fit2)
+fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df2)
+summary(fit3)
+hist(resid(fit3),nclass=20)
+qqnorm(resid(fit3))
+qqline(resid(fit3))
+
+
+```
+
+```{r}
+# Backwards selection
+fit1=lm(clo~ diff+sex+sex:diff,data=df2)
+summary(fit1)
+# We are removing the indoor and outdoor temperature interaction
+fit2=lm(clo~ diff+sex:diff,data=df2)
+summary(fit2)
+
+hist(resid(fit2),nclass=20)
+qqnorm(resid(fit2)[df2$sex=="male"])
+qqline(resid(fit2)[df2$sex=="male"])
+
+qqnorm(resid(fit2)[df2$sex=="female"])
+qqline(resid(fit2)[df2$sex=="female"])
+
+
+qqnorm(resid(fit2))
+qqline(resid(fit2))
+
+```
+
+```{r}
+
+nloglik=function(beta){
+  intercept=par[1]
+  sex=par[2]
+  tout=par[3]
+  tin=par[4]
+  interact=par[5]
+  m=cbind(1,0,df2$tOut,df2$tIn,df2$tIn)
+  m[df2$sex=="male",2]=1
+  m[df2$sex=="female",5]=0
+  theta=solve(t(m)%*%m,t(m)%*%df2$clo)
+  y=m%*%theta
+  resid=y-df2$clo
+  sig=sd(y[df2$sex=="male"])
+  sig[df2$sex=="female"]=sd(y[df2$sex=="female"])
+}
+```
+
+```{r}
+df3=read.csv(file="./Data/clothingSum.csv")
+df3=df3[,3:6]
+df3=df3[-(1:nrow(df3)),]
+df3
+mean(df2$tIn)
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="female")
+df3=rbind(tmp_male,tmp_female)
+df3=rbind(df3,)
+```
+
