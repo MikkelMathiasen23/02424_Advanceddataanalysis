@@ -36,10 +36,27 @@ ggplot(df2,aes(x=tOut,y=tIn))+geom_point()+facet_wrap(~sex)
 
 ggplot(df2,aes(x=tOut,y=tIn))+geom_point()+facet_wrap(~sex)
 
+ggplot(df2,aes(x=day,y=clo))+geom_point()
+ggplot(df2,aes(x=day,y=tOut))+geom_point()
+ggplot(df2,aes(x=tIn,y=clo,col=sex))+geom_point()+facet_wrap(~day)
+ggplot(df2,aes(x=tIn,y=clo,col=sex))+geom_point()+facet_wrap(~day)
+
+
+ggplot(df2,aes(x=tOut,y=clo,group=subjId,col=subjId))+
+  geom_text(aes(label=day))+geom_path()+facet_wrap(~sex)+
+  theme(legend.position = "none")+
+  xlab("Outdoor temperature")+ylab("Clothing")
+ggplot(df2,aes(x=tIn,y=clo,group=subjId,col=subjId))+
+  geom_text(aes(label=day))+geom_path()+facet_wrap(~sex)+
+  theme(legend.position = "none")+
+  xlab("Indoor temperature")+ylab("Clothing")
+
+
 df2$day=as.factor(df2$day)
 df2$subjId=as.factor(df2$subjId)
 ggplot(df2,aes(x=tOut,y=clo,col=subjId))+geom_point()+geom_line()+facet_wrap(~sex)
-ggplot(df2,aes(x=tIn,y=clo,col=subjId))+geom_point()+geom_line()+facet_wrap(~sex)
+ggplot(df2,aes(x=tIn,y=clo,col=subjId))+geom_point()+geom_line()+facet_wrap(~sex)+
+  theme(legend)
 
 ggplot(df2,aes(x=tOut-tIn,y=clo,col=subjId))+geom_point()+geom_line()+facet_wrap(~sex)
 
@@ -202,5 +219,84 @@ tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df
 tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="female")
 df3=rbind(tmp_male,tmp_female)
 df3=rbind(df3,)
+
 ```
+
+```{r}
+sum(df2$sex=="male")
+sum(df2$sex=="female")
+
+df3=df2
+tmp=df2
+
+df3$clo2=df3$clo
+df3$clo[df3$sex=="male"]=NA
+df3$clo2[df3$sex=="female"]=NA
+
+tmp$clo2=tmp$clo
+tmp$clo[tmp$sex=="female"]=NA
+tmp$clo2[tmp$sex=="male"]=NA
+
+df3=rbind(df3,tmp)
+X=as.matrix(df3[,4:5])
+Y=as.matrix(df3[,c(3,7)])
+matrix(c())
+solve(t(X)%*%X,t(X)%*%Y)
+lm(cbind(clo,clo2)~tIn+tOut,data=df3)
+str(df2)
+
+```
+
+```{r}
+fit=lm(clo ~ tOut*tIn*sex+subjId,data=df2)
+summary(fit)
+
+fit=lm(clo ~ tOut+tIn+sex+tIn:sex+tOut:sex+tIn:tOut+subjId,data=df2)
+summary(fit)
+
+fit=lm(clo ~ tOut+tIn+sex+tIn:sex+tIn:tOut+subjId,data=df2)
+summary(fit)
+
+fit=lm(clo ~ tOut+tIn+sex+tIn:sex+subjId,data=df2)
+summary(fit)
+
+fit=lm(clo ~ tOut+tIn+subjId,data=df2)
+summary(fit)
+
+library(lme4)
+library(lmerTest)
+fit_mixed=lmer(clo ~ tIn*tOut*sex+(1|subjId),data=df2)
+summary(fit_mixed)
+
+fit_mixed=lmer(clo ~ tIn+tOut+sex+tOut:tIn+tOut:sex+tIn:sex+(1|subjId),data=df2)
+summary(fit_mixed)
+
+fit_mixed=lmer(clo ~ tIn+tOut+sex+tOut:sex+tIn:sex+(1|subjId),data=df2)
+summary(fit_mixed)
+
+fit_mixed=lmer(clo ~ tIn+tOut+sex+tIn:sex+(1|subjId),data=df2)
+summary(fit_mixed)
+
+ggplot(data = data.frame(c()))+
+  stat_qq(aes(sample=resid(fit_mixed)))+
+  stat_qq_line(aes(sample=resid(fit_mixed)))
+
+  stat_qq_line(aes(sample=resid(fit_mixed)))
+
+ranef(fit_mixed)
+hist(ranef(fit_mixed)$subjId[,1])
+
+
+qqnorm(ranef(fit_mixed)$subjId[,1])
+qqline(ranef(fit_mixed)$subjId[,1])
+
+ fixef(fit_mixed)
+
+qqnorm(resid(fit_mixed))
+qqline(resid(fit_mixed))
+
+
+
+```
+
 
