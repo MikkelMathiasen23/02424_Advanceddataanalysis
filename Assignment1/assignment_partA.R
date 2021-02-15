@@ -6,28 +6,48 @@ df2=read.csv(file="./Data/clothingSum.csv")
 
 df3 = df2[,c(3:6)]
 
-
 #Question 2:
 fit2 = lm( clo ~ tOut + tInOp + sex + tInOp*sex,data = df3)
 summary(fit2)
 
-fit3 = lm( clo ~ tOut + tInOp + sex,data = df3)
-summary(fit3)
+df3$residual = resid(fit2)
 
+ggplot(df3, aes(sample = residual, colour = sex)) +
+  stat_qq() +
+  stat_qq_line()
+
+ggplot(df3, aes(x = residual, colour = sex)) +
+  geom_histogram()+ facet_wrap(~sex)
+
+'fit3 = lm( clo ~ tOut + tInOp + sex,data = df3)
+summary(fit3)
+'
 lrtest(fit2, fit3)
+
+df3$residual = NA
+df3[df3$sex == 'female', 5 ] = resid(fit2)[df3$sex == 'female']
+df3[df3$sex == 'male', 5 ] = resid(fit2)[df3$sex == 'male']
+ggplot(data = df3, aes(x = sex, y= residual))+ geom_boxplot() + geom_jitter(width = 0.3)
+
+ggplot(data = df3, aes(x = tInOp, y= residual, col = sex))+ geom_point() 
+
+ggplot(data = df3, aes(x = tOut, y= residual, col = sex))+ geom_point()
+ggplot(data = df3, aes(x = clo, y= residual, col = sex))+ geom_point()
+
+ggplot(data = df3, aes(x = tOut, y= residual, col =as.factor(df2$day) ,group = df2$subjId))+ geom_point()+geom_line()
 
 
 ### Question 4:
-fit2f = lm( clo ~ tOut + tInOp + sex + tInOp*sex ,data = df3[df3$sex == 'female',])
+fit2f = lm( clo ~ tOut + tInOp   ,data = df3[df3$sex == 'female',])
 summary(fit2f)
-fit2m = lm( clo ~ tOut + tInOp + sex + tInOp*sex,data = df3[df3$sex == 'male',])
+fit2m = lm( clo ~ tOut + tInOp  ,data = df3[df3$sex == 'male',])
 summary(fit2m)
 
 
 df3$residual = NA
 df3[df3$sex == 'female', 5 ] = resid(fit2f)
 df3[df3$sex == 'male', 5 ] = resid(fit2m)
-ggplot(data = df3, aes(x = sex, y= residual))+ geom_boxplot()
+ggplot(data = df3, aes(x = sex, y= residual))+ geom_boxplot() + geom_jitter(width = 0.3)
 frac = var(resid(fit2f))/var(resid(fit2m))
 
 
@@ -68,4 +88,64 @@ df3$residual_2 = resid(fit2)
 df3$idx = 1:nrow(df3)
 ggplot(data = df3, aes(x = idx, y = residual_2, col = as.factor(df2$subjId))) + geom_point() + geom_line() + facet_wrap(~sex)
 #Can't remove subjId in final model 
+
+
+
+
+
+################################################################################
+### Part B
+################################################################################
+
+#Question 1 
+#Sex as this result in singular matrix 
+
+df2$subjId = as.factor(df2$subjId)
+fitB = lm( clo ~ tOut*tInOp+subjId,data = df2)
+summary(fitB)
+
+fit2B = lm( clo ~ tOut+tInOp+subjId,data = df2)
+summary(fit2B)
+
+fit3B = lm( clo ~ tOut+subjId,data = df2)
+summary(fit3B)
+plot(fit3B)
+#Eventuelt plot coefficienter for hver subjId
+
+qqnorm(resid(fit3B))                   
+qqline(resid(fit3B))
+
+
+#Question 2: 
+hist(fit3B$coefficients[3:length(fit3B$coefficients)])
+
+
+qqnorm(fit3B$coefficients[3:length(fit3B$coefficients)])
+qqline(fit3B$coefficients[3:length(fit3B$coefficients)])
+
+
+#Question 3: 
+
+
+
+###############################################################################
+#Part C
+###############################################################################
+df1$subjId = as.factor(df1$subjId)
+df1$day = as.factor(df1$day)
+df1$obs.no = as.factor(df1$obs.no)
+
+fitC = lm( clo ~ tInOp  + tOut+subjId +day + obs.no ,data = df1)
+summary(fitC)
+
+
+qqnorm(resid(fitC))
+qqline(resid(fitC))
+
+
+
+# Argue for Weighted analysis - question + how to fit it? 
+# Part B - should we use mixed linear models with SubjId as random effect? 
+# Visualization of model parameters - should we enforce distribution on the model parameters? 
+# Part C: should we fit a new model after looking at the residuals? 
 
