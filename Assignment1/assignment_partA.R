@@ -5,6 +5,7 @@ library(car)
 df1=read.csv(file="./Data/clothingFull.csv")
 df2=read.csv(file="./Data/clothingSum.csv")
 
+
 df3 = df2[,c(3:6)]
 
 

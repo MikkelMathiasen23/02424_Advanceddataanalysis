@@ -16,21 +16,67 @@ library(knitr)
 library(RColorBrewer)
 library(tidyverse)
 library(latex2exp)
+library(car)
+library(xtable)
 ```
 
 # Problem A
 ```{r}
 df1=read.csv(file="./Data/clothingFull.csv")
 df2=read.csv(file="./Data/clothingSum.csv")
-str(df1)
-str(df2)
+names(df2)[5]="tIn"
 
-test=df1%>%
-  group_by(day,subjId,sex)%>%
-  summarise(clo=mean(clo),tOut=mean(tOut),tInOp=mean(tInOp))
-test=test[,names(df2)]
-idx=which(test!=df2,arr.ind = T)
-head(test[idx[,1],])
-head(df2[idx[,1],])
 ```
+A general linear model predicting the level of clothing (clo) using outdoor temperature, indoor operating temperature and sex of the subject as exploratory variables will be fitted. The full model using all variables and interactions are used as a starting point, hereafter the model will be reduced using the backward selection with Type III partitioning. To obtain type III partitioning partial tests are computed for all factors, and hence compute the deviance for the variables as they entered the model last. Higher order variables are removed first if these are insignificant. 
+
+```{r}
+fit1=lm(clo~ tOut*tIn*sex,data=df2)
+Anova(fit1, type = 'III')
+#Remove third order interaction tOut:tIn:sex
+
+fit2=lm(clo~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
+Anova(fit2, type = 'III')
+#Remove tOut:sex
+
+fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df2)
+Anova(fit3, type = 'III')
+```
+
+The result from the backward selection using Type III partitioning are given below: 
+
+$$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp}:sex_i + \epsilon_i$$
+
+```{r}
+anova(fit1, fit3)
+
+sigma(fit3)
+```
+
+where $$\epsilon_i ~ N(0, \sigma^2)$$ 
+
+BØR VI IKKE BESTEMME SIGMA? SKAL VI SAMMENLIGNE MED H0?
+
+Here : indicates the interaction between the indoor operating temperature and gender of the subject. The coefficients and confidence intervals can be seen in table 1. 
+
+```{r}
+conf = confint(fit3)
+df_param = cbind(conf[,1], fit3$coefficients, conf[,2])
+#xtable(df_param)
+```
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & 2.5% & Estimate & 97.5% \\ 
+  \hline
+(Intercept) & 1.51 & 2.13 & 2.76 \\ 
+  tOut & -0.02 & -0.01 & -0.01 \\ 
+  tIn & -0.07 & -0.05 & -0.02 \\ 
+  sexmale & -2.16 & -1.28 & -0.40 \\ 
+  tIn:sexmale & 0.01 & 0.04 & 0.08 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
 
