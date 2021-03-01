@@ -16,13 +16,18 @@ library(knitr)
 library(RColorBrewer)
 library(tidyverse)
 library(latex2exp)
+library(car)
 ```
 
 # Problem A
 ```{r}
 df1=read.csv(file="./Data/clothingFull.csv")
 df2=read.csv(file="./Data/clothingSum.csv")
+df2$subjId=as.character(df2$subjId)
+df1$obs.no=as.character(df1$obs.no)
+df1$subjId=as.character(df1$subjId)
 names(df2)[5]="tIn"
+names(df1)[4]="tIn"
 str(df1)
 
 str(df2)
@@ -35,13 +40,16 @@ ggplot(df2,aes(x=tOut,y=clo))+geom_point()+facet_wrap(~sex)
 ggplot(df2,aes(x=tOut,y=tIn))+geom_point()+facet_wrap(~sex)
 
 ggplot(df2,aes(x=tOut,y=tIn))+geom_point()+facet_wrap(~sex)
-
+X=cbind(1,1:10,rnorm(10))
+xl=c()
+solve(t(X)%*%X)
 ggplot(df2,aes(x=day,y=clo))+geom_point()
 ggplot(df2,aes(x=day,y=tOut))+geom_point()
 ggplot(df2,aes(x=tIn,y=clo,col=sex))+geom_point()+facet_wrap(~day)
 ggplot(df2,aes(x=tIn,y=clo,col=sex))+geom_point()+facet_wrap(~day)
 
 
+df2$subjId=as.character(df2$subjId)
 ggplot(df2,aes(x=tOut,y=clo,group=subjId,col=subjId))+
   geom_text(aes(label=day))+geom_path()+facet_wrap(~sex)+
   theme(legend.position = "none")+
@@ -64,6 +72,16 @@ ggplot(df2,aes(x=tOut,y=tIn,col=subjId))+geom_point()+geom_line()
 ggplot(df2,aes(x=tIn))+geom_histogram()
 
 ```
+
+```{r}
+df1$obs.no=as.character(df1$obs.no)
+df1$subjId=as.character(df1$subjId)
+ggplot(df1,aes(x=tOut,y=clo,group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Outdoor temperature")+ylab("Clothing")
+```
+
 Temperature is almost a gaussian distribution
 Indoor temperature is obviously higher
 Somewhat relation between indoor and outdoor temperature. 
@@ -73,7 +91,10 @@ Temperature vs Clo shows that males use a more constant amount of clothing, whil
 ```{r}
 # Backwards selection
 fit1=lm(clo~ tOut*tIn*sex,data=df2)
+ridge=glmnet(df2$clo,df2[,4:6],alpha=0,family='gaussian',)
+Anova(fit1,type=3)
 summary(fit1)
+anova(fit1)
 # We are removing the indoor and outdoor temperature interaction
 fit2=lm(clo~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
 summary(fit2)
@@ -81,16 +102,25 @@ summary(fit2)
 fit2=lm(clo~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
 summary(fit2)
 fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df2)
-df2$resid_fit3=resid(fit3)
+df2$resid_fit3=rstudent(fit3)
+ggplot(df2,aes(x=resid_fit3))+geom_histogram()+facet_wrap(~sex)
 ggplot(df2,aes(x=resid_fit3))+geom_histogram()+facet_wrap(~sex)
 
+fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df2)
+
 summary(fit3)
+
 hist(resid(fit3),nclass=20)
+hist(rstudent(fit3),nclass=20)
 qqnorm(resid(fit3)[df2$sex=="male"])
 qqline(resid(fit3)[df2$sex=="male"])
+qqnorm(rstudent(fit3)[df2$sex=="male"])
+qqline(rstudent(fit3)[df2$sex=="male"])
 
 qqnorm(resid(fit3)[df2$sex=="female"])
 qqline(resid(fit3)[df2$sex=="female"])
+qqnorm(rstudent(fit3)[df2$sex=="female"])
+qqline(rstudent(fit3)[df2$sex=="female"])
 
 fit4=lm(clo~ tOut+tIn+sex,data=df2)
 summary(fit4)
@@ -100,7 +130,7 @@ qqline(resid(fit4))
 
 library(lme4)
 anova(fit4,fit3,test = 'LRT')
-lrtest(fit4,fit3)
+anova(fit4,fit3,test = 'LRT')
 
 df2$trans=log(df2$clo/(1-df2$clo))
 ggplot(df2,aes(x=tOut,y=trans))+geom_point()+facet_wrap(~sex)
@@ -166,8 +196,62 @@ hist(resid(fit3),nclass=20)
 qqnorm(resid(fit3))
 qqline(resid(fit3))
 
+```
+
+```{r}
+# part A.4
+
+ll_partA<-function(a,data=df2){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
+  return(logLik(fit))
+}
+weighted_lm<-function(a,data=df2){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
+  return(fit)
+}
+# Finding optimal weights
+opt=optim(1,ll_partA,control=list(fnscale=-1),hessian=T)
+# Fitting model with optimal weights
+fit=weighted_lm(opt$par)
+Anova(fit,type=2)
+# CI, NOT  profile log-likelihood -> we need to add one for the weights
+confint(fit)
+cbind(lower=coef(fit)+qt(0.025,df=fit$df.residual)*sqrt(diag(vcov(fit))),
+      upper=coef(fit)+qt(0.975,df=fit$df.residual)*sqrt(diag(vcov(fit))))
+# profile log-Likelihood plotting
+a_list=seq(1.7,5,0.001)
+ll_list=sapply(a_list,ll_partA)
+plot(a_list,ll_list-max(ll_list),main="profile Likelihood of weights",type="l")
+abline(h=-0.5*qchisq(0.95,df=1),col=4,lwd=2)
+# Finding intercepts
+idx_l=which((ll_list[-length(ll_list)]-max(ll_list) < -0.5*qchisq(0.95,df=1)&ll_list[-1]-max(ll_list)> -0.5*qchisq(0.95,df=1)))
+idx_h=which((ll_list[-length(ll_list)]-max(ll_list) > -0.5*qchisq(0.95,df=1)&ll_list[-1]-max(ll_list)< -0.5*qchisq(0.95,df=1)))
+# Full model profile LL
+m=confint(fit)
+m=rbind(m,weights=c(a_list[idx_l],a_list[idx_h]))
+m
+opt$par+c(-1,1)*sqrt(diag(solve(-opt$hessian)))*qt(0.975,df=fit$df.residual)
+# Conf int for sigma
+lm_sigma_conf<-function(fit,CI=0.95){
+  # Book page 53: sigma_hat^2~sigma^2*chisq_f/f where f=n-k
+  # rearanging: sigma_hat^2*f/chisq_f
+  sigma=sigma(fit)
+  d_f=fit$df.residual
+  conf_sigma2=d_f*sigma^2/qchisq(c((1-CI)/2,1-(1-CI)/2), df = d_f, lower.tail = FALSE)
+  conf=sqrt(conf_sigma2)
+  names(conf)=paste(c((1-CI)/2,1-(1-CI)/2)*100,"%")
+  return(conf)
+}
+# Conf int for sigma
+lm_sigma_conf(fit)
+
 
 ```
+
 
 ```{r}
 # Backwards selection
@@ -190,24 +274,7 @@ qqline(resid(fit2))
 
 ```
 
-```{r}
 
-nloglik=function(beta){
-  intercept=par[1]
-  sex=par[2]
-  tout=par[3]
-  tin=par[4]
-  interact=par[5]
-  m=cbind(1,0,df2$tOut,df2$tIn,df2$tIn)
-  m[df2$sex=="male",2]=1
-  m[df2$sex=="female",5]=0
-  theta=solve(t(m)%*%m,t(m)%*%df2$clo)
-  y=m%*%theta
-  resid=y-df2$clo
-  sig=sd(y[df2$sex=="male"])
-  sig[df2$sex=="female"]=sd(y[df2$sex=="female"])
-}
-```
 
 ```{r}
 df3=read.csv(file="./Data/clothingSum.csv")
@@ -298,5 +365,42 @@ qqline(resid(fit_mixed))
 
 
 ```
+
+```{r}
+#----------------
+# part C
+fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df1)
+summary(fit3)
+df1$resid=resid(fit3)
+df1$student=rstudent(fit3)
+ggplot(df1,aes(x=tOut,y=student,group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Outdoor temperature")+ylab("Clothing")
+ggplot(df1,aes(x=tIn,y=student,group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Indoor temperature")+ylab("Clothing")
+
+# from part B
+fit3B = lm( clo ~ tOut+subjId,data = df1)
+summary(fit3B)
+df1$resid=resid(fit3B)
+df1$student=rstudent(fit3B)
+ggplot(df1,aes(x=tOut,y=student,group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Outdoor temperature")+ylab("Residuals")
+
+ggplot(df1,aes(x=tIn,y=student,group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Indoor temperature")+ylab("Residuals")
+
+
+#-------------
+```
+
+
 
 
