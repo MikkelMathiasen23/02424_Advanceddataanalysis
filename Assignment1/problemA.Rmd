@@ -355,6 +355,15 @@ plot(fit)
 ```
 From the residuals and the standardized residuals these looks reasonably random. The QQ-plot looks good and only one observation (#22) appears to stick out from the rest. Observation #22 does not have a high leverage and this should therefore not affect the model to much. Clearly the weighting of the variance of the residuals have helped with the model assumptions. 
 
+The figure below shows the residuals when looking at the subject ID, and from this it can clearly be seen that the subject ID contains information about the variance in the residuals. The subject ID should therefore be included in the modelling. 
+
+```{r}
+df2$residual_2 = resid(fit)
+df2$idx = 1:nrow(df2)
+ggplot(data = df2, aes(x = idx, y = residual_2, col = as.factor(subjId))) + geom_point() + geom_line() + facet_wrap(~sex)
+
+```
+
 
 
 
