@@ -36,6 +36,9 @@ library(directlabels)
 ```{r child = 'Contribution.Rmd', cache = T}
 ```
 \FloatBarrier
+```{r child = 'problem1_exploratory.Rmd.Rmd', cache = T}
+```
+\FloatBarrier
 ```{r child = 'problemA.Rmd', cache = T}
 ```
 \FloatBarrier
@@ -43,9 +46,6 @@ library(directlabels)
 ```
 \FloatBarrier
 ```{r child = 'problemC.Rmd', cache = T}
-```
-\FloatBarrier
-```{r child = 'ProblemD.Rmd', cache = T}
 ```
 \FloatBarrier
 ```{r child = 'bib.Rmd', cache = T}

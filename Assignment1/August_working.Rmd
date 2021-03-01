@@ -29,20 +29,18 @@ df1$subjId=as.character(df1$subjId)
 names(df2)[5]="tIn"
 names(df1)[4]="tIn"
 str(df1)
-
 str(df2)
 
 ```
 
 ```{r}
+
 ggplot(df2,aes(x=tOut,y=clo))+geom_point()+facet_wrap(~sex)
 
 ggplot(df2,aes(x=tOut,y=tIn))+geom_point()+facet_wrap(~sex)
 
 ggplot(df2,aes(x=tOut,y=tIn))+geom_point()+facet_wrap(~sex)
-X=cbind(1,1:10,rnorm(10))
-xl=c()
-solve(t(X)%*%X)
+
 ggplot(df2,aes(x=day,y=clo))+geom_point()
 ggplot(df2,aes(x=day,y=tOut))+geom_point()
 ggplot(df2,aes(x=tIn,y=clo,col=sex))+geom_point()+facet_wrap(~day)
