@@ -88,8 +88,14 @@ Temperature vs Clo shows that males use a more constant amount of clothing, whil
 
 ```{r}
 # Backwards selection
+
+fit1=lm(clo~ tOut:tIn,data=df2)
+Anova(fit1,type=3)
+summary(fit1)
+X=cbind(1,df2$tOut*df2$tIn)
+solve(t(X)%*%X,t(X)%*%df2$clo)
+
 fit1=lm(clo~ tOut*tIn*sex,data=df2)
-ridge=glmnet(df2$clo,df2[,4:6],alpha=0,family='gaussian',)
 Anova(fit1,type=3)
 summary(fit1)
 anova(fit1)
