@@ -18,6 +18,7 @@ library(tidyverse)
 library(latex2exp)
 library(car)
 library(xtable)
+library(gridExtra)
 ```
 
 # Problem A
@@ -47,16 +48,25 @@ The result from the backward selection using Type III partitioning are given bel
 $$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp}:sex_i + \epsilon_i$$
 
 ```{r}
-anova(fit1, fit3)
+sigma_est = sigma(fit3)
+anova(fit1,fit3)
 
-sigma(fit3)
+lm_sigma_conf<-function(fit,CI=0.95){
+  # Book page 53: sigma_hat^2~sigma^2*chisq_f/f where f=n-k
+  # rearanging: sigma_hat^2*f/chisq_f
+  sigma=sigma(fit)
+  d_f=fit$df.residual
+  conf_sigma2=d_f*sigma^2/qchisq(c((1-CI)/2,1-(1-CI)/2), df = d_f, lower.tail = FALSE)
+  conf=sqrt(conf_sigma2)
+  names(conf)=paste(c((1-CI)/2,1-(1-CI)/2)*100,"%")
+  return(conf)
+}
+lm_sigma_conf(fit3)
 ```
 
-where $$\epsilon_i ~ N(0, \sigma^2)$$ 
+where $$\epsilon_i ~ N(0, \sigma^2)$$, and $\hat{\sigma^2}$ is estimated as 0.120. An estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136].
 
-BØR VI IKKE BESTEMME SIGMA? SKAL VI SAMMENLIGNE MED H0?
-
-Here : indicates the interaction between the indoor operating temperature and gender of the subject. The coefficients and confidence intervals can be seen in table 1. 
+Here : indicates the interaction between the indoor operating temperature and gender of the subject. To test the model reduction compared to the full initial model a likelihood-ratio-test is performed (theorem 3.6), where the p-value is computed to: 0.29 ie. we can't reject the model reduction. The coefficients and confidence intervals can be seen in table 1. 
 
 ```{r}
 conf = confint(fit3)
@@ -70,13 +80,281 @@ df_param = cbind(conf[,1], fit3$coefficients, conf[,2])
   \hline
  & 2.5% & Estimate & 97.5% \\ 
   \hline
-(Intercept) & 1.51 & 2.13 & 2.76 \\ 
-  tOut & -0.02 & -0.01 & -0.01 \\ 
-  tIn & -0.07 & -0.05 & -0.02 \\ 
-  sexmale & -2.16 & -1.28 & -0.40 \\ 
-  tIn:sexmale & 0.01 & 0.04 & 0.08 \\ 
+  $\hat{\beta_0}$ & 1.51 & 2.13 & 2.76 \\ 
+  $\hat{\beta_1}$ & -0.02 & -0.01 & -0.01 \\ 
+  $\hat{\beta_2}$ & -0.07 & -0.05 & -0.02 \\ 
+  $\hat{\beta_3}$ & -2.16 & -1.28 & -0.40 \\ 
+  $\hat{\beta_4}$ & 0.01 & 0.04 & 0.08 \\ 
    \hline
 \end{tabular}
 \end{table}
+
+$\hat{\beta_0}$ is the intercept of the model, whereas $\hat{\beta_1}$ and $\hat{\beta_2}$ describes the impact of the outdoor temperature and indoor operating temperature affect the clothing level respectively. $\hat{\beta_1}$ and $\hat{\beta_2}$ are negative meaning that when these temperature rises then the clothing level decreases and vice versa. $\hat{\beta_3}$ indicates whether the subject are male (1) or female (0), as this parameter is negative then this means that males typically has less clothes on at the same temperature compared to females. $\hat{\beta_4}$ is the interaction-term between indoor operating temperature and the gender of the subject.BESKRIV LIDT HVAD DEN ER!
+
+
+Below are confidence and prediction intervals of clothing level vs. outdoor temperature for different fixed levels of indoor operating temperatues. The indoor operating temperatures are chosen as the 25\% quantile, mean and 75\% quantile. 
+
+```{r}
+par(mfrow = c(3,2))
+#25 % quantile
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="female")
+new=rbind(tmp_male,tmp_female)
+
+conf = predict(fit2,tmp_male,interval = 'confidence')
+pred = predict(fit2, tmp_male,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
+idx = df2$sex == 'male'
+points(df2$tOut[idx], df2$clo[idx], pch = 25)
+title('Male, tInOp = 26.01')
+
+conf = predict(fit2,tmp_female,interval = 'confidence')
+pred = predict(fit2, tmp_female,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
+idx2 = df2$sex == 'female'
+points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
+title('Female, tInOp = 26.01')
+
+###- Mean:
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="female")
+new=rbind(tmp_male,tmp_female)
+
+conf = predict(fit2,tmp_male,interval = 'confidence')
+pred = predict(fit2, tmp_male,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
+idx = df2$sex == 'male'
+points(df2$tOut[idx], df2$clo[idx], pch = 25)
+title('Male, tInOp = 26.82')
+
+conf = predict(fit2,tmp_female,interval = 'confidence')
+pred = predict(fit2, tmp_female,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
+idx2 = df2$sex == 'female'
+points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
+title('Female, tInOp = 26.82')
+
+#75 % quantile
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="female")
+new=rbind(tmp_male,tmp_female)
+
+conf = predict(fit2,tmp_male,interval = 'confidence')
+pred = predict(fit2, tmp_male,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
+idx = df2$sex == 'male'
+points(df2$tOut[idx], df2$clo[idx], pch = 25)
+title('Male, tInOp = 27.48')
+
+conf = predict(fit2,tmp_female,interval = 'confidence')
+pred = predict(fit2, tmp_female,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
+idx2 = df2$sex == 'female'
+points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
+title('Female, tInOp = 27.48')
+
+```
+
+SKRIV KOMMENTAR TIL FIGUR OVENFOR!!!
+
+
+The residuals of the model will be investigated in the figure below: 
+```{r}
+par(mfrow = c(2,2))
+plot(fit3)
+```
+From the residuals and the standardized residuals these looks reasonably random, whereas the QQ-plot have som heavy tails which could indicate that the model not follows the assumption stated so far. When comparing the point number 22, 119 and 75 which are some of the points resulting in the tails it can be seen from leverage plot that these do not have high leverage ie. not affecting the model a lot. The residuals will be further investigated by looking at the residuals for the different exploratory variables. 
+
+```{r}
+df2$residual = resid(fit3)
+q1 = ggplot(df2, aes(sample = residual, colour = sex)) +
+  stat_qq() +
+  stat_qq_line()
+q2 = ggplot(data = df2, aes(x = sex, y= residual, colour = sex))+ geom_boxplot() + geom_jitter(width = 0.3)
+
+q3 = ggplot(data = df2, aes(x = tIn, y= residual, col = sex))+ geom_point() 
+
+q4 = ggplot(data = df2, aes(x = tOut, y= residual, col = sex))+ geom_point()
+
+grid.arrange(q1,q2,q3,q4, ncol = 2)
+```
+
+From the figures above the residuals for the indoor operating temperature and outdoor temperature appears to be randomly distributed. It should be noted from the boxplot that the residual variance of females appears to be larger than the residuals of the males. Also from the qq-plot it can be seen that the tails probably originate from the females. Clearly it can be seen that weighting of the variance between males and females are needed. The variance of residuals for females are 2.83 times larger than for males. By weighting the variance of the females with this fraction the following qq-plot arises (see below), which clearly indicates that a weighting of the variance between males and females will result in a better model. 
+
+SKRIV NOGET OM VORES NYE ANTAGELSER IKKE LÆNGERE IID MEN STADIGVÆK UAFHÆNGIGE MEN IKKE IDENTISKE
+
+```{r}
+frac = var(resid(fit3)[df2$sex == 'female'])/var(resid(fit3)[df2$sex == 'male'])
+par(mfrow=c(1,1))
+res = resid(fit3)
+res[df2$sex == 'female'] = res[df2$sex == 'female']/frac
+qqnorm(res)
+qqline(res)
+```
+
+Firstly, the optimal fraction needs to be estimated, this will be done by optimizing log-likelihood wrt. the weighting of the variance. The optimal weighting of the female residual variance is estimated to: 2.925 which will be used in the final model.
+```{r}
+ll_partA<-function(a,data=df2){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
+  return(logLik(fit))
+}
+weighted_lm<-function(a,data=df2){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
+  return(fit)
+}
+# Finding optimal weights
+opt=optim(1,ll_partA,control=list(fnscale=-1),hessian=T)
+# Fitting model with optimal weights
+fit=weighted_lm(opt$par)
+```
+
+In order to compare the weighted model with the unweighted model AIC are used as a measure. The likelihood are not comaprable as the model are not nested. The AIC are computed as: -184.59 and -202.64 for the unweighted and weighted model respectively. The weighted model appears to perform better. The confidence intervals of the parameters are presented in the table below. $\hat{\sigma^2}$ is again estimated 0.085. An estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.076, 0.097].
+```{r}
+conf = confint(fit)
+df_param = cbind(conf[,1], fit$coefficients, conf[,2])
+xtable(df_param)
+c(lm_sigma_conf(fit), sigma(fit))
+c(AIC(fit3), AIC(fit))
+```
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & 1 & 2 & 3 \\ 
+  \hline
+(Intercept) & 1.49 & 2.22 & 2.95 \\ 
+  tOut & -0.02 & -0.01 & -0.01 \\ 
+  tIn & -0.08 & -0.05 & -0.02 \\ 
+  sexmale & -2.22 & -1.37 & -0.51 \\ 
+  tIn:sexmale & 0.02 & 0.05 & 0.08 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+
+HOW TO MAKE PREDICTION/CONFIDENCE INTERVAL WHEN WEIGHTED SIGMA
+
+```{r}
+par(mfrow = c(3,2))
+#25 % quantile
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="female")
+new=rbind(tmp_male,tmp_female)
+
+conf = predict(fit,tmp_male,interval = 'confidence')
+pred = predict(fit, tmp_male,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
+idx = df2$sex == 'male'
+points(df2$tOut[idx], df2$clo[idx], pch = 25)
+title('Male, tInOp = 26.01')
+
+conf = predict(fit,tmp_female,interval = 'confidence')
+pred = predict(fit, tmp_female,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l', ylab = 'clo', xlab = 'tOut',ylim = c(-1,2))
+lines(tmp_female$tOut,(conf[,2]-conf[,1])*opt$par+conf[,1], col = 'red', lty = 2)
+lines(tmp_female$tOut,(conf[,3]-conf[,1])*opt$par+conf[,1], col = 'red', lty = 2)
+lines(tmp_female$tOut,(pred[,2]-pred[,1])*opt$par+ pred[,1], col = 'green', lty = 2)
+lines(tmp_female$tOut,(pred[,3]-pred[,1])*opt$par+pred[,1], col = 'green', lty = 2)
+idx2 = df2$sex == 'female'
+points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
+title('Female, tInOp = 26.01')
+
+###- Mean:
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="female")
+new=rbind(tmp_male,tmp_female)
+
+conf = predict(fit,tmp_male,interval = 'confidence')
+pred = predict(fit, tmp_male,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
+idx = df2$sex == 'male'
+points(df2$tOut[idx], df2$clo[idx], pch = 25)
+title('Male, tInOp = 26.82')
+
+conf = predict(fit,tmp_female,interval = 'confidence')
+pred = predict(fit, tmp_female,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
+idx2 = df2$sex == 'female'
+points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
+title('Female, tInOp = 26.82')
+
+#75 % quantile
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="female")
+new=rbind(tmp_male,tmp_female)
+
+conf = predict(fit,tmp_male,interval = 'confidence')
+pred = predict(fit, tmp_male,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
+idx = df2$sex == 'male'
+points(df2$tOut[idx], df2$clo[idx], pch = 25)
+title('Male, tInOp = 27.48')
+
+conf = predict(fit,tmp_female,interval = 'confidence')
+pred = predict(fit, tmp_female,interval = 'prediction')
+plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
+lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
+lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
+lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
+lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
+idx2 = df2$sex == 'female'
+points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
+title('Female, tInOp = 27.48')
+```
+
+
+The residuals of the model will be investigated in the figure below: 
+```{r}
+par(mfrow = c(2,2))
+plot(fit)
+```
+From the residuals and the standardized residuals these looks reasonably random. The QQ-plot looks good and only one observation (#22) appears to stick out from the rest. Observation #22 does not have a high leverage and this should therefore not affect the model to much. Clearly the weighting of the variance of the residuals have helped with the model assumptions. 
+
+
 
 
