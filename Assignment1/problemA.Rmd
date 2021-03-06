@@ -45,6 +45,8 @@ fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df2)
 Anova(fit3, type = 'III')
 ```
 
+SHOULD WE MAKE ANALYSIS OF DEVIANCE TABLE? PAGE 57
+
 The result from the backward selection using Type III partitioning are given below: 
 
 $$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp}:sex_i + \epsilon_i$$
