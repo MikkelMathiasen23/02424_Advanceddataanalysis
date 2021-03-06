@@ -28,7 +28,7 @@ df2=read.csv(file="./Data/clothingSum.csv")
 names(df2)[5]="tIn"
 
 ```
-A general linear model predicting the level of clothing (clo) using outdoor temperature (tOut), indoor operating temperature (tInOp) and sex (sex) of the subject as exploratory variables will be fitted. The full model using all variables and interactions are used as a starting point, hereafter the model will be reduced using the backward selection based on Type III partitioning. To obtain type III partitioning partial tests are computed for all factors, and hence compute the deviance for the variables as they entered the model last. Higher order variables are removed first if these are insignificant. 
+A general linear model predicting the level of clothing (clo) using outdoor temperature (tOut), indoor operating temperature (tInOp) and sex (sex) of the subject as exploratory variables will be fitted. The full model using all variables and interactions are used as a starting point, hereafter the model will be reduced using the backward selection based on Type III partitioning. Higher order variables are removed first if these are insignificant. 
 
 ```{r}
 fit1=lm(clo~ tOut*tIn*sex,data=df2)
@@ -215,7 +215,7 @@ qqline(res)
 ```
 
 
-Firstly, the optimal fraction needs to be estimated, this will be done by optimizing log-likelihood wrt. the weighting of the variance. The optimal weighting of the female residual variance is estimated to: 2.925 which will be used in the final model.
+Firstly, the optimal ratio needs to be estimated, this will be done by optimizing log-likelihood wrt. the weighting of the variance. The optimal weighting of the female residual variance is estimated to: 2.925 which will be used in the final model.
 ```{r}
 ll_partA<-function(a,data=df2){
   weights=rep(1,nrow(data))
