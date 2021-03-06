@@ -30,6 +30,8 @@ names(df2)[5]="tIn"
 ```
 A general linear model predicting the level of clothing (clo) using outdoor temperature (tOut), indoor operating temperature (tInOp) and sex (sex) of the subject as exploratory variables will be fitted. The full model using all variables and interactions are used as a starting point, hereafter the model will be reduced using the backward selection based on Type III partitioning. Higher order variables are removed first if these are insignificant. 
 
+MODEL ASSUMPTIONS?
+
 ```{r}
 fit1=lm(clo~ tOut*tIn*sex,data=df2)
 Anova(fit1, type = 'III')
