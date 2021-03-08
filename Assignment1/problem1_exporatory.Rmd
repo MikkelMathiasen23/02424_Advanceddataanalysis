@@ -7,7 +7,85 @@ chunk_output_type: console
 
 ```{r}
 source('setup.R')
+library(ggplot2)
+library(lmtest)
+library(car)
+library(gridExtra)
 ```
 
-## Conclusion
+\section{Exploratory analysis of the data}
+
+A data set describing the level of comfort in an office consists of 6 variables described in \cref{table:exp}. For the first part of the modeling, the identifier for subject and day variables will be omitted.    
+
+\begin{table}[h!]
+\centering
+ \begin{tabular}{c c c} 
+ \hline
+ Variable & Type & Description \\  
+ \hline
+ \texttt{clo} & Continuous & Level of clothing \\ 
+ \texttt{tOut} & Continuous & Outdoor temperature \\
+ \texttt{tInOp} & Continuous & Indoor operating temperature\\
+ \texttt{sex} & Factor & Sex of the subject \\
+ \texttt{subjId} & Factor & Identifier for subject\\
+ \texttt{day} & Factor & Day (within the subject) \\
+ \hline
+ \end{tabular}
+ \caption{Variable description of the data set.}
+ \label{table:exp}
+\end{table}
+
+The data set consists of 136 observations with 66 male and 70 female observations. Firstly, the summary statistics are computed for the continuous variables, seen in \cref{table:summary_stat} 
+
+\begin{table}[h!]
+\centering
+  \begin{tabular}{c c c c c}
+  \hline
+  & $\hat{\mu}$ & $\hat{\sigma^2}$ & Min & Max \\  \hline
+  \texttt{clo} & 0.02 & 0.15 & 0.25 & 0.96 \\ 
+  \texttt{tOut} & 21.54 & 17.27 & 11.93 & 33.08 \\
+  \texttt{tInOp} & 26.82 & 1.69 & 23.11 & 29.55 \\ \hline
+  \end{tabular}
+  \caption{Summary statistics of the continouos variables.}
+  \label{table:summary_stat}
+\end{table}
+
+On \cref{fig:exp_analysis_1} below, the variables are plotted against each other separately for male and females. On the first figure, it should be noted how the clothing level of females seems to vary to a greater extent compared to the male counterpart which seem more constant. Additionally, it appears that the level of female clothing decreases as the indoor and outdoor temperature increases. On the second figure, it appears that the outdoor temperature and indoor operating temperature are positively correlated which intuitively makes sense. For the third figure, the indoor operating temperature is plotted aginst the clothing level. The same applies as for figure 1; the clothing seems more constant for males compared to females. 
+
+
+
+```{r}
+df1=read.csv(file="./Data/clothingFull.csv")
+df2=read.csv(file="./Data/clothingSum.csv")
+df3 = df2[,c(3:6)]
+
+
+p1 <- ggplot(df3,aes(x=tOut,y=clo))+geom_point()+facet_wrap(~sex)+xlab("Outdoor temperature") + ylab("Clothing level")
+```
+
+```{r}
+p2 <- ggplot(df3,aes(x=tOut,y=tInOp))+geom_point()+facet_wrap(~sex) +xlab("Outdoor temperature") + ylab("Indoor operating temperature")
+
+```
+```{r exp_analysis_1, fig.cap = "Scatter plot of the continuous variables plotted separately for sex."}
+p3 <- ggplot(df3,aes(x=tInOp,y=clo))+geom_point()+facet_wrap(~sex) +xlab("Indoor operating temperature") + ylab("Clothing level")
+
+grid.arrange(p1,p2,p3, nrow = 3)
+```
+
+On \cref{fig:exp_analysis_2} below, histograms have been computed for the continuous variables for male and females separately The continuous variables appear to be centered and roughly symmetric with no apparent skewness.
+
+```{r exp_analysis_2, fig.cap = "Histograms of the continuous variables plotted separately for sex."}
+#histogrammer
+
+hist1 <- ggplot(df3,aes(x=clo))+geom_histogram(color="white", binwidth = .1)+facet_wrap(~sex) + xlab('Clothing level')
+hist2 <- ggplot(df3,aes(x=tOut))+geom_histogram(color="white", binwidth = 2)+facet_wrap(~sex) +  xlab('Outdoor temperature')
+hist3 <- ggplot(df3,aes(x=tInOp))+geom_histogram(color = "white", binwidth = .5)+facet_wrap(~sex)+ xlab('Indoor operating temperature')
+
+grid.arrange(hist1,hist2,hist3, nrow = 1)
+```
+
+It is assumed for the modelling, that all the data points are independent. 
+
+
 
