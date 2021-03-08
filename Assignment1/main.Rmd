@@ -33,24 +33,8 @@ library(xtable)
 library(directlabels)
 ```
 
-```{r child = 'Contribution.Rmd', cache = T}
-```
-\FloatBarrier
-```{r child = 'problem1_exporatory.Rmd', cache = T}
-```
-\FloatBarrier
 ```{r child = 'problemA.Rmd', cache = T}
 ```
-\FloatBarrier
-```{r child = 'problemB.Rmd', cache = T}
-```
-\FloatBarrier
-```{r child = 'problemC.Rmd', cache = T}
-```
-\FloatBarrier
-```{r child = 'bib.Rmd', cache = T}
-```
-# Appendix: R-code in seperate file. 
 
 
 
