@@ -252,7 +252,8 @@ c(AIC(fit3), AIC(fit))
 \end{table}
 
 
-```{r pred_2,fig.height=8,fig.cap="The figure presents the prediction and confidence interval for three fixed values of the indoor operating temperature (tInOp)"}
+
+```{r pred_2, fig.height=8,fig.cap="The figure presents the prediction and confidence interval for three fixed values of the indoor operating temperature (tInOp)"}
 tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="male")
 tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="female")
 new=rbind(tmp_male,tmp_female)
@@ -267,8 +268,7 @@ pred = predict(fit, new,weights = 1/w, interval = 'prediction')
 
 out = data.frame(cbind(new, conf, pred))
 names(out)
-q1 = 
-  ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+q1 =   ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
   geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
@@ -325,7 +325,8 @@ grid.arrange(q1,q2,q3)
 From figure \ref{fig:pred_2} it can be seen that the prediction interval for the females are more wide compared to the unweighted model and more points lie within the prediction interval. Clearly, it can be seen that the prediction interval for females are more wide compared to males, which is due to the weighting of the residuals. 
 
 The residuals of the model will be investigated in the figure \ref{fig:res_4} below: 
-```{r, res_4,fig.height=6,fig.cap="The figure presents the residuals of the weighted model"}
+
+```{r, res_4, fig.height=6,fig.cap="The figure presents the residuals of the weighted model"}
 par(mfrow = c(2,2))
 plot(fit)
 ```
@@ -333,13 +334,14 @@ From the residuals and the standardized residuals these looks reasonably random.
 
 Figure \ref{fig:res_5} shows the residuals when looking at the subject ID, and from this it can clearly be seen that the subject ID contains information about the variance in the residuals. The subject ID should therefore be included in the modeling. 
 
-```{r res_5, height = 4, cap "The figure presents the residuals as a function of the subject ID."}
+```{r res_5, fig.height = 4, cap = "The figure presents the residuals as a function of the subject ID."}
 df2$residuals = resid(fit)
 df2$subj_number = 1:nrow(df2)
 ggplot(data = df2, aes(x = subj_number, y = residuals, col = as.factor(subjId))) + geom_point() + geom_line() + 
   xlab('Index') + ggtitle('Residuals of observations')+facet_wrap(~as.factor(sex))+ theme(plot.title = element_text(hjust = 0.5))
 
 ```
+
 
 
 
