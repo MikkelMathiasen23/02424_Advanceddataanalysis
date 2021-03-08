@@ -8,7 +8,7 @@ suppressMessages(suppressWarnings({
   library(lubridate)
   library(RColorBrewer)
   library(splines)
-  library(ctsmr)
+  #library(ctsmr)
 }))
 
 # Knitr options
