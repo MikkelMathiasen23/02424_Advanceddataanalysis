@@ -33,6 +33,16 @@ library(xtable)
 library(directlabels)
 ```
 
+<<<<<<< HEAD
+=======
+
+```{r child = 'Contribution.Rmd', cache = T}
+```
+\FloatBarrier
+```{r child = 'problem1_exporatory.Rmd', cache = T}
+```
+\FloatBarrier
+>>>>>>> a55ce3f8a7d2ecaac2c4cee15e0d70e9e3829500
 ```{r child = 'problemA.Rmd', cache = T}
 ```
 
