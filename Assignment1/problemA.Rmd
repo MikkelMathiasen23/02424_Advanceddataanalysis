@@ -263,6 +263,53 @@ c(AIC(fit3), AIC(fit))
 \end{tabular}
 \end{table}
 
+```{r}
+#Mean: 
+X=cbind(df2$tOut,df2$tIn,df2$sex,df2$tIn)
+X[df2$sex=="female",4]=0
+X[df2$sex=="female",3]=0
+X[df2$sex!="female",3]=1
+X=matrix(as.numeric(X),ncol=4)
+
+tmp=seq(min(df2$tOut),max(df2$tOut),0.1)
+length(tmp)
+Xl=cbind(rep(tmp,2),mean(df2$tIn),rep(c(1,0),each=length(tmp)),rep(c(mean(df2$tIn),0),each=length(tmp)))
+
+
+Sigma = matrix(data = 0, nrow = length(X[,1]), ncol = length(X[,1]))
+d = rep(0, length(X[,1]))
+d[df2$sex == 'female'] = opt$par 
+d[df2$sex == 'male'] = 1
+diag(Sigma) = d
+
+XtSX = solve(t(X)%*%solve(Sigma)%*%X)
+
+out=sapply(1:(length(tmp)*2),function(i){
+  if (Xl[i,3] == 0){s = sigma(fit3)*sqrt(opt$par)} else {s = sigma(fit3)} 
+  res=s*sqrt(1+ t(Xl[i,])%*%XtSX%*%Xl[i,])
+  return(res)
+})
+out=cbind(Xl,out)
+pred = sapply(1:(length(tmp)*2),function(i){
+      res = t(c(1,Xl[i,]))%*%fit3$coefficients
+      return (res)})
+
+
+out = cbind(out, pred)
+out = data.frame(out)
+names(out) = c('tOut', 'tIn', 'sex', 'tIn:sex','sd','pred')
+out$sex[out$sex == 0] = 'female' 
+out$sex[out$sex == 1] = 'male' 
+
+ggplot(data = out, aes(x = as.numeric(tOut), y= as.numeric(pred), col = as.factor(sex))) + geom_line()+
+  geom_line(aes(x = tOut, y = pred + qt(0.975, df = 100)*sd), lty = 2)+
+  geom_line(aes(x = tOut, y = pred - qt(0.975, df = 100)*sd), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col = as.factor(sex))) + facet_wrap(~sex)
+
+
+
+
+```
 
 HOW TO MAKE PREDICTION/CONFIDENCE INTERVAL WHEN WEIGHTED SIGMA
 - 3.66 + 3.67 ligning 
