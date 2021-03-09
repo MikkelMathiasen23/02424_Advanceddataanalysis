@@ -207,6 +207,9 @@ ggplot(data = df_coef, aes(x = names, y = coef_est, color = sex)) +
 
 SKRIV TEKST HER!
 
+Introducing weights for sex does not change predictions that much, even though the AIC/BIC decreases.
+
+
 ```{r}
 df2$residual = resid(fit3B2)
 q1 = ggplot(df2, aes(sample = residual, colour = sex)) +
@@ -228,18 +231,26 @@ sum(df2$sex=="male")
 sd(resid(fit3B2)[df2$sex=="male"])
 
 
+
+
+```
+
+
+```{r}
 ggplot(df2,aes(x=tOut,y=residual,col=subjId))+geom_text(aes(label=subjId))+
   facet_grid(rows=vars(sex),cols=vars(paste("Day",day)))+
   theme(legend.position = "none")+ggtitle("Each data point/number is the subject ID")
 
+
+```
+
+```{r}
 ggplot(df2,aes(x=tOut,y=residual,col=subjId))+
   geom_text(aes(label=day))+geom_path(alpha=0.5)+
   facet_wrap(~sex)+theme(legend.position = "none")+
   ggtitle("Each data point/number is day number")
-
-
-
 ```
+
 
 ```{r}
 ll_partB<-function(a,data=df2){
