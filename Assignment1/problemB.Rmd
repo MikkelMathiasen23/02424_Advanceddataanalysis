@@ -11,35 +11,47 @@ source('setup.R')
 
 # Problem B
 
+## GLM with subject ID
+
 As we saw from the residuals in Problem A, some of the individuals do produce residuals that are either all positive or all negative. This could indicate that the individuals could have different base preferences of clothing. That is, one individual might be be warm most of the time and therefore wear less clothing. Likewise an individual might often be cold and would therefore wear more clothes. This could indicate that our model should have an individual intercept. 
 
-We cannot estimate any models with both an interaction between both of the indoor/outdoor temperatures and an individual intercept because of our degrees of freedom. Third order interactions are therefore also not possible. We can however estimate a model with an interaction between either the indoor or outdoor temperature and the individuals. This will lead to either of the following models:
 
+Furthermore, dividing the data into individuals rather than just sex, is a more precise grouping. Therefore we can discard the groups depending on sex. 
+
+We cannot estimate any models with both an interaction between both of the indoor/outdoor temperatures and an individual intercept because of a lack of degrees of freedom. Third order interactions are therefore also not possible. We can however estimate a model with an interaction between either the indoor or outdoor temperature and the individuals. This will lead to either of the following models:
+
+The first model:
 \begin{equation}\label{eq:prob2_full1}
 \begin{aligned}
-y_i=&\beta_0+a\cdot \beta_1 \cdot t_{in,i}+\beta_2 \cdot t_{out,i}+\beta_3\cdot t_{in,i}\cdot t_{out,i}+a(sex_i)+b(t_{in,i},sex_i)+c(t_{in,i},sex_i)+d(individual_i)+e(t_{in,i},individual_i)\\
-&\gamma(t_{out,i},sex_i)+
+Clo_i=&\beta_0+\beta_1 \cdot t_{in,i}+\beta_2 \cdot t_{out,i}+\beta_3\cdot t_{in,i}\cdot t_{out,i}+\\
+& a(individual_i)+b(t_{in,i},individual_i)
 \end{aligned}
 \end{equation}
+
+The second model:
 
 \begin{equation}\label{eq:prob2_full2}
 \begin{aligned}
-y_i=\mu+a\cdot b \cdot t_{in,i}+c \cdot t_{out,i}+d\cdot t_{in,i}\cdot t_{out,i}+\alpha(sex_i)+\beta(t_{in,i},sex_i)+\beta(t_{in,i},sex_i)\\
-y_i=\mu+a\cdot b \cdot t_{in,i}+c \cdot t_{out,i}+d\cdot t_{in,i}\cdot t_{out,i}+\alpha(sex_i)+\gamma(t_{out,i},sex_i)
-\end{aligned}
+Clo_i=&\beta_0+\beta_1 \cdot t_{in,i}+\beta_2 \cdot t_{out,i}+\beta_3\cdot t_{in,i}\cdot t_{out,i}+\\
+& a(individual_i)+b(t_{out,i},individual_i)\end{aligned}
 \end{equation}
+where $beta_j$ is parameters for the overall intercept and continuous variables, while $a$ and $b$ are functions of either just a categorical variable or a combination of categorical and continuous variables. 
 
 The following table shows the initial models with either an interaction between the indoor/ temperature and the individuals:
 
 ```{r}
 df2=read.csv(file="./Data/clothingSum.csv")
-df2$subjId = as.character(df2$subjId)
-fitB = lm( clo ~ tOut*tInOp+subjId*tOut,data = df2)
-m1=Anova(fitB,type=3)
-fitB = lm( clo ~ tOut*tInOp+subjId*tInOp,data = df2)
-m2=Anova(fitB,type=3)
+df2$subjId = factor(df2$subjId)
+df2$sex=factor(df2$sex)
+#ftable(sex~subjId,data=df2)
+
+fitB1 = lm( clo ~ tOut*tInOp+subjId*tOut,data = df2)
+m1=Anova(fitB1,type=3)
+#m1
+fitB2 = lm( clo ~ tOut*tInOp+subjId*tInOp,data = df2)
+m2=Anova(fitB2,type=3)
+#m2
 xtable(rbind(m1,m2),digits=c(0,3,0,3,3))
-summary(fitB)
 
 ```
 \begin{table}[H]
@@ -65,55 +77,189 @@ summary(fitB)
   Residuals1 & 0.348 & 40 &  &  \\ 
    \hline
 \end{tabular}
-\caption{The first rows (until the horizontal line) significant parameters for a model with an interaction term between the outdoor temperature and the individuals. Below the horizontal line we have a model with interaction term between the indoor temperature and the indivuduals. We can see that none of these interaction terms between the individuals and the temperature are significant. Furthermore we see that those are the first terms to be dropped. We used a type 3 for the model deviance table.}
+\caption{The first rows (until the horizontal line in the middle) significant parameters for a model with an interaction term between the outdoor temperature and the individuals. Below the horizontal line we have a model with interaction term between the indoor temperature and the indivuduals. We can see that none of these interaction terms between the individuals and the temperature are significant. Furthermore we see that those are the first terms to be dropped. We used a type 3 for the ANOVA table.}
 \label{tab:prob2_init}
 \end{table}
 
-\cref{tab:prob2_init} shows that neither of the interaction terms between the temperatures and the individuals are significant. Therefore we can continue with finding our optimal model. 
+\cref{tab:prob2_init} shows that neither of the interaction terms between the temperatures and the individuals are significant. This means that both of our two initial models from equation \cref{eq:prob2_full1} and \cref{eq:prob2_full2} will be reduced to the same model.
+
+As in part 1, we remove first higher order terms before we remove lower order terms. We choose which terms to remove by looking at the type 3 deviance table. We start by removing the terms with the highest p-value, and keep removing terms until all terms are significant. Each removed term can be seen in \cref{tab:prob2_deviance}
 
 ```{r}
+# Fitting the reduced model
+fitB = lm(clo ~ tOut*tInOp+subjId,data = df2)
+Anova(fitB,type=3)
 
-# fit2B = lm( clo ~ tOut+tInOp+subjId,data = df2)
-# summary(fit2B)
-# 
-# fit3B = lm( clo ~ tOut+subjId,data = df2)
-# summary(fit3B)
-# plot(fit3B)
-# #Eventuelt plot coefficienter for hver subjId
-# 
-# qqnorm(resid(fit3B))                   
-# qqline(resid(fit3B))
-# 
-# 
-# #Question 2: 
-# hist(fit3B$coefficients[3:length(fit3B$coefficients)], nclass= 12)
-# l = length(fit3B$coefficients)
-# 
-# qqnorm(fit3B$coefficients[3:length(fit3B$coefficients)])
-# qqline(fit3B$coefficients[3:length(fit3B$coefficients)])
-# 
-# 
-# std_coef = sqrt(diag(vcov(fit3B)))[3:l]
-# coef_est = fit3B$coefficients[3:l]
-# 
-# df_coef = data.frame(cbind(coef_est, confint(fit3B)[3:l,]))
-# df_coef$names =rownames(df_coef)
-# df_coef$sex = NaN
-# library(stringr)
-# 
-# for (i in 1:(l-2)){
-#   
-#   df_coef$sex[i] = df2$sex[str_extract(df_coef$names[i],"([0-9]{1,3})")==df2$subjId] 
-# }
-# 
-# df_coef$names = as.numeric(str_extract(df_coef$names,"([0-9]{1,3})"))
-# df_coef = df_coef[order(as.numeric(df_coef$names)),]
-# df_coef$names = as.factor(df_coef$names)
-# levels(df_coef$names)
-# 
-# 
-# ggplot(data = df_coef, aes(x = names, y = coef_est, color = sex)) + 
-#   geom_pointrange(aes(ymin=X2.5.., ymax=X97.5..)) + 
-#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+# Dropping interaction term and refitting
+fit2B = lm(clo ~ tOut+tInOp+subjId,data = df2)
+Anova(fit2B,type=3)
+
+# Dropping tInOp and refitting
+fit3B = lm( clo ~ tOut+subjId,data = df2)
+Anova(fit3B,type=3)
+#xtable(anova(fitB1,fitB,fit2B,fit3B))
+
 ```
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrrrr}
+  \hline
+ & Res.Df & RSS & Df & Sum of Sq & F & Pr($>$F) \\ 
+  \hline
+clo $\sim$ tOut * tInOp + subjId * tOut & 40 & 0.27 &  &  &  &  \\ 
+  clo $\sim$ tOut * tInOp + subjId & 86 & 0.71 & -46 & -0.44 & 1.45 & 0.1171 \\ 
+ clo $\sim$ tOut + tInOp + subjId & 87 & 0.71 & -1 & -0.01 & 1.06 & 0.3092 \\ 
+  clo $\sim$ tOut + subjId & 88 & 0.72 & -1 & -0.00 & 0.07 & 0.7978 \\ 
+   \hline
+\end{tabular}
+\caption{Deviance table of each of the models. The first column shows the model in \texttt{R} notation. The last column with the P-value shows the P-value when compared to the model from the line above}
+\label{tab:prob2_deviance}
+\end{table}
+
+When all the non-significant terms have been removed we end up with the following model
+
+\begin{equation}\label{eq:probB_final}
+Clo_i=\beta_0+\beta_1\cdot t_{out,i}+a(individual_i)
+\end{equation}
+
+When we estimate the model in \texttt{R}, we do however not get an individual estimate of $\beta_0$. We estimate $\mu=\beta_0+a(individual_1)$ which means the intercept and the first individual parameter (subject ID 11) is estimated as one. This also means that each of the parameters for the other individuals are estimated as $g(individual_i)=a(individual_i)-a(individual_1)$. 
+
+Instead of fitting the above model we can instead fit a model without an overall intercept as they are equivalent:
+
+\begin{equation}\label{eq:probB_final2}
+Clo_i=\beta_1\cdot t_{out,i}+a(individual_i)
+\end{equation}
+
+This model will ensure an easier interpretation of the subject ID parameters. 
+
+## Visual presentation of the parameters
+
+
+
+By investigating the individual subject ID parameters from \cref{eq:probB_final2} we might find an underlying distribution:
+
+
+```{r par_dist,fig.height=4,fig.cap="The figure to the left shows a histogram of the individual parameters, $g(individual_i)$ (except for the first individual), while the figure to the right shows a QQ plot. Both suggest that the parameters could be gaussian distributed."}
+fit3B2 = lm( clo ~ -1+tOut+subjId,data = df2)
+#Anova(fit3B,type=3)
+#Question 2:
+p1=ggplot(data.frame(c()),aes(x=fit3B2$coefficients[-1]))+
+  geom_histogram(bins=12)+xlab("Individual parameters")+ylab("Count")+
+  ggtitle("Histogram of individual parameters")
+
+p2=ggplot(data.frame(c()),aes(sample=fit3B2$coefficients[-1]))+
+  stat_qq()+stat_qq_line()+xlab("Theoretical")+ylab("Sample")+
+  ggtitle("QQ plot of individual parameters")
+
+library(gridExtra)
+grid.arrange(p1,p2,ncol=2)
+```
+
+\cref{fig:par_dist} suggests that the parameters of the individuals could be normally distributed. We do see some heavy tails, but it is close enough for the assumption. Ideally, we would have fitted a mixed random and fixed effect model. 
+
+## Interpretation of the parameters. 
+
+The interpretation of the parameters by using \cref{eq:probB_final2} instead of \cref{eq:probB_final2} become very simple. The subject ID estimates is the individual intercepts, while $\beta_1$ is a parameter defines the increase/decrease in clothing level as the indoor temperature increases. 
+```{r}
+m=confint(fit3B2)[1,]
+m=cbind(fit3B2$coef[1],t(m))
+xtable(m,digits=4)
+```
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & Estimate & 2.5 \% & 97.5 \% \\ 
+  \hline
+$\beta_1$ & -0.0143 & -0.0203 & -0.0082 \\ 
+   \hline
+\end{tabular}
+\caption{This table shows the estimate and 95 \% confidence interval of the $\beta_1$ parameter from \cref{eq:probB_final2}}
+\end{table}
+The rest of the parameters can be found in figure \ref{fig:par_CI}. 
+```{r par_CI,fig.height=3,fig.cap="This figure shows each parameter with its 95 \\% confidence interval."}
+l = length(fit3B2$coefficients)
+std_coef = sqrt(diag(vcov(fit3B2)))[-1]
+coef_est = fit3B2$coefficients[-1]
+
+df_coef = data.frame(cbind(coef_est, confint(fit3B2)[-1,]))
+library(stringr)
+df_coef$names =gsub("subjId","",rownames(df_coef))
+df_coef$sex = NaN
+for (i in 1:(l-1)){
+  df_coef$sex[i] = as.character(df2$sex[df_coef$names[i]==df2$subjId][1])
+}
+df_coef = df_coef[order(as.numeric(as.character(df_coef$names))),]
+df_coef$names = factor(as.numeric(as.character(df_coef$names)))
+df_coef$sex = df_coef$sex
+levels(df_coef$names)
+
+ggplot(data = df_coef, aes(x = names, y = coef_est, color = sex)) +
+  geom_pointrange(aes(ymin=X2.5.., ymax=X97.5..)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  xlab("Subject Names")+ylab("Coefficient estimates")+
+  ggtitle("Different intercepts for each Subject ID along with CI")
+```
+
+## Residual analysis
+
+SKRIV TEKST HER!
+
+```{r}
+df2$residual = resid(fit3B2)
+q1 = ggplot(df2, aes(sample = residual, colour = sex)) +
+  stat_qq() +  stat_qq_line()+ggtitle("")
+q2 =  ggplot(df2, aes(sample = residual)) +
+  stat_qq() +
+  stat_qq_line()
+
+q3 = ggplot(data = df2, aes(x = sex, y= residual, colour = sex))+ geom_boxplot() + geom_jitter(width = 0.3)
+
+q4 = ggplot(data = df2, aes(x = tOut, y= residual, col = sex))+ geom_point() + xlab('Outdoor temperature (tOut)')
+
+grid.arrange(q1,q2,q3,q4, ncol = 2)
+
+sum(df2$sex=="female")
+sd(resid(fit3B2)[df2$sex=="female"])
+
+sum(df2$sex=="male")
+sd(resid(fit3B2)[df2$sex=="male"])
+
+
+ggplot(df2,aes(x=tOut,y=residual,col=subjId))+geom_text(aes(label=subjId))+
+  facet_grid(rows=vars(sex),cols=vars(paste("Day",day)))+
+  theme(legend.position = "none")+ggtitle("Each data point/number is the subject ID")
+
+ggplot(df2,aes(x=tOut,y=residual,col=subjId))+
+  geom_text(aes(label=day))+geom_path(alpha=0.5)+
+  facet_wrap(~sex)+theme(legend.position = "none")+
+  ggtitle("Each data point/number is day number")
+
+
+
+```
+
+```{r}
+ll_partB<-function(a,data=df2){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=lm(clo~ -1+tOut+subjId,w=weights,data=data)
+  return(logLik(fit))
+}
+weighted_lm<-function(a,data=df2){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=lm(clo~ -1+tOut+subjId,w=weights,data=data)
+  return(fit)
+}
+opt=optim(1,fn=ll_partB,data=df2,control = list(fnscale=-1),hessian = T)
+opt$par
+fit4B = weighted_lm(opt$par,df2)
+Anova(fit4B,type=3)
+
+df2$residual=resid(fit4B)
+```
+
 
