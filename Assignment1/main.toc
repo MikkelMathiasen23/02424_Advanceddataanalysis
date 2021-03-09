@@ -1,1 +1,8 @@
-\contentsline {section}{Problem A}{1}{section*.2}%
+\contentsline {section}{Exploratory analysis of the data}{1}{section*.2}%
+\contentsline {section}{Problem A}{3}{section*.3}%
+\contentsline {section}{Problem B}{10}{section*.4}%
+\contentsline {subsection}{GLM with subject ID}{11}{section*.5}%
+\contentsline {subsection}{Visual presentation of the parameters}{12}{section*.6}%
+\contentsline {subsection}{Interpretation of the parameters.}{13}{section*.7}%
+\contentsline {subsection}{Residual analysis}{13}{section*.8}%
+\contentsline {section}{Problem C}{15}{section*.9}%
