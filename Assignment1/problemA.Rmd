@@ -28,9 +28,7 @@ df2=read.csv(file="./Data/clothingSum.csv")
 names(df2)[5]="tIn"
 
 ```
-A general linear model predicting the level of clothing (clo) using outdoor temperature (tOut), indoor operating temperature (tInOp) and sex (sex) of the subject as exploratory variables will be fitted. The full model using all variables and interactions are used as a starting point, hereafter the model will be reduced using the backward selection based on Type III partitioning. Higher order variables are removed first if these are insignificant. 
-
-MODEL ASSUMPTIONS?
+A general linear model predicting the level of clothing (clo) using outdoor temperature (tOut), indoor operating temperature (tInOp) and sex (sex) of the subject as explanatory variables will be fitted. The full model using all variables and interactions are used as a starting point, hereafter the model will be reduced using the backward selection based on Type III partitioning. Higher order variables are removed first if these are insignificant. 
 
 ```{r}
 fit1=lm(clo~ tOut*tIn*sex,data=df2)
@@ -44,12 +42,29 @@ Anova(fit2, type = 'III')
 fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df2)
 Anova(fit3, type = 'III')
 ```
+In table \ref{dev_1} the different models fitted through the backward selection are written in R notation (first column) and the statistics calculated for each model in the following columns.
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrrrr}
+  \hline
+ & Res.Df & RSS & Df & Sum of Sq & F & Pr($>$F) \\ 
+  \hline
+clo $\backsim$ tOut * tIn * sex & 128 & 1.82 &  &  &  &  \\ 
+  clo $\backsim$ tOut + tIn + tOut * sex + tIn * sex & 130 & 1.85 & -2 & -0.02 & 0.86 & 0.4259 \\ 
+  clo $\backsim$ tOut + tIn + tIn:sex + sex & 131 & 1.88 & -1 & -0.03 & 2.03 & 0.1569 \\ 
+   \hline
+\end{tabular}
+\caption{Analysis of deviance table from backward selection of the optimal model}
+\label{dev_1}
+\end{table}
 
-SHOULD WE MAKE ANALYSIS OF DEVIANCE TABLE? PAGE 57
+```{r}
+#xtable(anova(fit1, fit2, fit3))
+```
 
 The result from the backward selection using Type III partitioning are given below: 
 
-$$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp}:sex_i + \epsilon_i$$
+$$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp,i}\cdot sex_i + \epsilon_i$$
 
 ```{r}
 sigma_est = sigma(fit3)
@@ -68,9 +83,9 @@ lm_sigma_conf<-function(fit,CI=0.95){
 lm_sigma_conf(fit3)
 ```
 
-where $$\epsilon_i ~ N(0, \sigma^2)$$, and $\hat{\sigma^2}$ is estimated as 0.120. An estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136].
+where $$\epsilon_i \backsim\ N(0, \sigma^2)$$ the residuals are assumed to be i.i.d ie. $\sigma^2I$. $\hat{\sigma^2}$ is estimated as 0.120, and an estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136].
 
-Here : indicates the interaction between the indoor operating temperature and gender of the subject. To test the model reduction compared to the full initial model a likelihood-ratio-test is performed (theorem 3.6), where the p-value is computed to: 0.29 ie. we can't reject the model reduction. The coefficients and confidence intervals can be seen in table 1. 
+In the resulting model presented above the $\cdot$ indicates the interaction between the indoor operating temperature and gender of the subject. To test the model reduction compared to the full initial model a likelihood-ratio-test is performed using theorem 3.6, where the p-value is computed to: 0.29 ie. we can't reject the model reduction. The coefficients and confidence intervals can be seen in table \ref{param_1}. 
 
 ```{r}
 conf = confint(fit3)
@@ -78,138 +93,109 @@ df_param = cbind(conf[,1], fit3$coefficients, conf[,2])
 #xtable(df_param)
 ```
 
+
 \begin{table}[ht]
 \centering
 \begin{tabular}{rrrr}
+    \hline
+    & 2.5\% & Estimate & 97.5\% \\ 
   \hline
- & 2.5% & Estimate & 97.5% \\ 
-  \hline
-  $\hat{\beta_0}$ & 1.51 & 2.13 & 2.76 \\ 
+ $\hat{\beta_0} = \hat{\mu}+female$ & 1.51 & 2.13 & 2.76 \\ 
   $\hat{\beta_1}$ & -0.02 & -0.01 & -0.01 \\ 
   $\hat{\beta_2}$ & -0.07 & -0.05 & -0.02 \\ 
   $\hat{\beta_3}$ & -2.16 & -1.28 & -0.40 \\ 
   $\hat{\beta_4}$ & 0.01 & 0.04 & 0.08 \\ 
-   \hline
+    \hline
 \end{tabular}
+\caption{Parameter estimates with confidence intervals}
+\label{param_1}
 \end{table}
 
-$\hat{\beta_0}$ is the intercept of the model, whereas $\hat{\beta_1}$ and $\hat{\beta_2}$ describes the impact of the outdoor temperature and indoor operating temperature affect the clothing level respectively. $\hat{\beta_1}$ and $\hat{\beta_2}$ are negative meaning that when these temperature rises then the clothing level decreases and vice versa. $\hat{\beta_3}$ indicates whether the subject are male (1) or female (0), as this parameter is negative then this means that males typically has less clothes on at the same temperature compared to females. $\hat{\beta_4}$ is the interaction-term between indoor operating temperature and the gender of the subject.
+$\hat{\beta_0}$ is the intercept of the model, and contains both the intercept of the model but also the impact of being a female on the clothing level as $sex(female) = 0$.  $\hat{\beta_1}$ and $\hat{\beta_2}$ describes the impact of the outdoor temperature and indoor operating temperature affect the clothing level respectively. $\hat{\beta_1}$ and $\hat{\beta_2}$ are negative meaning that when these temperature rises then the clothing level decreases and vice versa. $\hat{\beta_3}$ indicates whether the subject are male (1) or female (0), as this parameter is negative then this means that males typically has less clothes on at the same temperature compared to females. $\hat{\beta_4}$ is the interaction-term between indoor operating temperature and the gender of the subject. As $sex(female) = 0$ the $\hat{\beta_2}$ must contain the information about the slope for females, whereas the interaction term $\hat{\beta_4}$ contains the changes in the slope of $\hat{\beta_2}$ for males. 
 
-SKRIV LIDT OM BETA4!!
+In figure \ref{fig:pred_1} are confidence and prediction intervals of clothing level vs. outdoor temperature for different fixed levels of indoor operating temperatures. The indoor operating temperatures are chosen as the 25\% quantile, mean and 75\% quantile. 
 
-Below are confidence and prediction intervals of clothing level vs. outdoor temperature for different fixed levels of indoor operating temperatures. The indoor operating temperatures are chosen as the 25\% quantile, mean and 75\% quantile. 
-
-```{r}
-par(mfrow = c(3,2))
-#25 % quantile
+```{r pred_1, fig.height=8,fig.cap="The figure presents the prediction and confidence interval for three fixed values of the indoor operating temperature (tInOp)"}
 tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="male")
 tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="female")
 new=rbind(tmp_male,tmp_female)
 
-conf = predict(fit2,tmp_male,interval = 'confidence')
-pred = predict(fit2, tmp_male,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
-idx = df2$sex == 'male'
-points(df2$tOut[idx], df2$clo[idx], pch = 25)
-title('Male, tInOp = 26.01')
+conf = predict(fit3,new,interval = 'confidence')
+pred = predict(fit3, new,interval = 'prediction')
 
-conf = predict(fit2,tmp_female,interval = 'confidence')
-pred = predict(fit2, tmp_female,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
-idx2 = df2$sex == 'female'
-points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
-title('Female, tInOp = 26.01')
+out = data.frame(cbind(new, conf, pred))
+names(out)
+q1 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
+  labs(title="25% Quantile of indoor operating temperature (tInOp = 26.01)",
+        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
+
 
 ###- Mean:
 tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="male")
 tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="female")
 new=rbind(tmp_male,tmp_female)
 
-conf = predict(fit2,tmp_male,interval = 'confidence')
-pred = predict(fit2, tmp_male,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
-idx = df2$sex == 'male'
-points(df2$tOut[idx], df2$clo[idx], pch = 25)
-title('Male, tInOp = 26.82')
-
-conf = predict(fit2,tmp_female,interval = 'confidence')
-pred = predict(fit2, tmp_female,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
-idx2 = df2$sex == 'female'
-points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
-title('Female, tInOp = 26.82')
+conf = predict(fit3,new,interval = 'confidence')
+pred = predict(fit3, new,interval = 'prediction')
+out = data.frame(cbind(new, conf, pred))
+q2 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
+  labs(title="Mean of indoor operating temperature (tInOp = 26.82)",
+        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
 
 #75 % quantile
 tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="male")
 tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="female")
 new=rbind(tmp_male,tmp_female)
 
-conf = predict(fit2,tmp_male,interval = 'confidence')
-pred = predict(fit2, tmp_male,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
-idx = df2$sex == 'male'
-points(df2$tOut[idx], df2$clo[idx], pch = 25)
-title('Male, tInOp = 27.48')
+conf = predict(fit3,new,interval = 'confidence')
+pred = predict(fit3, new,interval = 'prediction')
+out = data.frame(cbind(new, conf, pred))
 
-conf = predict(fit2,tmp_female,interval = 'confidence')
-pred = predict(fit2, tmp_female,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
-idx2 = df2$sex == 'female'
-points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
-title('Female, tInOp = 27.48')
+q3 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
+  labs(title="75% Quantile of indoor operating temperature (tInOp = 27.48)",
+        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
 
+grid.arrange(q1,q2,q3)
 ```
 
-From the figures above we can see that almost all points for the males are within the prediction interval except one sample. One sample out of the 95\% prediction interval - as it is 95\% prediction interval it would be expected that some points are out of the interval. From the female figures we can see that more points are out of the interval. It could appear that the variation in the male points are smaller than for the females.  
+From the figure \ref{fig:pred_1} above we can see that almost all points for the males are within the prediction interval except one sample. One sample out of the 95\% prediction interval - as it is 95\% prediction interval it would be expected that some points are out of the interval. From the female figures we can see that more points are out of the prediction interval. It could appear that the variation in the male points are smaller than for the females.  
 
-The residuals of the model will be investigated in the figure below: 
-```{r}
+The residuals of the model will be investigated in the figure \ref{fig:res_1}. 
+```{r res_1,fig.height=6,fig.cap="The figure presents the residuals of the model selected from the backward selection with Type III partionioning."}
 par(mfrow = c(2,2))
 plot(fit3)
 ```
-From the residuals and the standardized residuals these looks reasonably random, whereas the QQ-plot have some heavy tails which could indicate that the model not follows the assumption ie. the residuals are IID. When looking at the QQ-plot the following points appear to create some of the tails: 22, 119 and 75. When comparing these points 22, 119 and 75 which are some of the points resulting in the tails it can be seen from leverage plot that these do not have high leverage ie. not affecting the model a lot. The residuals will be further investigated by looking at the residuals for the different exploratory variables. 
+From the residuals and the standardized residuals these looks reasonably random, whereas the QQ-plot have some heavy tails which could indicate that the model not follows the assumption ie. the residuals are i.i.id. When looking at the QQ-plot the following points appear to create some of the tails: 22, 119 and 75. When comparing these points 22, 119 and 75 which are some of the points resulting in the tails it can be seen from leverage plot that these do not have high leverage ie. not affecting the model a lot. The residuals will be further investigated by looking at the residuals for the different explanatory variables. 
 
-```{r}
+
+```{r res_2,fig.height=6,fig.cap="The figure presents the residuals of the model selected from the backward selection with Type III partionioning as a function of the the input variables."}
+
 df2$residual = resid(fit3)
 q1 = ggplot(df2, aes(sample = residual, colour = sex)) +
   stat_qq() +
   stat_qq_line()
-q2 = ggplot(data = df2, aes(x = sex, y= residual, colour = sex))+ geom_boxplot() + geom_jitter(width = 0.3)
+q2 = ggplot(data = df2, aes(x = sex, y= residual, colour = sex))+ geom_boxplot() + geom_jitter(width = 0.3) 
 
-q3 = ggplot(data = df2, aes(x = tIn, y= residual, col = sex))+ geom_point() 
+q3 = ggplot(data = df2, aes(x = tIn, y= residual, col = sex))+ geom_point()  + xlab('Indoor operating temperature (tInOp)')
 
-q4 = ggplot(data = df2, aes(x = tOut, y= residual, col = sex))+ geom_point()
+q4 = ggplot(data = df2, aes(x = tOut, y= residual, col = sex))+ geom_point() + xlab('Outdoor temperature (tOut)')
 
 grid.arrange(q1,q2,q3,q4, ncol = 2)
 ```
 
-From the figures above the residuals for the indoor operating temperature and outdoor temperature appears to be randomly distributed. It should be noted from the boxplot that the residual variance of females appears to be larger than the residuals of the males. Also from the qq-plot it can be seen that the tails probably originate from the females. Clearly it can be seen that weighting of the variance between males and females are needed. The variance of residuals for females are 2.83 times larger than for males. By weighting the variance of the females with this fraction the following qq-plot arises (see below), which clearly indicates that a weighting of the variance between males and females will result in a better model. This could indicate that the variance of the residuals shouldn't be assumed to be identical across all points, but instead assumed to be identical within each gender group. The residuals are still assumed to be independent, but instead of unweighted residuals $\sigma^2 *I$ the model will include weighted residuals: $\sigma^2\Sigma$, which will be a diagonal matrix including 1 for the entries for men and a ratio for women.
+From the figures above the residuals for the indoor operating temperature and outdoor temperature appears to be randomly distributed. It should be noted from the boxplot that the residual variance of females appears to be larger than the residuals of the males. Also from the qq-plot it can be seen that the tails probably originate from the females. Clearly it can be seen that weighting of the variance between males and females are needed. The variance of residuals for females are 2.83 times larger than for males. By weighting the variance of the females with this fraction the following qq-plot arises (see figure \ref{fig:res_3}), which clearly indicates that a weighting of the variance between males and females will result in a better model. This could indicate that the variance of the residuals shouldn't be assumed to be identical across all points, but instead assumed to be identical within each gender group. The residuals are still assumed to be independent, but instead of unweighted residuals $\sigma^2I$ the model will include weighted residuals: $\sigma^2\Sigma$, which will be a diagonal matrix including 1 for the entries for men and a ratio for women.
 
-```{r}
+
+```{r res_3,fig.height=4,fig.cap="The figure presents a QQ-plot of the effect of normalizing the residuals across females/males "}
 frac = var(resid(fit3)[df2$sex == 'female'])/var(resid(fit3)[df2$sex == 'male'])
 par(mfrow=c(1,1))
 res = resid(fit3)
@@ -239,7 +225,7 @@ opt=optim(1,ll_partA,control=list(fnscale=-1),hessian=T)
 fit=weighted_lm(opt$par)
 ```
 
-In order to compare the weighted model with the unweighted model AIC are used as a measure. The likelihood are not comparable as the models are not nested. The AIC are computed as: -184.59 and -202.64 for the unweighted and weighted model respectively. The weighted model appears to perform better. The confidence intervals of the parameters are presented in the table below. $\hat{\sigma^2}$ is estimated to 0.085. An estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.076, 0.097].
+In order to compare the weighted model with the unweighted model AIC are used as a measure. The likelihood are not comparable as the models are not nested. The AIC are computed as: -184.59 and -202.64 for the unweighted and weighted model respectively. The weighted model appears to perform better. The confidence intervals of the parameters are presented in table \ref{par_2}. $\hat{\sigma^2}$ is estimated to 0.085, and an estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.076, 0.097].
 ```{r}
 conf = confint(fit)
 df_param = cbind(conf[,1], fit$coefficients, conf[,2])
@@ -252,7 +238,7 @@ c(AIC(fit3), AIC(fit))
 \centering
 \begin{tabular}{rrrr}
   \hline
- & 1 & 2 & 3 \\ 
+ & 2.5\% & Estimate & 97.5 \% \\ 
   \hline
 (Intercept) & 1.49 & 2.22 & 2.95 \\ 
   tOut & -0.02 & -0.01 & -0.01 \\ 
@@ -261,112 +247,101 @@ c(AIC(fit3), AIC(fit))
   tIn:sexmale & 0.02 & 0.05 & 0.08 \\ 
    \hline
 \end{tabular}
+\caption{Parameter estimate with confidence intervals}
+\label{par_2}
 \end{table}
 
 
-HOW TO MAKE PREDICTION/CONFIDENCE INTERVAL WHEN WEIGHTED SIGMA
-- 3.66 + 3.67 ligning 
 
-```{r}
-par(mfrow = c(3,2))
-#25 % quantile
+```{r pred_2, fig.height=8,fig.cap="The figure presents the prediction and confidence interval for three fixed values of the indoor operating temperature (tInOp)"}
 tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="male")
 tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="female")
 new=rbind(tmp_male,tmp_female)
 
-conf = predict(fit,tmp_male,interval = 'confidence')
-pred = predict(fit, tmp_male,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
-idx = df2$sex == 'male'
-points(df2$tOut[idx], df2$clo[idx], pch = 25)
-title('Male, tInOp = 26.01')
+w = rep(0, length(new[,1]))
+w[new$sex == 'female'] = opt$par 
+w[new$sex =='male'] = 1
 
-conf = predict(fit,tmp_female,interval = 'confidence')
-pred = predict(fit, tmp_female,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l', ylab = 'clo', xlab = 'tOut',ylim = c(-1,2))
-lines(tmp_female$tOut,(conf[,2]-conf[,1])*opt$par+conf[,1], col = 'red', lty = 2)
-lines(tmp_female$tOut,(conf[,3]-conf[,1])*opt$par+conf[,1], col = 'red', lty = 2)
-lines(tmp_female$tOut,(pred[,2]-pred[,1])*opt$par+ pred[,1], col = 'green', lty = 2)
-lines(tmp_female$tOut,(pred[,3]-pred[,1])*opt$par+pred[,1], col = 'green', lty = 2)
-idx2 = df2$sex == 'female'
-points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
-title('Female, tInOp = 26.01')
+
+conf = predict(fit,new,weights = 1/w, interval = 'confidence')
+pred = predict(fit, new,weights = 1/w, interval = 'prediction')
+
+out = data.frame(cbind(new, conf, pred))
+names(out)
+q1 =   ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
+  labs(title="25% Quantile of indoor operating temperature (tInOp = 26.01)",
+        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
+
 
 ###- Mean:
 tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="male")
 tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="female")
 new=rbind(tmp_male,tmp_female)
 
-conf = predict(fit,tmp_male,interval = 'confidence')
-pred = predict(fit, tmp_male,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
-idx = df2$sex == 'male'
-points(df2$tOut[idx], df2$clo[idx], pch = 25)
-title('Male, tInOp = 26.82')
+w = rep(0, length(new[,1]))
+w[new$sex == 'female'] = opt$par 
+w[new$sex =='male'] = 1
 
-conf = predict(fit,tmp_female,interval = 'confidence')
-pred = predict(fit, tmp_female,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
-idx2 = df2$sex == 'female'
-points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
-title('Female, tInOp = 26.82')
+
+conf = predict(fit,new,weights = 1/w, interval = 'confidence')
+pred = predict(fit, new,weights = 1/w, interval = 'prediction')
+
+out = data.frame(cbind(new, conf, pred))
+q2 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
+  labs(title="Mean of indoor operating temperature (tInOp = 26.82)",
+        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
 
 #75 % quantile
 tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="male")
 tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="female")
 new=rbind(tmp_male,tmp_female)
+w = rep(0, length(new[,1]))
+w[new$sex == 'female'] = opt$par 
+w[new$sex =='male'] = 1
 
-conf = predict(fit,tmp_male,interval = 'confidence')
-pred = predict(fit, tmp_male,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue', type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_male$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_male$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_male$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_male$tOut,pred[,3], col = 'green', lty = 2)
-idx = df2$sex == 'male'
-points(df2$tOut[idx], df2$clo[idx], pch = 25)
-title('Male, tInOp = 27.48')
 
-conf = predict(fit,tmp_female,interval = 'confidence')
-pred = predict(fit, tmp_female,interval = 'prediction')
-plot(tmp_male$tOut, conf[,1], col = 'blue',lwd = 2, type = 'l',ylim = c(min(pred), max(pred)), ylab = 'clo', xlab = 'tOut')
-lines(tmp_female$tOut,conf[,2], col = 'red', lty = 2)
-lines(tmp_female$tOut,conf[,3], col = 'red', lty = 2)
-lines(tmp_female$tOut,pred[,2], col = 'green', lty = 2)
-lines(tmp_female$tOut,pred[,3], col = 'green', lty = 2)
-idx2 = df2$sex == 'female'
-points(df2$tOut[idx2], df2$clo[idx2], pch = 25)
-title('Female, tInOp = 27.48')
+conf = predict(fit,new,weights = 1/w, interval = 'confidence')
+pred = predict(fit, new,weights = 1/w, interval = 'prediction')
+
+out = data.frame(cbind(new, conf, pred))
+
+q3 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
+  labs(title="75% Quantile of indoor operating temperature (tInOp = 27.48)",
+        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(q1,q2,q3)
 ```
 
 
-The residuals of the model will be investigated in the figure below: 
-```{r}
+From figure \ref{fig:pred_2} it can be seen that the prediction interval for the females are more wide compared to the unweighted model and more points lie within the prediction interval. Clearly, it can be seen that the prediction interval for females are more wide compared to males, which is due to the weighting of the residuals. 
+
+The residuals of the model will be investigated in the figure \ref{fig:res_4} below: 
+
+```{r, res_4, fig.height=6,fig.cap="The figure presents the residuals of the weighted model"}
 par(mfrow = c(2,2))
 plot(fit)
 ```
-From the residuals and the standardized residuals these looks reasonably random. The QQ-plot looks good and only one observation (#22) appears to stick out from the rest. Observation #22 does not have a high leverage and this should therefore not affect the model to much. Clearly the weighting of the variance of the residuals have helped with the model assumptions. 
+From the residuals and the standardized residuals these looks reasonably random. The QQ-plot looks good and only one observation (#22) appears to stick out from the rest. Observation #22 does not have a high leverage and this should therefore not affect the model too much. Clearly the weighting of the variance of the residuals have helped with the model assumptions. 
 
-The figure below shows the residuals when looking at the subject ID, and from this it can clearly be seen that the subject ID contains information about the variance in the residuals. The subject ID should therefore be included in the modeling. 
+Figure \ref{fig:res_5} shows the residuals when looking at the subject ID, and from this it can clearly be seen that the subject ID contains information about the variance in the residuals. The subject ID should therefore be included in the modeling. 
 
-```{r}
+```{r res_5, fig.height = 4, cap = "The figure presents the residuals as a function of the subject ID."}
 df2$residuals = resid(fit)
 df2$subj_number = 1:nrow(df2)
-ggplot(data = df2, aes(x = subj_number, y = residuals, col = as.factor(subjId))) + geom_point() + geom_line() + facet_wrap(~sex)
+ggplot(data = df2, aes(x = subj_number, y = residuals, col = as.factor(subjId))) + geom_point() + geom_line() + 
+  xlab('Index') + ggtitle('Residuals of observations')+facet_wrap(~as.factor(sex))+ theme(plot.title = element_text(hjust = 0.5))
 
 ```
+
 
 
 

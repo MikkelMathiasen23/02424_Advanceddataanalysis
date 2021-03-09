@@ -11,3 +11,115 @@ source('setup.R')
 
 ## Problem C
 
+```{r}
+df1=read.csv(file="./Data/clothingFull.csv")
+names(df1)[4]="tIn"
+
+
+```
+
+```{r}
+ll_partA<-function(a,data=df1){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
+  return(logLik(fit))
+}
+weighted_lm<-function(a,data=df1){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
+  return(fit)
+}
+# Finding optimal weights
+opt=optim(1,ll_partA,control=list(fnscale=-1),hessian=T)
+# Fitting model with optimal weights
+fit=weighted_lm(opt$par)
+```
+
+
+```{r}
+par(mfrow=c(2,2))
+plot(fit3B)
+
+Anova(fit, type = 'III')
+
+par(mfrow= c(1,1))
+acf(resid(fit))
+```
+
+
+
+```{r}
+df1$residual = resid(fit)
+q1 = ggplot(df1, aes(sample = residual, colour = sex)) +
+  stat_qq() +
+  stat_qq_line()
+q2 = ggplot(data = df1, aes(x = sex, y= residual, colour = sex))+ geom_boxplot() + geom_jitter(width = 0.3) 
+
+q3 = ggplot(data = df1, aes(x = tIn, y= residual, col = sex))+ geom_point()  + xlab('Indoor operating temperature (tInOp)')
+
+q4 = ggplot(data = df1, aes(x = tOut, y= residual, col = sex))+ geom_point() + xlab('Outdoor temperature (tOut)')
+
+grid.arrange(q1,q2,q3,q4, ncol = 2)
+```
+
+
+```{r}
+ggplot(data = df1, aes(x = tOut)) + geom_histogram()+ facet_wrap(~day)
+```
+
+
+```{r}
+df1$obs.no=as.character(df1$obs.no)
+df1$subjId=as.character(df1$subjId)
+ggplot(df1,aes(x=tOut,y=clo,group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Outdoor temperature")+ylab("Clothing")
+```
+
+```{r}
+df1$obs.no=as.character(df1$obs.no)
+df1$subjId=as.character(df1$subjId)
+ggplot(df1,aes(x=tOut,y=residual,group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Outdoor temperature")+ylab("Residual")
+
+```
+
+
+
+#################################################################################################################
+
+The model from part B is applied on the full dataset and by plotting the residuals as a function of the outdoor temperature is presented below. The residuals are split into to columns according to gender and columns depending on the day. From figure xx it is apparent that each observation at one day is correlated and thereby the assumption of indepence are violated. 
+```{r}
+fit3B = lm( clo ~ -1 +tOut+subjId,data = df1)
+df1$obs.no=as.character(df1$obs.no)
+df1$subjId=as.character(df1$subjId)
+ggplot(df1,aes(x=tOut,y=resid(fit3B),group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Outdoor temperature")+ylab("Residual")
+```
+
+
+
+```{r}
+df1$residual = resid(fit3B)
+q1 = ggplot(df1, aes(sample = residual, colour = sex)) +
+  stat_qq() +
+  stat_qq_line()
+q2 =  ggplot(df1, aes(sample = residual)) +
+  stat_qq() +
+  stat_qq_line()
+  
+q3=   ggplot(data = df1, aes(x = sex, y= residual, colour = sex))+ geom_boxplot() + geom_jitter(width = 0.3) 
+
+
+q4 = ggplot(data = df1, aes(x = tOut, y= residual, col = sex))+ geom_point() + xlab('Outdoor temperature (tOut)')
+
+grid.arrange(q1,q2,q3,q4, ncol = 2)
+```
+
