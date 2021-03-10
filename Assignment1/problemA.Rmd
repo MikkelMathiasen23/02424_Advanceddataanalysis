@@ -35,8 +35,12 @@ fit1=lm(clo~ tOut*tIn*sex,data=df2)
 Anova(fit1, type = 'III')
 #Remove third order interaction tOut:tIn:sex
 
-fit2=lm(clo~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
-Anova(fit2, type = 'III')
+fit2a=lm(clo~ tOut+tIn+tOut*sex+tIn*sex + tOut*tIn,data=df2)
+Anova(fit2a, type = 'III')
+#Remove tIn*tOut
+
+fit2b=lm(clo~ tOut+tIn+tOut*sex+tIn*sex,data=df2)
+Anova(fit2b, type = 'III')
 #Remove tOut:sex
 
 fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df2)
@@ -49,20 +53,21 @@ In table \ref{dev_1} the different models fitted through the backward selection 
   \hline
  & Res.Df & RSS & Df & Sum of Sq & F & Pr($>$F) \\ 
   \hline
-clo $\backsim$ tOut * tIn * sex & 128 & 1.82 &  &  &  &  \\ 
-  clo $\backsim$ tOut + tIn + tOut * sex + tIn * sex & 130 & 1.85 & -2 & -0.02 & 0.86 & 0.4259 \\ 
-  clo $\backsim$ tOut + tIn + tIn:sex + sex & 131 & 1.88 & -1 & -0.03 & 2.03 & 0.1569 \\ 
+clo $\backsim$ tOut * tInOp * sex & 128 & 1.82 &  &  &  &  \\ 
+clo $\backsim$tOut + tInOp + tOut * sex + tInOp * sex + tOut * tInOp  & 129 & 1.85 & -1 & -0.02 & 1.71 & 0.1927 \\ 
+  clo $\backsim$ tOut + tInOp + tOut * sex + tInOp * sex & 130 & 1.85 & -2 & -0.02 & 0.86 & 0.4259 \\ 
+  clo $\backsim$ tOut + tInOp + tInOp:sex + sex & 131 & 1.88 & -1 & -0.03 & 2.03 & 0.1569 \\ 
    \hline
 \end{tabular}
-\caption{Analysis of deviance table from backward selection of the optimal model}
+\caption{Analysis of deviance table from backward selection of the optimal model.}
 \label{dev_1}
 \end{table}
 
 ```{r}
-#xtable(anova(fit1, fit2, fit3))
+xtable(anova(fit1, fit2a, fit2b, fit3))
 ```
 
-The result from the backward selection using Type III partitioning are given below: 
+The result from the backward selection using Type III partitioning are given below where the third-order interaction has been removed and as well the second order interaction between the outdoor temperature \& gender as well as indoor operating temperature  
 
 $$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp,i}\cdot sex_i + \epsilon_i$$
 
@@ -85,9 +90,10 @@ lm_sigma_conf(fit3)
 
 where $$\epsilon_i \backsim\ N(0, \sigma^2)$$ The residuals are assumed to be i.i.d ie. $\sigma^2I$. The variance of the residuals ($\hat{\sigma^2}$) is estimated as 0.120, and an estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136].
 
-In the resulting model presented above the $\cdot$ indicates the interaction between the indoor operating temperature and gender of the subject. To test the model reduction, the reduced model are compared to the full initial model (first row in table \ref{dev_1}) through a likelihood-ratio-test using theorem 3.6, where the p-value is computed to: $p = 0.29$ and the model reduction are therefore kept. 
+In the resulting model presented above the $\cdot$ indicates the interaction between the indoor operating temperature and gender of the subject. It is wanted to test whether the model reduction is appropiate and in order to test this a likelihood-ratio test are performed based on theorem 3.6. The likelihood test are performed by comparing the initial model using all interactions (first row in table \ref{dev_1}) and the reduced model (last row in table \ref{dev_1}) and by comparing the deviances of the two models, the resulting p-value computed is: $p = 0.29$ and the model reduction are therefore kept. 
 
 ```{r}
+anova(fit3, fit1)
 conf = confint(fit3)
 df_param = cbind(conf[,1], fit3$coefficients, conf[,2])
 #xtable(df_param)
