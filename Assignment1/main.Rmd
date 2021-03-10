@@ -34,12 +34,6 @@ library(directlabels)
 ```
 
 
-```{r child = 'problem1_exporatory.Rmd', cache = T}
-```
 ```{r child = 'problemA.Rmd', cache = T}
-```
-```{r child = 'problemB.Rmd', cache = T}
-```
-```{r child = 'problemC.Rmd', cache = T}
 ```
 
