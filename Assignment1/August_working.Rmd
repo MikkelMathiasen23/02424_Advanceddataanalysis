@@ -34,6 +34,73 @@ str(df2)
 ```
 
 ```{r}
+ll_partA<-function(a,data=df2,modl="clo ~ tOut+tIn*sex"){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=eval(parse(text=paste('lm(',modl,',w=weights,data=data)')))
+  return(logLik(fit))
+}
+
+weighted_lm<-function(a,data=df2,modl){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=eval(parse(text=paste('lm(',modl,',w=weights,data=data)')))
+  return(fit)
+}
+# Finding optimal weights
+opt1=optim(1,ll_partA,control=list(fnscale=-1),hessian=T,modl = "clo ~ tOut*tIn*sex")
+opt1$par
+fit1 = weighted_lm(opt1$par,data=df2,modl = "clo ~ tOut*tIn*sex")
+Anova(fit1, type = 'III')
+
+#Remove third order interaction tOut:tIn:sex
+opt2=optim(1,ll_partA,control=list(fnscale=-1),hessian=T,
+           modl = "clo ~ tOut*sex+tIn*sex + tOut*tIn")
+opt2$par
+fit2 = weighted_lm(opt2$par,data=df2,
+                   modl = "clo ~ tOut*sex+tIn*sex + tOut*tIn")
+
+Anova(fit2, type = 'III')
+
+#Remove tIn*tOut
+opt3=optim(1,ll_partA,control=list(fnscale=-1),hessian=T,
+           modl = "clo ~ tOut*sex+tIn*sex")
+opt3$par
+fit3 = weighted_lm(opt3$par,data=df2,
+                   modl = "clo ~ tOut*sex+tIn*sex")
+
+Anova(fit3, type = 'III')
+
+# Remove tOut:sex
+opt4=optim(1,ll_partA,control=list(fnscale=-1),hessian=T,
+           modl = "clo ~ tOut+tIn*sex")
+opt4$par
+fit4 = weighted_lm(opt4$par,data=df2,
+                   modl = "clo ~ tOut+tIn*sex")
+
+Anova(fit4, type = 'III')
+# OPTIMAL MODEL
+
+par(mfrow=c(2,2))
+plot(fit4)
+par(mfrow=c(1,1))
+
+m=confint(fit4)
+m=rbind(m,weights=opt4$par+c(-1,1)*sqrt(diag(solve(-opt4$hessian)))*qt(0.975,df=fit4$df.residual))
+m=cbind(c(coef(fit4),weigh_par=opt4$par),m)
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+
+```{r}
 
 ggplot(df2,aes(x=tOut,y=clo))+geom_point()+facet_wrap(~sex)
 
