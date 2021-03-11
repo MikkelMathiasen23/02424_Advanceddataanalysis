@@ -16,7 +16,7 @@ source('setup.R')
 As we saw from the residuals in Problem A, some of the individuals do produce residuals that are either all positive or all negative. This could indicate that the individuals could have different base preferences of clothing. That is, one individual might be be warm most of the time and therefore wear less clothing. Likewise an individual might often be cold and would therefore wear more clothes. This could indicate that our model should have an individual intercept. 
 
 
-Furthermore, dividing the data into individuals rather than just sex, is a more precise grouping. Therefore we can discard the groups depending on sex. 
+Furthermore, dividing the data into individuals rather than just sex, is a more precise grouping. There is also no individual who is both male and female, so the individuals are nested within the sex grouping. Therefore we can discard the groups depending on sex. 
 
 We cannot estimate any models with both an interaction between both of the indoor/outdoor temperatures and an individual intercept because of a lack of degrees of freedom. Third order interactions are therefore also not possible. We can however estimate a model with an interaction between either the indoor or outdoor temperature and the individuals. This will lead to either of the following models:
 
@@ -35,23 +35,26 @@ The second model:
 Clo_i=&\beta_0+\beta_1 \cdot t_{in,i}+\beta_2 \cdot t_{out,i}+\beta_3\cdot t_{in,i}\cdot t_{out,i}+\\
 & a(individual_i)+b(t_{out,i},individual_i)\end{aligned}
 \end{equation}
-where $beta_j$ is parameters for the overall intercept and continuous variables, while $a$ and $b$ are functions of either just a categorical variable or a combination of categorical and continuous variables. 
+where $\beta_j$ is parameters for the overall intercept and continuous variables, while $a$ and $b$ are functions of either just a categorical variable or a combination of categorical and continuous variables. 
 
 The following table shows the initial models with either an interaction between the indoor/ temperature and the individuals:
 
 ```{r}
+library(ggplot2)
+library(car)
+library(xtable)
 df2=read.csv(file="./Data/clothingSum.csv")
+names(df2)[5]="tIn"
 df2$subjId = factor(df2$subjId)
 df2$sex=factor(df2$sex)
-#ftable(sex~subjId,data=df2)
 
-fitB1 = lm( clo ~ tOut*tInOp+subjId*tOut,data = df2)
+fitB1 = lm( clo ~ tOut*tIn+subjId*tOut,data = df2)
 m1=Anova(fitB1,type=3)
 #m1
-fitB2 = lm( clo ~ tOut*tInOp+subjId*tInOp,data = df2)
+fitB2 = lm( clo ~ tOut*tIn+subjId*tIn,data = df2)
 m2=Anova(fitB2,type=3)
 #m2
-xtable(rbind(m1,m2),digits=c(0,3,0,3,3))
+#xtable(rbind(m1,m2),digits=c(0,3,0,3,3))
 
 ```
 \begin{table}[H]
@@ -62,18 +65,18 @@ xtable(rbind(m1,m2),digits=c(0,3,0,3,3))
   \hline
 (Intercept) & 0.022 & 1 & 3.386 & 0.073 \\ 
   tOut & 0.023 & 1 & 3.446 & 0.071 \\ 
-  tInOp & 0.017 & 1 & 2.531 & 0.120 \\ 
+  tIn & 0.017 & 1 & 2.531 & 0.120 \\ 
   subjId & 0.480 & 46 & 1.571 & 0.074 \\ 
-  tOut:tInOp & 0.023 & 1 & 3.417 & 0.072 \\ 
+  tOut:tIn & 0.023 & 1 & 3.417 & 0.072 \\ 
   tOut:subjId & 0.442 & 46 & 1.449 & 0.117 \\ 
   Residuals & 0.266 & 40 &  &  \\ 
   \hline
   (Intercept)1 & 0.002 & 1 & 0.270 & 0.606 \\ 
   tOut1 & 0.015 & 1 & 1.695 & 0.200 \\ 
-  tInOp1 & 0.004 & 1 & 0.417 & 0.522 \\ 
+  tIn1 & 0.004 & 1 & 0.417 & 0.522 \\ 
   subjId1 & 0.370 & 46 & 0.925 & 0.603 \\ 
-  tOut:tInOp1 & 0.019 & 1 & 2.176 & 0.148 \\ 
-  tInOp:subjId & 0.360 & 46 & 0.899 & 0.639 \\ 
+  tOut:tIn1 & 0.019 & 1 & 2.176 & 0.148 \\ 
+  tIn:subjId & 0.360 & 46 & 0.899 & 0.639 \\ 
   Residuals1 & 0.348 & 40 &  &  \\ 
    \hline
 \end{tabular}
@@ -87,14 +90,14 @@ As in part 1, we remove first higher order terms before we remove lower order te
 
 ```{r}
 # Fitting the reduced model
-fitB = lm(clo ~ tOut*tInOp+subjId,data = df2)
+fitB = lm(clo ~ tOut*tIn+subjId,data = df2)
 Anova(fitB,type=3)
 
 # Dropping interaction term and refitting
-fit2B = lm(clo ~ tOut+tInOp+subjId,data = df2)
+fit2B = lm(clo ~ tOut+tIn+subjId,data = df2)
 Anova(fit2B,type=3)
 
-# Dropping tInOp and refitting
+# Dropping tIn and refitting
 fit3B = lm( clo ~ tOut+subjId,data = df2)
 Anova(fit3B,type=3)
 #xtable(anova(fitB1,fitB,fit2B,fit3B))
@@ -107,9 +110,9 @@ Anova(fit3B,type=3)
   \hline
  & Res.Df & RSS & Df & Sum of Sq & F & Pr($>$F) \\ 
   \hline
-clo $\sim$ tOut * tInOp + subjId * tOut & 40 & 0.27 &  &  &  &  \\ 
-  clo $\sim$ tOut * tInOp + subjId & 86 & 0.71 & -46 & -0.44 & 1.45 & 0.1171 \\ 
- clo $\sim$ tOut + tInOp + subjId & 87 & 0.71 & -1 & -0.01 & 1.06 & 0.3092 \\ 
+clo $\sim$ tOut * tIn + subjId * tOut & 40 & 0.27 &  &  &  &  \\ 
+  clo $\sim$ tOut * tIn + subjId & 86 & 0.71 & -46 & -0.44 & 1.45 & 0.1171 \\ 
+ clo $\sim$ tOut + tIn + subjId & 87 & 0.71 & -1 & -0.01 & 1.06 & 0.3092 \\ 
   clo $\sim$ tOut + subjId & 88 & 0.72 & -1 & -0.00 & 0.07 & 0.7978 \\ 
    \hline
 \end{tabular}
@@ -136,7 +139,6 @@ This model will ensure an easier interpretation of the subject ID parameters.
 ## Visual presentation of the parameters
 
 
-
 By investigating the individual subject ID parameters from \cref{eq:probB_final2} we might find an underlying distribution:
 
 
@@ -160,14 +162,14 @@ grid.arrange(p1,p2,ncol=2)
 
 ## Interpretation of the parameters. 
 
-The interpretation of the parameters by using \cref{eq:probB_final2} instead of \cref{eq:probB_final2} become very simple. The subject ID estimates is the individual intercepts, while $\beta_1$ is a parameter defines the increase/decrease in clothing level as the indoor temperature increases. 
+The interpretation of the parameters by using \cref{eq:probB_final2} instead of \cref{eq:probB_final2} become very simple. The subject ID estimates is the individual intercepts, while $\beta_1$ is a parameter defines the increase/decrease in clothing level as the indoor temperature increases/decreases. The uncertainty of $\beta_1$ can be found in \cref{tab:probB_final2}
 ```{r}
 m=confint(fit3B2)[1,]
 m=cbind(fit3B2$coef[1],t(m))
-xtable(m,digits=4)
+#xtable(m,digits=4)
 ```
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \begin{tabular}{rrrr}
   \hline
@@ -176,10 +178,11 @@ xtable(m,digits=4)
 $\beta_1$ & -0.0143 & -0.0203 & -0.0082 \\ 
    \hline
 \end{tabular}
-\caption{This table shows the estimate and 95 \% confidence interval of the $\beta_1$ parameter from \cref{eq:probB_final2}}
+\caption{This table shows the estimate and 95 \% confidence interval of the $\beta_1$ parameter from \cref{eq:probB_final2}. The uncertainty is estimated with a Wald type confidence interval.}
 \end{table}
-The rest of the parameters can be found in figure \ref{fig:par_CI}. 
-```{r par_CI,fig.height=3,fig.cap="This figure shows each parameter with its 95 \\% confidence interval."}
+
+We could have added each of the intercepts in the table as well, but the table would become quite large and comparing each of the individual intercepts would become difficult. Instead the individual intercepts can be found in figure \ref{fig:par_CI} along with their confidence intervals. 
+```{r par_CI,fig.height=3,fig.cap="This figure shows each parameter with its 95 \\% confidence interval. The uncertainty is estimated with a Wald type confidence interval."}
 l = length(fit3B2$coefficients)
 std_coef = sqrt(diag(vcov(fit3B2)))[-1]
 coef_est = fit3B2$coefficients[-1]
@@ -194,18 +197,83 @@ for (i in 1:(l-1)){
 df_coef = df_coef[order(as.numeric(as.character(df_coef$names))),]
 df_coef$names = factor(as.numeric(as.character(df_coef$names)))
 df_coef$sex = df_coef$sex
-levels(df_coef$names)
+#levels(df_coef$names)
 
 ggplot(data = df_coef, aes(x = names, y = coef_est, color = sex)) +
-  geom_pointrange(aes(ymin=X2.5.., ymax=X97.5..)) +
+  geom_point()+
+  geom_errorbar(aes(ymin=X2.5.., ymax=X97.5..)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
-  xlab("Subject Names")+ylab("Coefficient estimates")+
+  xlab("Subject ID")+ylab("Coefficient estimates")+
   ggtitle("Different intercepts for each Subject ID along with CI")
 ```
 
-## Residual analysis
 
-SKRIV TEKST HER!
+
+## Prediction & Residual analysis
+
+ and the residuals that comes from these predictions. 
+```{r}
+test=fit3B2
+
+med=which(median(coef(fit3B2)[-1])==coef(fit3B2))
+
+q25=which(quantile(coef(fit3B2)[-1],probs = 0.25)==coef(fit3B2))
+
+q75=which(quantile(coef(fit3B2)[-1],probs = 0.75)==coef(fit3B2))
+
+
+tmp_med=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),subjId=names(med))
+
+new = tm
+
+conf = predict(fit3B2,new=tmp_med,interval = 'confidence')
+pred = predict(fit3B2, new,interval = 'prediction')
+
+out = data.frame(cbind(new, conf, pred))
+names(out)
+q1 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
+  labs(title="25% Quantile of indoor operating temperature (tInOp = 26.01)",
+        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
+
+
+###- Mean:
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="female")
+new=rbind(tmp_male,tmp_female)
+
+conf = predict(fit3B2,new,interval = 'confidence')
+pred = predict(fit3B2, new,interval = 'prediction')
+out = data.frame(cbind(new, conf, pred))
+q2 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
+  labs(title="Mean of indoor operating temperature (tInOp = 26.82)",
+        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
+
+#75 % quantile
+tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="male")
+tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="female")
+new=rbind(tmp_male,tmp_female)
+
+conf = predict(fit3B2,new,interval = 'confidence')
+pred = predict(fit3B2, new,interval = 'prediction')
+out = data.frame(cbind(new, conf, pred))
+
+q3 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
+  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
+  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
+  labs(title="75% Quantile of indoor operating temperature (tInOp = 27.48)",
+        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(q1,q2,q3)
+
+```
+
 
 Introducing weights for sex does not change predictions that much, even though the AIC/BIC decreases.
 
