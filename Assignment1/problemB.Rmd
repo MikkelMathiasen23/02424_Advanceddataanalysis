@@ -33,7 +33,8 @@ The second model:
 \begin{equation}\label{eq:prob2_full2}
 \begin{aligned}
 Clo_i=&\beta_0+\beta_1 \cdot t_{in,i}+\beta_2 \cdot t_{out,i}+\beta_3\cdot t_{in,i}\cdot t_{out,i}+\\
-& a(individual_i)+b(t_{out,i},individual_i)\end{aligned}
+& a(individual_i)+b(t_{out,i},individual_i)
+\end{aligned}
 \end{equation}
 where $\beta_j$ is parameters for the overall intercept and continuous variables, while $a$ and $b$ are functions of either just a categorical variable or a combination of categorical and continuous variables. 
 
@@ -59,25 +60,25 @@ m2=Anova(fitB2,type=3)
 ```
 \begin{table}[H]
 \centering
-\begin{tabular}{ccccc}
+\begin{tabular}{ccccccc}
   \hline
- & Sum Sq & Df & F value & Pr($>$F) \\ 
+Model & & Sum Sq & Df & F value & Pr($>$F) \\ 
   \hline
-(Intercept) & 0.022 & 1 & 3.386 & 0.073 \\ 
-  tOut & 0.023 & 1 & 3.446 & 0.071 \\ 
-  tIn & 0.017 & 1 & 2.531 & 0.120 \\ 
-  subjId & 0.480 & 46 & 1.571 & 0.074 \\ 
-  tOut:tIn & 0.023 & 1 & 3.417 & 0.072 \\ 
-  tOut:subjId & 0.442 & 46 & 1.449 & 0.117 \\ 
-  Residuals & 0.266 & 40 &  &  \\ 
+&(Intercept) & 0.022 & 1 & 3.386 & 0.073 \\ 
+&  tOut & 0.023 & 1 & 3.446 & 0.071 \\ 
+&  tInOp & 0.017 & 1 & 2.531 & 0.120 \\ 
+\textbf{Model 2, eq} $\eqref{eq:prob2_full1}$ &  subjId & 0.480 & 46 & 1.571 & 0.074 \\ 
+&  tOut:tInOp & 0.023 & 1 & 3.417 & 0.072 \\ 
+&  tOut:subjId & 0.442 & 46 & 1.449 & 0.117 \\ 
+&  Residuals & 0.266 & 40 &  &  \\ 
   \hline
-  (Intercept)1 & 0.002 & 1 & 0.270 & 0.606 \\ 
-  tOut1 & 0.015 & 1 & 1.695 & 0.200 \\ 
-  tIn1 & 0.004 & 1 & 0.417 & 0.522 \\ 
-  subjId1 & 0.370 & 46 & 0.925 & 0.603 \\ 
-  tOut:tIn1 & 0.019 & 1 & 2.176 & 0.148 \\ 
-  tIn:subjId & 0.360 & 46 & 0.899 & 0.639 \\ 
-  Residuals1 & 0.348 & 40 &  &  \\ 
+&  (Intercept)1 & 0.002 & 1 & 0.270 & 0.606 \\ 
+&  tOut & 0.015 & 1 & 1.695 & 0.200 \\ 
+&  tInOp & 0.004 & 1 & 0.417 & 0.522 \\ 
+\textbf{Model 2, eq} $\eqref{eq:prob2_full2}$&  subjId & 0.370 & 46 & 0.925 & 0.603 \\ 
+&  tOut:tInOp & 0.019 & 1 & 2.176 & 0.148 \\ 
+&  tInOp:subjId & 0.360 & 46 & 0.899 & 0.639 \\ 
+&  Residuals & 0.348 & 40 &  &  \\ 
    \hline
 \end{tabular}
 \caption{The first rows (until the horizontal line in the middle) significant parameters for a model with an interaction term between the outdoor temperature and the individuals. Below the horizontal line we have a model with interaction term between the indoor temperature and the indivuduals. We can see that none of these interaction terms between the individuals and the temperature are significant. Furthermore we see that those are the first terms to be dropped. We used a type 3 for the ANOVA table.}
@@ -86,7 +87,7 @@ m2=Anova(fitB2,type=3)
 
 \cref{tab:prob2_init} shows that neither of the interaction terms between the temperatures and the individuals are significant. This means that both of our two initial models from equation \cref{eq:prob2_full1} and \cref{eq:prob2_full2} will be reduced to the same model.
 
-As in part 1, we remove first higher order terms before we remove lower order terms. We choose which terms to remove by looking at the type 3 deviance table. We start by removing the terms with the highest p-value, and keep removing terms until all terms are significant. Each removed term can be seen in \cref{tab:prob2_deviance}
+As in part 1, we remove first higher order terms before we remove lower order terms. We choose which terms to remove by looking at the type 3 deviance table. We start by removing the terms with the highest p-value, and keep removing terms until all terms are significant. Each removed term can be seen in \ref{tab:prob2_deviance}
 
 ```{r}
 # Fitting the reduced model
@@ -110,9 +111,9 @@ Anova(fit3B,type=3)
   \hline
  & Res.Df & RSS & Df & Sum of Sq & F & Pr($>$F) \\ 
   \hline
-clo $\sim$ tOut * tIn + subjId * tOut & 40 & 0.27 &  &  &  &  \\ 
-  clo $\sim$ tOut * tIn + subjId & 86 & 0.71 & -46 & -0.44 & 1.45 & 0.1171 \\ 
- clo $\sim$ tOut + tIn + subjId & 87 & 0.71 & -1 & -0.01 & 1.06 & 0.3092 \\ 
+clo $\sim$ tOut * tInOp + subjId * tOut & 40 & 0.27 &  &  &  &  \\ 
+  clo $\sim$ tOut * tInOp + subjId & 86 & 0.71 & -46 & -0.44 & 1.45 & 0.1171 \\ 
+ clo $\sim$ tOut + tInOp + subjId & 87 & 0.71 & -1 & -0.01 & 1.06 & 0.3092 \\ 
   clo $\sim$ tOut + subjId & 88 & 0.72 & -1 & -0.00 & 0.07 & 0.7978 \\ 
    \hline
 \end{tabular}
@@ -162,7 +163,7 @@ grid.arrange(p1,p2,ncol=2)
 
 ## Interpretation of the parameters. 
 
-The interpretation of the parameters by using \cref{eq:probB_final2} instead of \cref{eq:probB_final2} become very simple. The subject ID estimates is the individual intercepts, while $\beta_1$ is a parameter defines the increase/decrease in clothing level as the indoor temperature increases/decreases. The uncertainty of $\beta_1$ can be found in \cref{tab:probB_final2}
+The interpretation of the parameters by using \cref{eq:prob2_full2} instead of \cref{eq:prob2_full1} become very simple. The subject ID estimates is the individual intercepts, while $\beta_1$ is a parameter defines the increase/decrease in clothing level as the indoor temperature increases/decreases. The uncertainty of $\beta_1$ can be found in table \ref{tab:prob2_CI}.
 ```{r}
 m=confint(fit3B2)[1,]
 m=cbind(fit3B2$coef[1],t(m))
@@ -178,7 +179,8 @@ m=cbind(fit3B2$coef[1],t(m))
 $\beta_1$ & -0.0143 & -0.0203 & -0.0082 \\ 
    \hline
 \end{tabular}
-\caption{This table shows the estimate and 95 \% confidence interval of the $\beta_1$ parameter from \cref{eq:probB_final2}. The uncertainty is estimated with a Wald type confidence interval.}
+\caption{This table shows the estimate and 95 \% confidence interval of the $\beta_1$ parameter from 
+$\eqref{eq:prob2_full2}$. The uncertainty is estimated with a Wald type confidence interval.}\label{tab:prob2_CI}
 \end{table}
 
 We could have added each of the intercepts in the table as well, but the table would become quite large and comparing each of the individual intercepts would become difficult. Instead the individual intercepts can be found in figure \ref{fig:par_CI} along with their confidence intervals. 
@@ -211,134 +213,73 @@ ggplot(data = df_coef, aes(x = names, y = coef_est, color = sex)) +
 
 ## Prediction & Residual analysis
 
- and the residuals that comes from these predictions. 
-```{r}
-test=fit3B2
+For this particular model, we run into issues when we want to start making predictions. We can estimate the predictions for our data points and compute the residuals but we cannot make a mean prediction. At least not directly. We can make a prediction for each subject ID. This means we can pick the subjects with the median, 25\% and 75\% quantiles intercepts. We can however not predict a new individual, at least not without assuming some kind of probability distribution.
+```{r quantile,fig.height=4,fig.cap="This figure shows the predictions for the individuals who had an intercept corresponding to the 25, 50 and 75\\% quantiles. All plots contain all the data points."}
+nam=c()
+quant=c(0.25,0.5,0.75)
+for(i in quant){
+  tmp=names(coef(fit3B2)[coef(fit3B2)%in%quantile(coef(fit3B2)[-1],probs = i,type=3)])
+  nam=c(nam,tmp)
+}
 
-med=which(median(coef(fit3B2)[-1])==coef(fit3B2))
+nam=gsub("subjId","",nam)
+nam
+t_seq=seq(min(df2$tOut),max(df2$tOut),0.1)
 
-q25=which(quantile(coef(fit3B2)[-1],probs = 0.25)==coef(fit3B2))
+new_data=data.frame(clo=NA,tOut=rep(t_seq,3),subjId=rep(nam,each=length(t_seq)))
+conf = predict(fit3B2,new=new_data,interval = 'confidence')
+pred = predict(fit3B2, new=new_data,interval = 'prediction')
 
-q75=which(quantile(coef(fit3B2)[-1],probs = 0.75)==coef(fit3B2))
-
-
-tmp_med=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),subjId=names(med))
-
-new = tm
-
-conf = predict(fit3B2,new=tmp_med,interval = 'confidence')
-pred = predict(fit3B2, new,interval = 'prediction')
-
-out = data.frame(cbind(new, conf, pred))
-names(out)
-q1 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
-  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
-  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
-  labs(title="25% Quantile of indoor operating temperature (tInOp = 26.01)",
-        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
+new_data$subjId=paste("Subject ID:",new_data$subjId)
+new_data$subjId=factor(new_data$subjId,levels=paste("Subject ID:",nam))
 
 
-###- Mean:
-tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="male")
-tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=mean(df2$tIn),sex="female")
-new=rbind(tmp_male,tmp_female)
-
-conf = predict(fit3B2,new,interval = 'confidence')
-pred = predict(fit3B2, new,interval = 'prediction')
-out = data.frame(cbind(new, conf, pred))
-q2 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
-  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
-  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
-  labs(title="Mean of indoor operating temperature (tInOp = 26.82)",
-        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
-
-#75 % quantile
-tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="male")
-tmp_female=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.75),sex="female")
-new=rbind(tmp_male,tmp_female)
-
-conf = predict(fit3B2,new,interval = 'confidence')
-pred = predict(fit3B2, new,interval = 'prediction')
-out = data.frame(cbind(new, conf, pred))
-
-q3 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
-  geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
-  geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
-  labs(title="75% Quantile of indoor operating temperature (tInOp = 27.48)",
-        x ="Outdoor temperature (tOut)", y = "Clothing level (clo)")+ theme(plot.title = element_text(hjust = 0.5))
-
-grid.arrange(q1,q2,q3)
+new_data$clo = conf[,"fit"]
+new_data$CI_lwr = conf[,"lwr"]
+new_data$CI_upr = conf[,"upr"]
+new_data$PI_lwr = pred[,"lwr"]
+new_data$PI_upr = pred[,"upr"]
+tmp = df2[df2$subjId%in%nam,]
+tmp$subjId=as.character(tmp$subjId)
+tmp$subjId=paste("Subject ID:",tmp$subjId)
+tmp$subjId = factor(tmp$subjId,levels=paste("Subject ID:",nam))
+ggplot(data  = new_data, aes(x = tOut, y = clo)) + geom_line(aes(col=subjId),lwd=1)+
+  geom_line(aes(x = tOut, y = CI_lwr,col=subjId), lty = 3,lwd=1)+ 
+  geom_line(aes(x = tOut, y = CI_upr,col=subjId), lty = 3,lwd=1)+
+  geom_line(aes(x = tOut, y = PI_lwr,col=subjId), lty = 2,lwd=1)+
+  geom_line(aes(x = tOut, y = PI_upr,col=subjId), lty = 2,lwd=1)+
+  facet_wrap(~subjId)+
+  geom_point(data = select(df2,-subjId), aes(x = tOut, y = clo),col='black',alpha=0.5)+
+  geom_point(data = tmp,aes(x = tOut, y = clo,col=subjId),size=2)+
+  xlab("Outdoor Temperature")+ylab("Clothing level")+
+  ggtitle(paste("Predictions for subjects with intercept quantile",
+                paste0("Q_",quant*100,": ID=",nam,collapse = " ")))
 
 ```
 
-
-Introducing weights for sex does not change predictions that much, even though the AIC/BIC decreases.
-
-
-```{r}
-df2$residual = resid(fit3B2)
-q1 = ggplot(df2, aes(sample = residual, colour = sex)) +
-  stat_qq() +  stat_qq_line()+ggtitle("")
-q2 =  ggplot(df2, aes(sample = residual)) +
-  stat_qq() +
-  stat_qq_line()
-
-q3 = ggplot(data = df2, aes(x = sex, y= residual, colour = sex))+ geom_boxplot() + geom_jitter(width = 0.3)
-
-q4 = ggplot(data = df2, aes(x = tOut, y= residual, col = sex))+ geom_point() + xlab('Outdoor temperature (tOut)')
-
-grid.arrange(q1,q2,q3,q4, ncol = 2)
-
-sum(df2$sex=="female")
-sd(resid(fit3B2)[df2$sex=="female"])
-
-sum(df2$sex=="male")
-sd(resid(fit3B2)[df2$sex=="male"])
+\cref{fig:quantile} shows that we can make predictions for each of our individuals. These predictions does not matter for all of the other individuals as each of them have their own intercept. We have to look at the residuals for each data point individually:
 
 
-
-
+```{r prob2_resid,fig.cap="The upper left plot shows the Residuals vs. the fitted values. The plot to the upper right shows a QQ plot. The plot to the lower left is a Scale-Location plot and the final plot to the lower right is a residual vs leverage plot"}
+par_opt=par()
+par(mfrow=c(2,2),mar=c(2,2,2,2))
+plot(fit3B2)
+par(mfrow=c(1,1),mar=par_opt$mar)
 ```
 
+\cref{fig:prob2_resid} shows various plots of the residuals. The plot of the residuals vs the fitted values looks like white noise. This is an indication that our model did indeed catch the underlying pattern in the data. The QQ-plot do show some heavy tails, especially to most positive residuals. It is however still close enough to the theoretical quantiles, that it could be normally distributed. The Scale-Location plot also show an almost flat line, meaning that the variance seem to be constant for all observations. The residuals vs the leverage (Cook's Distance) do not indicate that any of the observation have a high influence that does not correspond with the fitted model. 
 
-```{r}
-ggplot(df2,aes(x=tOut,y=residual,col=subjId))+geom_text(aes(label=subjId))+
-  facet_grid(rows=vars(sex),cols=vars(paste("Day",day)))+
-  theme(legend.position = "none")+ggtitle("Each data point/number is the subject ID")
+In problem A, we had issues with the female observations would contain more noise. Even though we discarded this grouping we can still investigate if this is the case for this model as well:
 
-
-```
-
-```{r}
+```{r prob2_day,fig.height=3,fig.cap="This figure shows the residuals vs. the outdoor temperature, where each point is symolised by the observation day. The different colors are the subject IDs."}
+df2$residual=resid(fit3B2)
 ggplot(df2,aes(x=tOut,y=residual,col=subjId))+
   geom_text(aes(label=day))+geom_path(alpha=0.5)+
   facet_wrap(~sex)+theme(legend.position = "none")+
-  ggtitle("Each data point/number is day number")
+  ggtitle("Each data point is a number that corresponds to the observation day")+
+  xlab("Outdoor Temperature")+ylab("Residuals")
 ```
+\cref{fig:prob2_day} does show that the female group have slightly more variance than the male group. If we fitted a new model with a weight on each group, we would see that the new model would get a lower AIC than our final (part B) model, but the actual predictions/residuals would hardly change enough for us to see the visual difference. This does however still mean that the model with the weights would theoretically be better because of the lower AIC. 
 
-
-```{r}
-ll_partB<-function(a,data=df2){
-  weights=rep(1,nrow(data))
-  weights[data$sex=="female"]=1/a
-  fit=lm(clo~ -1+tOut+subjId,w=weights,data=data)
-  return(logLik(fit))
-}
-weighted_lm<-function(a,data=df2){
-  weights=rep(1,nrow(data))
-  weights[data$sex=="female"]=1/a
-  fit=lm(clo~ -1+tOut+subjId,w=weights,data=data)
-  return(fit)
-}
-opt=optim(1,fn=ll_partB,data=df2,control = list(fnscale=-1),hessian = T)
-opt$par
-fit4B = weighted_lm(opt$par,df2)
-Anova(fit4B,type=3)
-
-df2$residual=resid(fit4B)
-```
-
+\cref{fig:prob2_day} also shows each data point as a number corresponding to the observation day, while the color indicates different subject IDs. It does not seem like, from a visual perspective, that the observation days have any pattern, which means they probably would not have been useful for modelling. 
 
