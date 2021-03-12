@@ -2,13 +2,9 @@
 suppressMessages(suppressWarnings({
   library(tidyverse)
   library(car)
-  library(ggfortify)
   library(latex2exp)
   library(gridExtra)
-  library(lubridate)
   library(RColorBrewer)
-  library(splines)
-  #library(ctsmr)
 }))
 
 # Knitr options

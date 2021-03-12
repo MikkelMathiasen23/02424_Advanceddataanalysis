@@ -11,31 +11,58 @@ source('setup.R')
 
 \section{Problem C}
 
-For this section, the full data set of the previously used data will be used. This includes the same variables as previously but now includes six observations per day. The model selected in Problem B will be fitted to the full data and the residuals will be investigated. 
+For this section, the full data set of the previously used data will be used. This includes the same variables as previously but now includes six observations per day. 
 
 ```{r}
 df1=read.csv(file="./Data/clothingFull.csv")
+df1$obs.no=as.character(df1$obs.no)
+df1$subjId=as.character(df1$subjId)
+df1$day=as.character(df1$day)
+str(df1)
 names(df1)[4]="tIn"
-
-
 ```
 
 ```{r}
+# Fitting model from part A
+ll_partA<-function(a,data=df2,modl="clo ~ tOut+tIn*sex"){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=eval(parse(text=paste('lm(',modl,',w=weights,data=data)')))
+  return(logLik(fit))
+}
+
+weighted_lm<-function(a,data=df2,modl){
+  weights=rep(1,nrow(data))
+  weights[data$sex=="female"]=1/a
+  fit=eval(parse(text=paste('lm(',modl,',w=weights,data=data)')))
+  return(fit)
+}
+optA=optim(1,ll_partA,control=list(fnscale=-1),hessian=T,
+           modl = "clo ~ tOut+tIn+tIn:sex+sex",data=df1)
+optA$par
+# Optimal model from part A
+fitA = weighted_lm(optA$par,data=df1,
+                   modl = "clo ~ tOut+tIn+tIn:sex+sex")
+# Extra model to check whether R takes the weight estimate into account for the AIC
+fitA2 = lm(clo ~ tOut+tIn+tIn:sex+sex,data=df1)
+
+# Optimal model from part B.
 fit3B = lm( clo ~ -1 +tOut+subjId,data = df1)
-df1$obs.no=as.character(df1$obs.no)
-df1$subjId=as.character(df1$subjId)
-ggplot(df1,aes(x=tOut,y=resid(fit3B),group=subjId,col=subjId))+
-  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
-  theme(legend.position = "none")+
-  xlab("Outdoor temperature")+ylab("Residual")
+
+# AIC does NOT take the weight estimate into account.
+# This means that the AIC should be higher for fitA because of the extra parameter. 
+AIC(fit3B,fitA,fitA2)
 ```
+
+We fitted both the model from part A and B. The model from part B had an AIC that was much lower than the model form part A. Therefore we will only investigate the residuals of the best of the two. 
+
 
 ```{r partc_resid, fig.cap = "Residuals of model (eq. 4) fitted on the whole data set."}
 par(mfrow=c(2,2))
 plot(fit3B)
 ```
 
-From \cref{fig:partc_resid}, the residuals appear to be normally distributed with no heavy tails according to the QQ-plot. When looking at the residuals and the standardized residuals, however, these do not appear to be independently distributed. The residuals plotted as a function of the outdoor temperature is also presented below. The residuals are split into to columns according to gender and columns depending on the day.
+From \cref{fig:partc_resid}, the residuals appear to be normally distributed with no heavy tails according to the QQ-plot. When looking at the residuals and the standardized residuals, however, these do not appear to be independently distributed. The residuals vs. the fitted values have a negative correlation like residuals plotted as a function of the outdoor temperature as presented in \cref{fig:partC_residual}. The Scale-location plot indicates that the variance changes. 
 
 ```{r partc_param_resid, fig.height=3, fig.cap = "The residuals of the input variables."}
 df1$residual = resid(fit3B)
@@ -54,44 +81,24 @@ q4 = ggplot(data = df1, aes(x = tOut, y= residual, col = sex))+ geom_point() + x
 grid.arrange(q3,q4, ncol = 2)
 ```
 
-From \cref{fig:partc_param_resid} it can be seen, that a higher variance for the female residuals compared to the male is still observed. A negative correlation between the outdoor tempearature and the model residuals can also be seen.  
+From \cref{fig:partc_param_resid} it can be seen, that a higher variance for the female residuals compared to the male is still observed. A negative correlation between the outdoor temperature and the model residuals can also be seen.  
 
-Finally, the residuals are plotted as a function of the outdoor temperature separately for the 4 different days where data is available. The observations are numbered according to their obsersavation number of the day. 
+Finally, the residuals are plotted as a function of the outdoor temperature separately for the 4 different days where data is available. The observations are numbered according to their observation number of the day. 
 
-```{r partc_final, fig.height=3, fig.cap="The residuals as a function of outdoor temperature over the 4 observed days. The observations are numbered accordingly to their observation number of the day."}
-df1$obs.no=as.character(df1$obs.no)
-df1$subjId=as.character(df1$subjId)
-ggplot(df1,aes(x=tOut,y=residual,group=subjId,col=subjId))+
+
+
+```{r partC_residual, fig.cap="The figure shows the residuals vs the outdoor temperature. The first column of plots are plots from day 1 to 4 (from the top) for the female group, while the column of plots to the left is for the male group. In each plot, the residuals are colored according to their subject ID and each data point correspond to the observation number. "}
+ggplot(df1,aes(x=tOut,y=resid(fit3B),group=subjId,col=subjId))+
   geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
   theme(legend.position = "none")+
-  xlab("Outdoor temperature")+ylab("Residual")
-
+  xlab("Outdoor temperature")+ylab("Residual")+
+  ggtitle(paste("Residual vs outdoor temperature for each day and sex",
+                "Each number correspond to the observation number\n for each day.",
+                "The colors correspond to each subject ID"))
 ```
 
-From \cref{fig:partc_final} it is apparent that the outdoor temperature observations are correlated by day. This violates the assumption for the data that it must be independently distributed.  
-
-
- ```{r}
-# ll_partA<-function(a,data=df1){
-#   weights=rep(1,nrow(data))
-#   weights[data$sex=="female"]=1/a
-#   fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
-#   return(logLik(fit))
-# }
-# weighted_lm<-function(a,data=df1){
-#   weights=rep(1,nrow(data))
-#   weights[data$sex=="female"]=1/a
-#   fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
-#   return(fit)
-# }
-# # Finding optimal weights
-# opt=optim(1,ll_partA,control=list(fnscale=-1),hessian=T)
-# # Fitting model with optimal weights
-# fit=weighted_lm(opt$par)
-```
-
-
-
+\cref{fig:partC_residual} shows the residuals vs. the out door temperature. Each column of plots is either the male or female group, while each row corresponds to the observation day.  It is clear that we see some negative correlation between the residuals and the outdoor temperature. Furthermore it is quite clear (especially from the plot of day 1 for males) that the residuals are correlated.
+Intuitively, this also makes sense as we usually wear the same clothing level throughout a day, i.e. it would make sense if the observations throughout a day would be correlated. 
 
 
 
