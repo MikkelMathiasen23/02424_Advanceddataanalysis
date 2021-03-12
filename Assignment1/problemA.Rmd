@@ -164,7 +164,7 @@ pred = predict(fit3, new,interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 names(out)
 q1 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="25% Quantile of indoor operating temperature (tInOp = 26.01)",
@@ -180,7 +180,7 @@ conf = predict(fit3,new,interval = 'confidence')
 pred = predict(fit3, new,interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 q2 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="Mean of indoor operating temperature (tInOp = 26.82)",
@@ -196,7 +196,7 @@ pred = predict(fit3, new,interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 
 q3 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="75% Quantile of indoor operating temperature (tInOp = 27.48)",
@@ -327,7 +327,7 @@ pred = predict(fit, new,weights = 1/w, interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 names(out)
 q1 =   ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="25% Quantile of indoor operating temperature (tInOp = 26.01)",
@@ -349,7 +349,7 @@ pred = predict(fit, new,weights = 1/w, interval = 'prediction')
 
 out = data.frame(cbind(new, conf, pred))
 q2 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="Mean of indoor operating temperature (tInOp = 26.82)",
@@ -370,7 +370,7 @@ pred = predict(fit, new,weights = 1/w, interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 
 q3 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="75% Quantile of indoor operating temperature (tInOp = 27.48)",

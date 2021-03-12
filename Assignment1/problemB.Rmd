@@ -200,7 +200,7 @@ $\hat{\beta_1}$ & -0.0143 & -0.0203 & -0.0082 \\
 $\eqref{eq:prob2_full2}$ and the estimate of $\sigma$. The uncertainty is estimated with a Wald type confidence interval. The estimate confidence interval for $\sigma$ is calculated with the distribution from Theorem 3.5 (page 53) in the book.}\label{tab:prob2_CI}
 \end{table}
 
-We could have added each of the intercepts in the table as well, but the table would become quite large and comparing each of the individual intercepts would become difficult. Instead the individual intercepts can be found in figure \ref{fig:par_CI} along with their confidence intervals. 
+We could have added each of the intercepts in the table as well, but the table would become quite large and comparing each of the individual intercepts would become difficult. Instead the individual intercepts can be found in figure \ref{fig:par_CI} along with their confidence intervals. From figure \ref{fig:par_CI} it can be seen that most confidence intervals for subject IDs are within each others range. Though it should be noticed that some does not eg. 113 and 123.
 ```{r par_CI,fig.height=3,fig.cap="This figure shows each parameter with its 95 \\% confidence interval. The uncertainty is estimated with a Wald type confidence interval."}
 l = length(fit3B2$coefficients)
 std_coef = sqrt(diag(vcov(fit3B2)))[-1]
