@@ -48,6 +48,9 @@ library(directlabels)
 ```{r child = 'problemC.Rmd', cache = T}
 ```
 
+```{r child = 'conclusion.Rmd', cache = T}
+```
+
 # Appendix: R-code
 ```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
 ```

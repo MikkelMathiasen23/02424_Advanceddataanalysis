@@ -1,0 +1,52 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+chunk_output_type: console
+---
+
+```{r}
+source('setup.R')
+```
+
+# Conclusion
+
+In part A of this report, a general linear model was fitted to predict the level of clothing in an office. The model was selected using backwards selection based on Type III partitioning. This resulted in the following model.
+
+$$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp,i}\cdot sex_i + \epsilon_i$$
+
+
+From the residual analysis of this model (Figure 5), it was found that the residuals might not be identically distributed which lead to the new assumption that the residuals might be identically distributed within the two gender groups. Therefore, a weighted residual model was investigated. The optimal weight of the residuals for females compared to males was estimated by optimizing the log-likelihood and was to estimated to 2.93 with the 95\% confidence interval [1.51, 4.34]. The weighted and unweighted models were compared using both the AIC and BIC criterion. Both information criterias showed that the weighted residual model was preferred. The residuals of the weighted residual model were also found to appear normally distributed. 
+
+It was found that the subject ID variable contained information regarding the variance in the residuals for the weighted residual model. This was investigated in part B. By including the subject ID as a more precise grouping compared to sex, the sex variable was removed. Due to a lack of degrees of freedom, two models were investigated.
+
+The first model:
+\begin{equation}\label{eq:prob2_full1}
+\begin{aligned}
+Clo_i=&\beta_0+\beta_1 \cdot t_{InOp,i}+\beta_2 \cdot t_{Out,i}+\beta_3\cdot t_{InOp,i}\cdot t_{Out,i}+\\
+& a(individual_i)+b(t_{InOp,i},individual_i)
+\end{aligned}
+\end{equation}
+
+The second model:
+\begin{equation}\label{eq:prob2_full2}
+\begin{aligned}
+Clo_i=&\beta_0+\beta_1 \cdot t_{InOp,i}+\beta_2 \cdot t_{Out,i}+\beta_3\cdot t_{InOp,i}\cdot t_{Out,i}+\\
+& a(individual_i)+b(t_{Out,i},individual_i)
+\end{aligned}
+\end{equation}
+
+It was found that neither of the interaction terms between the temperatures and the individuals were significant and the two models was reduced to the same model using backwards selection based on Type III partitioning. This gave the model:
+
+\begin{equation}\label{eq:probB_final2}
+Clo_i=\beta_1\cdot t_{out,i}+a(individual_i)
+\end{equation}
+
+This model, however, has the limitation that it cannot predict a new individual without assuming a probability distribution. 
+
+Finally, the model from \cref{eq:probB_final2} and the weigthed residual model were fitted to the full data set which contained 6 observations per day. It was found that \cref{eq:probB_final2} had a much lower AIC and it's residuals were therefore investigated. Here is was found, however, that the residuals did not appear independently distributed as the residuals were correlated.   
+
+
+
+
+
