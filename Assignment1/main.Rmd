@@ -16,6 +16,7 @@ header-includes:
 - \usepackage[noabbrev,nameinlink,capitalise]{cleveref}
 - \usepackage{float}
 - \usepackage{placeins}
+- \usepackage[format=plain,labelfont={bf,it},textfont=it]{caption}
 editor_options: 
   chunk_output_type: console
 ---
