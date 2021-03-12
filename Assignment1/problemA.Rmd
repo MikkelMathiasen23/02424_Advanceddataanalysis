@@ -30,7 +30,7 @@ names(df2)[5]="tIn"
 ```
 ## Model Selection
 
-A general linear model (GLM) predicting the level of clothing (\texttt{clo}) using outdoor temperature (\texttt{tOut}), indoor operating temperature (\texttt{tInOp}) and gender (\texttt{sex}) of the subject as explanatory variables will be fitted. The full GLM model using all variables and interactions are used as a starting point, hereafter the model will be reduced using the backward selection based on Type III partitioning and higher order variables are removed first if these are insignificant. If a higher order variables are significant, but the corresponding first order of the variable is non-significant, we will keep both the first order and higher order terms. 
+A general linear model (GLM) predicting the level of clothing (\texttt{clo}) using outdoor temperature (\texttt{tOut}), indoor operating temperature (\texttt{tInOp}) and gender (\texttt{sex}) of the subject as explanatory variables will be fitted. The full GLM model using all variables and interactions are used as a starting point, hereafter the model will be reduced using backwards selection based on Type III partitioning. Higher order variables are removed first if these are insignificant. If a higher order variable is significant but the corresponding first order of the variable is non-significant, both the first order and higher order term will be kept. 
 
 ```{r}
 #######Unweighted model - using backward selection and type III partitioning:
@@ -50,7 +50,7 @@ fit3=lm(clo~ tOut+tIn+tIn:sex+sex,data=df2)
 Anova(fit3, type = 'III')
 #Final optimal model:
 ```
-In table \ref{dev_1} the different models fitted through the backward selection are written in R notation (first column) and the statistics calculated for each model in the following columns.
+In table \ref{dev_1} the different models fitted through the backward stepwise selection are written in R notation (first column) and the statistics calculated for each model in the following columns.
 \begin{table}[H]
 \centering
 \begin{tabular}{lrrrrrr}
@@ -76,11 +76,11 @@ xtable(anova(fit1, fit2a, fit2b, fit3))
 
 ## Estimated parameters
 
-The final model from the backward selection using Type III partitioning are shown below where the third-order interaction has been removed and as well the second order interaction between the outdoor temperature \& gender as well as indoor operating temperature. 
+The final model from the backwards selection using Type III partitioning is shown below where the third-order interaction, the second order interaction between the outdoor temperature \& gender as well as indoor operating temperature have been removed. 
 
 $$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp,i}\cdot sex_i + \epsilon_i$$
 where $i$ denote the observation number, $t_{Out}$ is the outdoor temperature, $t_{InOp}$ is the indoor temperature of the office and $sex_{i}$ is either 0 or 1 depending on the sex; $sex(female)=0$ and $sex(male)=1$. 
-When our categorical variable, \texttt{sex}, has been transformed to ones and zeros, we can easily interpret the rest of the parameters. 
+When the categorical variable, \texttt{sex}, has been transformed to ones and zeros, we can easily interpret the rest of the parameters. 
 
 $\hat{\beta_0}+\hat{\beta}_3\cdot sex_i$ is the intercept of the model. The intercept for a female individual is $\hat{\beta}_0$ because $sex(female)=0$. The combination of $\hat{\beta_0}+\hat{\beta}_3$ is the intercept for a male individual as $sex(male) = 1$. 
 
@@ -108,9 +108,9 @@ lm_sigma_conf<-function(fit,CI=0.95){
 lm_sigma_conf(fit3)
 ```
 
-Finally, the noise term is distributed as $\epsilon_i \backsim\ N(0, \sigma^2)$, meaning that the noise is independent and identically distributed. The standard deviation of the residuals ($\hat{\sigma}$) is estimated as 0.120, and an estimate of the standard deviation and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136] (can also be seen in table \ref{param_1}).
+Finally, the noise term follows the distribution $\epsilon_i \backsim\ N(0, \sigma^2)$, meaning that the noise is independent and identically distributed. The standard deviation of the residuals ($\hat{\sigma}$) is estimated as 0.120, and an estimate of the standard deviation and confidence hereof is computed based on theorem 3.5. This results in the following 95\% confidence interval: [0.107, 0.136] (can also be seen in table \ref{param_1}).
 
-It is wanted to test whether the model reduction is appropriate and in order to test this a likelihood-ratio test are performed based on theorem 3.6. The likelihood test are performed by comparing the initial model using all interactions (first row in table \ref{dev_1}) and the reduced model (last row in table \ref{dev_1}) and by comparing the deviances of the two models, the resulting p-value computed is: $p = 0.29$ and the model reduction is therefore kept. 
+It is wanted to test whether the model reduction is appropriate. In order to test this, a likelihood-ratio test is performed based on theorem 3.6. The likelihood test is performed by comparing the initial model using all interactions (first row in table \ref{dev_1}) and the reduced model (last row in table \ref{dev_1}) and by comparing the deviances of the two models, the resulting p-value computed is: $p = 0.29$ and the model reduction is therefore kept. 
 
 ```{r}
 
@@ -205,11 +205,11 @@ q3 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+
 grid.arrange(q1,q2,q3)
 ```
 
-In figure \ref{fig:pred_1} 95\% confidence and prediction intervals are presented for three indoor operating temperature levels being 25\% quantile, mean and 75\% quantile. From the figure it can be seen that almost all samples for men except one lies within the prediction interval, whereas for females a few samples are out of the prediction interval. As the prediction interval only is a 95\% prediction interval it is expected that some points lies without of the interval. From the figure it should also be noted that males appears to be more constant, whereas females appear to contain larger variance. Also from the fitted line this appears to fit the male samples better than the female samples. Also it should be noted that when elevating the indoor operating temperature this results in the prediction and prediction interval for females are shifted to lower clothing levels whereas this appears to be constant for men. This also makes sense when considering the slope $t_{InOp,i}\hat{\beta_2}$ for the indoor operating temperatures effect on clothing level for females which is negative resulting in lower clothing level when the temperature rises. Whereas the effect of elevated indoor operating temperature for males are dependent on the following expression: $t_{InOp,i}\cdot(\hat{\beta_2}+\hat{\beta_4}\cdot sex_i)$ where $\hat{\beta_4}$ and $\hat{\beta_2}$ almost cancel out resulting in almost no change in clothing level when the indoor operating temperature rises.
+In figure \ref{fig:pred_1} 95\% confidence and prediction intervals are presented for three indoor operating temperature levels being the 25\% quantile, the mean and the 75\% quantile. From the figure, it can be seen that almost all samples for men except one lies within the prediction interval, whereas for females a few samples are out of the prediction interval. As the prediction interval only is a 95\% prediction interval it is expected that some points lie outside of the interval. From the figure, it should also be noted that male clothing level appears to be more constant, whereas females appear to contain larger variance. Also from the fitted line, this appears to fit the male samples better than the female samples. It should be noted that when elevating the indoor operating temperature, this results in the prediction and prediction interval for females being shifted to lower clothing levels whereas this appears to be constant for men. This also makes sense when considering the slope $t_{InOp,i}\hat{\beta_2}$ for the indoor operating temperatures effect on clothing level for females which is negative resulting in lower clothing level when the temperature rises. Whereas the effect of elevated indoor operating temperature for males are dependent on the following expression: $t_{InOp,i}\cdot(\hat{\beta_2}+\hat{\beta_4}\cdot sex_i)$ where $\hat{\beta_4}$ and $\hat{\beta_2}$ almost cancel out resulting in almost no change in clothing level when the indoor operating temperature rises.
 
 ## Residual analysis
 
-To ensure that the model lives up to the assumptions that the this type of model requires, we have to analyze the residuals. 
+To ensure that the model lives up to the assumptions that the this type of model requires, the residuals will be analyzed. 
 
 ```{r res_1,fig.height=6,fig.cap="The figure presents the residuals of the model selected from the backward selection with Type III partionioning."}
 par(mfrow = c(2,2))
@@ -234,7 +234,7 @@ q4 = ggplot(data = df2, aes(x = tOut, y= residual, col = sex))+ geom_point() + x
 grid.arrange(q1,q2,q3,q4, ncol = 2)
 ```
 
-From figure \ref{fig:res_2} it can be seen from the boxplot that the variance of the residuals differ between males and females. When looking at the residuals as a function of indoor operating temperature and outdoor temperature the residuals appears to be randomly distributed and this appears to be the case for both males and females. From the QQ-plot it should be noted that the variance of females and males also appear to be different and this could also give rise to the tails seen in figure \ref{fig:res_1}. This could indicate that the assumption that all residuals should be identical is not correct, and instead this should be switched with an assumption of the residuals being identical within each gender group. This would result in a weighted residual model, where an optimal weight of the residuals for females compared to males needs to be estimated. In order to investigate the effect of having this weighted residual model the residuals of females are divided by the fraction 2.83 (estimated above) and a new QQ-plot using these residuals are presented in figure \ref{fig:res_3}. From figure \ref{fig:res_3} it can be seen that a weighting residual model appears to be beneficial. 
+From figure \ref{fig:res_2} it can be seen from the boxplot that the variance of the residuals differ between males and females. When looking at the residuals as a function of indoor operating temperature and outdoor temperature the residuals appears to be randomly distributed and this appears to be the case for both males and females. From the QQ-plot, it should be noted that the variance of females and males also appear to be different and this could also give rise to the tails seen in figure \ref{fig:res_1}. This could indicate that the assumption that all residuals should be identically distributed is not correct, and instead this should be switched with an assumption of the residuals being identically distributed within each gender group. This would result in a weighted residual model, where an optimal weight of the residuals for females compared to males needs to be estimated. In order to investigate the effect of having this weighted residual model the residuals of females are divided by the fraction 2.83 (estimated above) and a new QQ-plot using these residuals is presented in figure \ref{fig:res_3}. From figure \ref{fig:res_3} it can be seen that a weighting residual model appears to be beneficial. 
 
 
 ```{r res_3,fig.height=4,fig.cap="The figure presents a QQ-plot of the effect of normalizing the residuals across females/males "}
@@ -249,7 +249,7 @@ qqline(res)
 
 ## Model with weights on sex
 
-Firstly, the optimal ratio needs to be estimated, this will be done by optimizing the log-likelihood with respect to the weighting of the variance. The optimal weighting of the female residual variance is estimated to: 2.93 which will be used in the weighted residual model. A confidence interval of the weighing of the residuals for females (called: $\hat{w}$) are also computed an can be seen in table \ref{param_2}.
+Firstly, the optimal ratio needs to be estimated, this will be done by optimizing the log-likelihood with respect to the weighting of the variance. The optimal weighting of the female residual variance is estimated to: 2.93 which will be used in the weighted residual model. A confidence interval of the weighing of the residuals for females (called: $\hat{w}$) is also computed an can be seen in table \ref{param_2}.
 ```{r}
 
 #Optimize weight of weighted residual model:
@@ -278,7 +278,7 @@ m=cbind(c(coef(fit),weigh_par=opt$par),m)
 m
 ```
 
-In order to compare the weighted model with the unweighted model information criteria AIC and BIC are used as a measure. The likelihood are not comparable as the models are not nested. The AIC are therefore chosen as criterion and are computed as: -184.59 and -202.64 for the unweighted and weighted model respectively. The BIC are therefore chosen as criterion and are computed as: -167.1172 and  -185.16 for the unweighted and weighted model respectively. Both information criteria appears to prefer the weighted residual model. The model parameters and confidence intervals are presented in table \ref{param_2}.  It should be noted that $\hat{\beta_3}$ has become smaller (-1.365) compared to the previous model with -1.2834 whereas the other parameters appears to be similar. The residual standard deviation $\hat{\sigma}$ is estimated to 0.085, and an estimate of the standard deviation and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.076, 0.097] (can also be seen in table \ref{param_2}). The residual variance is smaller than for the previous model. Afterwards a full model using all interactions and explanatory variables (indoor operating temperature, outdoor temperature and sex) was reduced using the same approach in the beginning (backward selection using type III partitioning where higher order terms are removed before lower order terms). This resulted in the same model as before and therefore this model is used for the proceeding analysis.
+In order to compare the weighted model with the unweighted model, information criteria AIC and BIC are used as a measure. The likelihoods are not comparable as the models are not nested. The AIC is computed to: -184.59 and -202.64 for the unweighted and weighted model respectively. The BIC is computed to: -167.1172 and  -185.16 for the unweighted and weighted model respectively. Both information criterias appear to prefer the weighted residual model. The model parameters and confidence intervals are presented in table \ref{param_2}.  It should be noted that $\hat{\beta_3}$ has become smaller (-1.365) compared to the previous model with -1.2834 whereas the other parameters appears to be similar. The residual standard deviation $\hat{\sigma}$ is estimated to 0.085, and an estimate of the standard deviation and confidence hereof is computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.076, 0.097] (can also be seen in table \ref{param_2}). The residual variance is smaller than for the previous model. Afterwards a full model using all interactions and explanatory variables (indoor operating temperature, outdoor temperature and sex) was reduced using the same approach as in the beginning (backward selection using type III partitioning where higher order terms are removed before lower order terms). This resulted in the same model as before and therefore this model is used for the proceeding analysis.
 ```{r}
 conf = confint(fit)
 df_param = cbind(conf[,1], fit$coefficients, conf[,2])
@@ -380,7 +380,7 @@ grid.arrange(q1,q2,q3)
 ```
 
 
-From figure \ref{fig:pred_2} it can be seen that the prediction interval for the females are more wide compared to the unweighted model (see figure \ref{fig:pred_1}) resulting in more points are within the prediction interval. Clearly, it can be seen that the prediction interval for females are more wide compared to males, which is due to the weighting of the residuals. Also the prediction interval for males appears to have become more narrow compared to the unweighted residual model (see figure \ref{fig:pred_1}). As in figure \ref{fig:pred_1} it can be seen that the prediction and prediction interval are shifted down when the indoor operating temperature are elevated, whereas it appears to be rather constant for males. From the figure it is apparent that the slope for females has been changed to fit better to the male samples, driving the slope away from the optimal slope for females. This change in slope might be due to the less weight put on the female residuals which is weighted with 2.93 compared to males. This could indicate that a gender specific slope might be needed in order to model this appropriately. 
+From figure \ref{fig:pred_2}, it can be seen that the prediction interval for females is wider compared to the unweighted model (see figure \ref{fig:pred_1}) resulting in more points being within the prediction interval. Clearly, it can be seen that the prediction interval for females is wider compared to males, which is due to the weighting of the residuals. Also the prediction interval for males appears to have become more narrow compared to the unweighted residual model (see figure \ref{fig:pred_1}). As in figure \ref{fig:pred_1}, it can be seen that the prediction and prediction interval are shifted down when the indoor operating temperature are elevated, whereas it appears to be rather constant for males. From the figure it is apparent that the slope for females has been changed to fit better to the male samples, driving the slope away from the optimal slope for females. This change in slope might be due to the less weight put on the female residuals which is weighted with 2.93 compared to males. This could indicate that a gender specific slope might be needed in order to model this appropriately. 
 
 ## Weighted model residuals
 
@@ -391,8 +391,8 @@ par(mfrow = c(2,2))
 plot(fit)
 ```
 
-From figure \ref{fig:res_4} it can be seen that the Normal-QQ plot clearly has improved compared to the one in figure \ref{fig:res_1}. All points except point 22 appear to follow the QQ-line nicely. From the Residuals vs Leverage plot it can be seen that point 22 has a low leverage and therefore does not affect the model fit substantially and further investigation of this point are omitted. From the Residuals vs Fitted and Scale-location plots the residuals appears to be randomly distributed. Clearly the weighted residual model improved the model fit. As the residuals as a function of indoor operating temperature and outdoor temperature for the unweighted residual model appeared to look randomly distributed these will not be further investigated for this model. 
-Also as the residual variance between gender has been taken into account and the residuals in figure \ref{fig:res_4} these will neither be further investigated. 
+From figure \ref{fig:res_4} it can be seen that the Normal-QQ plot clearly has improved compared to the one in figure \ref{fig:res_1}. All points except point 22 appear to follow the QQ-line nicely. From the Residuals vs Leverage plot it can be seen that point 22 has a low leverage and therefore does not affect the model fit substantially and further investigation of this point is omitted. From the Residuals vs Fitted and Scale-location plots the residuals appear to be randomly distributed. Clearly, the weighted residual model improved the model fit. As the residuals as a function of indoor operating temperature and outdoor temperature for the unweighted residual model appeared to look randomly distributed these will not be further investigated for this model. 
+Also as the residual variance between gender has been taken into account and the residuals in figure \ref{fig:res_4} these will not be further investigated. 
 Figure \ref{fig:res_6} shows the residuals when looking at the subject ID, and from this it can clearly be seen that the subject ID contains information about the variance in the residuals. The subject ID should therefore be included in the modeling. 
 
 ```{r res_6, fig.height = 4, fig.cap = "The figure presents the residuals as a function of the subject ID."}

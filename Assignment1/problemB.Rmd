@@ -18,7 +18,7 @@ As we saw from the residuals in Problem A, some of the individuals do produce re
 
 Furthermore, dividing the data into individuals rather than just sex, is a more precise grouping. There is also no individual who is both male and female, so the individuals are nested within the sex grouping. Therefore we can discard the groups depending on sex. 
 
-We cannot estimate any models with both an interaction between both of the indoor/outdoor temperatures and an individual intercept because of a lack of degrees of freedom. Third order interactions are therefore also not possible. We can however estimate a model with an interaction between either the indoor or outdoor temperature and the individuals. This will lead to either of the following models:
+We cannot estimate any models with both an interaction between both of the indoor/outdoor temperatures and an individual intercept because of a lack of degrees of freedom. Third order interactions are therefore also not possible. We can, however, estimate a model with an interaction between either the indoor or outdoor temperature and the individuals. This will lead to either of the following models:
 
 The first model:
 \begin{equation}\label{eq:prob2_full1}
@@ -87,7 +87,7 @@ Model & & Sum Sq & Df & F value & Pr($>$F) \\
 
 \cref{tab:prob2_init} shows that neither of the interaction terms between the temperatures and the individuals are significant. This means that both of our two initial models from equation \cref{eq:prob2_full1} and \cref{eq:prob2_full2} will be reduced to the same model.
 
-As in part 1, we remove first higher order terms before we remove lower order terms. We choose which terms to remove by looking at the Type III partitioning in the ANOVA table. We start by removing the terms with the highest p-value, and keep removing terms until all terms are significant. Each removed term can be seen in table \ref{tab:prob2_deviance}
+As in part 1, higher order terms are removed before lower order terms. We choose which terms to remove by looking at the Type III partitioning in the ANOVA table. We start by removing the terms with the highest p-value, and keep removing terms until all terms are significant. Each removed term can be seen in table \ref{tab:prob2_deviance}.
 
 ```{r}
 # Fitting the reduced model
@@ -163,7 +163,7 @@ grid.arrange(p1,p2,ncol=2)
 
 ## Interpretation of the parameters. 
 
-The interpretation of the parameters by using \cref{eq:prob2_full2} instead of \cref{eq:prob2_full1} become very simple. The subject ID estimates is the individual intercepts, while $\hat{\beta_1}$ is a parameter defines the increase/decrease in clothing level as the indoor operating temperature increases/decreases. The uncertainty of $\hat{\beta_1}$ can be found in table \ref{tab:prob2_CI}.
+The interpretation of the parameters by using \cref{eq:prob2_full2} instead of \cref{eq:prob2_full1} become very simple. The subject ID estimates the individual intercepts, while $\hat{\beta_1}$ is a parameter that defines the increase or decrease in clothing level as the indoor operating temperature increases or decreases. The uncertainty of $\hat{\beta_1}$ can be found in table \ref{tab:prob2_CI}.
 ```{r}
 # Confidence interval for the fixed effects
 m=confint(fit3B2)[1,]
