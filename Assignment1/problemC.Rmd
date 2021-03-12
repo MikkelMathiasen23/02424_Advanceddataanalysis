@@ -73,10 +73,12 @@ df1$residual = resid(fit3B)
 #  stat_qq() +
 #  stat_qq_line()
   
-q3=   ggplot(data = df1, aes(x = sex, y= residual, colour = sex))+ geom_boxplot() + geom_jitter(width = 0.3) 
+q3=   ggplot(data = df1, aes(x = sex, y= residual, colour = sex))+ 
+  geom_boxplot() + geom_jitter(width = 0.3) 
 
 
-q4 = ggplot(data = df1, aes(x = tOut, y= residual, col = sex))+ geom_point() + xlab('Outdoor temperature (tOut)')
+q4 = ggplot(data = df1, aes(x = tOut, y= residual, col = sex))+
+  geom_point() + xlab('Outdoor temperature (tOut)')
 
 grid.arrange(q3,q4, ncol = 2)
 ```

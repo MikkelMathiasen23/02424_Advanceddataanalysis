@@ -60,15 +60,23 @@ df2=read.csv(file="./Data/clothingSum.csv")
 df3 = df2[,c(3:6)]
 
 
-p1 <- ggplot(df3,aes(x=tOut,y=clo, col = as.factor(sex)) )+geom_point()+facet_wrap(~sex)+xlab("Outdoor temperature") + ylab("Clothing level")+ theme(legend.position = "none") 
+p1 <- ggplot(df3,aes(x=tOut,y=clo, col = as.factor(sex)) )+
+  geom_point()+facet_wrap(~sex)+xlab("Outdoor temperature") +
+  ylab("Clothing level")+ theme(legend.position = "none") 
 ```
 
 ```{r}
-p2 <- ggplot(df3,aes(x=tOut,y=tInOp, col = as.factor(sex)))+geom_point()+facet_wrap(~sex) +xlab("Outdoor temperature") + ylab("Indoor operating temperature")+ theme(legend.position = "none") 
+p2 <- ggplot(df3,aes(x=tOut,y=tInOp, col = as.factor(sex)))+
+  geom_point()+facet_wrap(~sex) +
+  xlab("Outdoor temperature") + ylab("Indoor operating temperature")+
+  theme(legend.position = "none") 
 
 ```
 ```{r exp_analysis_1, fig.cap = "Scatter plot of the continuous variables plotted separately for sex."}
-p3 <- ggplot(df3,aes(x=tInOp,y=clo, col = as.factor(sex)) )+geom_point()+facet_wrap(~sex) +xlab("Indoor operating temperature") + ylab("Clothing level")+ theme(legend.position = "none") 
+p3 <- ggplot(df3,aes(x=tInOp,y=clo, col = as.factor(sex)) )+
+  geom_point()+facet_wrap(~sex) +
+  xlab("Indoor operating temperature") + ylab("Clothing level")+
+  theme(legend.position = "none") 
 
 grid.arrange(p1,p2,p3, nrow = 3)
 ```
@@ -78,9 +86,18 @@ On \cref{fig:exp_analysis_2} below, histograms have been computed for the contin
 ```{r exp_analysis_2, fig.height=3,fig.cap = "Histograms of the continuous variables plotted separately for sex."}
 #histogrammer
 
-hist1 <- ggplot(df3,aes(x=clo,fill = as.factor(sex)))+geom_histogram(color="white", binwidth = .1)+facet_wrap(~sex) + xlab('Clothing level')+  theme(legend.position = "none") 
-hist2 <- ggplot(df3,aes(x=tOut,fill = as.factor(sex)))+geom_histogram(color="white", binwidth = 2)+facet_wrap(~sex) +  xlab('Outdoor temperature')+ theme(legend.position = "none") 
-hist3 <- ggplot(df3,aes(x=tInOp,fill = as.factor(sex)))+geom_histogram(color = "white", binwidth = .5)+facet_wrap(~sex)+ xlab('Indoor operating temperature')+ theme(legend.position = "none") 
+hist1 <- ggplot(df3,aes(x=clo,fill = as.factor(sex)))+
+  geom_histogram(color="white", binwidth = .1)+
+  facet_wrap(~sex) + xlab('Clothing level')+
+  theme(legend.position = "none") 
+hist2 <- ggplot(df3,aes(x=tOut,fill = as.factor(sex)))+
+  geom_histogram(color="white", binwidth = 2)+
+  facet_wrap(~sex) +  xlab('Outdoor temperature')+
+  theme(legend.position = "none") 
+hist3 <- ggplot(df3,aes(x=tInOp,fill = as.factor(sex)))+
+  geom_histogram(color = "white", binwidth = .5)+
+  facet_wrap(~sex)+ xlab('Indoor operating temperature')+
+  theme(legend.position = "none") 
 
 grid.arrange(hist1,hist2,hist3, nrow = 1)
 ```

@@ -20,4 +20,4 @@ knitr::opts_chunk$set(message=FALSE)
 knitr::opts_chunk$set(results = "hide")
 
 # ggplot theme
-theme_set(theme_minimal())
+#theme_set(theme_minimal())
