@@ -79,6 +79,14 @@ xtable(anova(fit1, fit2a, fit2b, fit3))
 The final model from the backward selection using Type III partitioning are shown below where the third-order interaction has been removed and as well the second order interaction between the outdoor temperature \& gender as well as indoor operating temperature. 
 
 $$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp,i}\cdot sex_i + \epsilon_i$$
+where $i$ denote the observation number, $t_{Out}$ is the outdoor temperature, $t_{InOp}$ is the indoor temperature of the office and $sex_{i}$ is either 0 or 1 depending on the sex; $sex(female)=0$ and $sex(male)=1$. 
+When our categorical variable, \texttt{sex}, has been transformed to ones and zeros, we can easily interpret the rest of the parameters. 
+
+$\hat{\beta_0}+\hat{\beta}_3\cdot sex_i$ is the intercept of the model. The intercept for a female individual is $\hat{\beta}_0$ because $sex(female)=0$. The combination of $\hat{\beta_0}+\hat{\beta}_3$ is the intercept for a male individual as $sex(male) = 1$. 
+
+$\hat{\beta_1}$ determines the impact of the outdoor temperature on the clothing level regardless of sex.
+
+$(\hat{\beta_2}+\hat{\beta_4})t_{InOp}$ models the change in clothing level as the indoor temperature changes. And as for each sex grouping for the intercept, $\hat{\beta_2}$ denotes the slope for the female group while $\hat{\beta_2}+\hat{\beta_4}$ denotes the slope for the male group. 
 
 ```{r}
 
@@ -100,9 +108,9 @@ lm_sigma_conf<-function(fit,CI=0.95){
 lm_sigma_conf(fit3)
 ```
 
-where $\epsilon_i \backsim\ N(0, \sigma^2)$, and the residuals are assumed to be i.i.d ie. $\sigma^2I$. The variance of the residuals ($\hat{\sigma^2}$) is estimated as 0.120, and an estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136] (can also be seen in table \ref{param_1}).
+Finally, the noise term is distributed as $\epsilon_i \backsim\ N(0, \sigma^2)$, meaning that the noise is independent and identically distributed. The variance of the residuals ($\hat{\sigma^2}$) is estimated as 0.120, and an estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136] (can also be seen in table \ref{param_1}).
 
-In the resulting model presented above the $\cdot$ indicates the interaction between the indoor operating temperature and gender of the subject. It is wanted to test whether the model reduction is appropriate and in order to test this a likelihood-ratio test are performed based on theorem 3.6. The likelihood test are performed by comparing the initial model using all interactions (first row in table \ref{dev_1}) and the reduced model (last row in table \ref{dev_1}) and by comparing the deviances of the two models, the resulting p-value computed is: $p = 0.29$ and the model reduction is therefore kept. 
+It is wanted to test whether the model reduction is appropriate and in order to test this a likelihood-ratio test are performed based on theorem 3.6. The likelihood test are performed by comparing the initial model using all interactions (first row in table \ref{dev_1}) and the reduced model (last row in table \ref{dev_1}) and by comparing the deviances of the two models, the resulting p-value computed is: $p = 0.29$ and the model reduction is therefore kept. 
 
 ```{r}
 
@@ -118,13 +126,13 @@ df_param = cbind(conf[,1], fit3$coefficients, conf[,2])
 ```
 
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \begin{tabular}{rrrr}
     \hline
     & 2.5\% & Estimate & 97.5\% \\ 
   \hline
- $\hat{\beta_0} = \hat{\mu}+female$ & 1.51 & 2.13 & 2.76 \\ 
+ $\hat{\beta_0}$ & 1.51 & 2.13 & 2.76 \\ 
   $\hat{\beta_1}$ & -0.02 & -0.01 & -0.01 \\ 
   $\hat{\beta_2}$ & -0.07 & -0.05 & -0.02 \\ 
   $\hat{\beta_3}$ & -2.16 & -1.28 & -0.40 \\ 
@@ -136,8 +144,8 @@ df_param = cbind(conf[,1], fit3$coefficients, conf[,2])
 \label{param_1}
 \end{table}
 
-The estimated parameters and 95\% confidence intervals can be seen in table \ref{param_1}. $\hat{\beta_0}$ is the intercept of the model, and contains both the intercept of the model but also the impact of being a female on the clothing level as $sex(female) = 0$, whereas $\hat{\beta_3}$ (because $sex(male) = 1$) determines the effect of being male on the clothing level. $\hat{\beta_1}$ determines the impact of the outdoor temperature on the clothing level for males and females, and as this parameter are negative higher outdoor temperatures results in lower clothing level for both males and females.$\hat{\beta_4}$ is the interaction-term between indoor operating temperature and the gender of the subject. As $sex(female) = 0$ the $\hat{\beta_2}$ must contain the information about the slope of indoor operating temperatures effect on clothing level for females. The interaction term $\hat{\beta_4}$ contains the changes in the slope of $\hat{\beta_2}$ for males as  $t_{InOp,i}\cdot(\hat{\beta_2}+\hat{\beta_4}\cdot sex_i)$ and $sex_i$ is only equal one for men whereas the $\hat{\beta_4}$ vanishes for females resulting in $\hat{\beta_2}$ determining the slope of the indoor operating temperature for females.
-
+The estimated parameters (and the estimate of the standard deviation of the noise) and 95\% confidence intervals can be seen in table \ref{param_1}. 
+As the exploratory analysis showed, there is a negative correlation (The estimated slopes are negative) between either of the temperatures and the clothing level. 
 ## Model predictions
 
 Now that we have found our model, we have to test its ability to make predictions. 
@@ -285,7 +293,7 @@ c(BIC(fit3), BIC(fit))
   \hline
  & 2.5\% & Estimate & 97.5 \% \\ 
   \hline
-$\hat{\beta_0} = \hat{\mu} + female$ & 1.49 & 2.22 & 2.95 \\ 
+$\hat{\beta_0}$ & 1.49 & 2.22 & 2.95 \\ 
   $\hat{\beta_1}$ & -0.02 & -0.01 & -0.01 \\ 
   $\hat{\beta_2}$ & -0.08 & -0.05 & -0.02 \\ 
   $\hat{\beta_3}$ & -2.22 & -1.37 & -0.51 \\ 
