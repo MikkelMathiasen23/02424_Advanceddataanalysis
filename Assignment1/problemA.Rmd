@@ -164,7 +164,7 @@ pred = predict(fit3, new,interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 names(out)
 q1 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="25% Quantile of indoor operating temperature (tInOp = 26.01)",
@@ -180,7 +180,7 @@ conf = predict(fit3,new,interval = 'confidence')
 pred = predict(fit3, new,interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 q2 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="Mean of indoor operating temperature (tInOp = 26.82)",
@@ -196,7 +196,7 @@ pred = predict(fit3, new,interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 
 q3 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="75% Quantile of indoor operating temperature (tInOp = 27.48)",
@@ -249,7 +249,7 @@ qqline(res)
 
 ## Model with weights on sex
 
-Firstly, the optimal ratio needs to be estimated, this will be done by optimizing the log-likelihood with respect to the weighting of the variance. The optimal weighting of the female residual variance is estimated to: 2.93 which will be used in the weighted residual model. A confidence interval of the weighing of the residuals for females (called: $\hat{w}$) are also computed an can be seen in table \ref{par_2}.
+Firstly, the optimal ratio needs to be estimated, this will be done by optimizing the log-likelihood with respect to the weighting of the variance. The optimal weighting of the female residual variance is estimated to: 2.93 which will be used in the weighted residual model. A confidence interval of the weighing of the residuals for females (called: $\hat{w}$) are also computed an can be seen in table \ref{param_2}.
 ```{r}
 
 #Optimize weight of weighted residual model:
@@ -278,7 +278,7 @@ m=cbind(c(coef(fit),weigh_par=opt$par),m)
 m
 ```
 
-In order to compare the weighted model with the unweighted model information criteria AIC and BIC are used as a measure. The likelihood are not comparable as the models are not nested. The AIC are therefore chosen as criterion and are computed as: -184.59 and -202.64 for the unweighted and weighted model respectively. The BIC are therefore chosen as criterion and are computed as: -167.1172 and  -185.16 for the unweighted and weighted model respectively. Both information criteria appears to prefer the weighted residual model. The model parameters and confidence intervals are presented in table \ref{par_2}.  It should be noted that $\hat{\beta_3}$ has become smaller (-1.365) compared to the previous model with -1.2834 whereas the other parameters appears to be similar. The residual standard deviation $\hat{\sigma^2}$ is estimated to 0.085, and an estimate of the standard deviation and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.076, 0.097] (can also be seen in table \ref{param_2}). The residual variance is smaller than for the previous model. Afterwards a full model using all interactions and explanatory variables (indoor operating temperature, outdoor temperature and sex) was reduced using the same approach in the beginning (backward selection using type III partitioning where higher order terms are removed before lower order terms). This resulted in the same model as before and therefore this model is used for the proceeding analysis.
+In order to compare the weighted model with the unweighted model information criteria AIC and BIC are used as a measure. The likelihood are not comparable as the models are not nested. The AIC are therefore chosen as criterion and are computed as: -184.59 and -202.64 for the unweighted and weighted model respectively. The BIC are therefore chosen as criterion and are computed as: -167.1172 and  -185.16 for the unweighted and weighted model respectively. Both information criteria appears to prefer the weighted residual model. The model parameters and confidence intervals are presented in table \ref{param_2}.  It should be noted that $\hat{\beta_3}$ has become smaller (-1.365) compared to the previous model with -1.2834 whereas the other parameters appears to be similar. The residual standard deviation $\hat{\sigma}$ is estimated to 0.085, and an estimate of the standard deviation and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.076, 0.097] (can also be seen in table \ref{param_2}). The residual variance is smaller than for the previous model. Afterwards a full model using all interactions and explanatory variables (indoor operating temperature, outdoor temperature and sex) was reduced using the same approach in the beginning (backward selection using type III partitioning where higher order terms are removed before lower order terms). This resulted in the same model as before and therefore this model is used for the proceeding analysis.
 ```{r}
 conf = confint(fit)
 df_param = cbind(conf[,1], fit$coefficients, conf[,2])
@@ -304,7 +304,7 @@ $\hat{\beta_0}$ & 1.49 & 2.22 & 2.95 \\
     \hline
 \end{tabular}
 \caption{Parameter estimate with 95\% confidence intervals and an estimate of $\sigma$, the standard deviation of the uncertainty of the model.}
-\label{par_2}
+\label{param_2}
 \end{table}
 
 ## Weighted model predictions
@@ -327,7 +327,7 @@ pred = predict(fit, new,weights = 1/w, interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 names(out)
 q1 =   ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="25% Quantile of indoor operating temperature (tInOp = 26.01)",
@@ -349,7 +349,7 @@ pred = predict(fit, new,weights = 1/w, interval = 'prediction')
 
 out = data.frame(cbind(new, conf, pred))
 q2 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="Mean of indoor operating temperature (tInOp = 26.82)",
@@ -370,7 +370,7 @@ pred = predict(fit, new,weights = 1/w, interval = 'prediction')
 out = data.frame(cbind(new, conf, pred))
 
 q3 = ggplot(data  = out, aes(x = tOut, y = fit, col = sex)) + geom_line()+   
-  geom_line(aes(x = tOut, y = lwr), lty = 2)+ geom_line(aes(x = tOut, y = upr), lty = 2)+
+  geom_line(aes(x = tOut, y = lwr), lty = 3)+ geom_line(aes(x = tOut, y = upr), lty = 3)+
   geom_line(aes(x = tOut, y = upr.1), lty = 2) + geom_line(aes(x = tOut, y = lwr.1), lty = 2)+
   geom_point(data = df2, aes(x = tOut, y = clo, col= as.factor(sex))) + facet_wrap(~sex) + 
   labs(title="75% Quantile of indoor operating temperature (tInOp = 27.48)",
