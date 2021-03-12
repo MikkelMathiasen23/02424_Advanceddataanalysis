@@ -55,11 +55,11 @@ In table \ref{dev_1} the different models fitted through the backward selection 
   \hline
  & Res.Df & RSS & Df & Sum of Sq & F & Pr($>$F) \\ 
   \hline
-clo $\backsim$ tOut * tInOp * sex & 128 & 1.82 &  &  &  &  \\ 
-clo $\backsim$tOut + tInOp + tOut * sex + tInOp * sex & & & & & &  \\ 
- + tOut * tInOp  & 129 & 1.85 & -1 & -0.02 & 1.71 & 0.1927 \\
-  clo $\backsim$ tOut + tInOp + tOut * sex + tInOp * sex & 130 & 1.85 & -2 & -0.02 & 0.86 & 0.4259 \\ 
-  clo $\backsim$ tOut + tInOp + tInOp:sex + sex & 131 & 1.88 & -1 & -0.03 & 2.03 & 0.1569 \\ 
+\texttt{clo} $\backsim$ \texttt{tOut * tInOp * sex} & 128 & 1.82 &  &  &  &  \\ 
+\texttt{clo} $\backsim$ \texttt{tOut + tInOp + sex +tOut : sex + } & & & & & &  \\ 
+\texttt{tInOp : sex +tOut : tInOp}  & 129 & 1.85 & -1 & -0.02 & 1.71 & 0.1927 \\
+\texttt{clo} $\backsim$ \texttt{tOut + tInOp + sex + tOut : sex + tInOp : sex} & 130 & 1.85 & -2 & -0.02 & 0.86 & 0.4259 \\ 
+\texttt{clo} $\backsim$ \texttt{tOut + tInOp + sex + tInOp:sex} & 131 & 1.88 & -1 & -0.03 & 2.03 & 0.1569 \\ 
    \hline
 \end{tabular}
 \caption{Analysis of deviance table from backward selection of the optimal model.}
