@@ -13,7 +13,7 @@ source('setup.R')
 
 ## GLM with subject ID
 
-As we saw from the residuals in Problem A, some of the individuals do produce residuals that are either all positive or all negative. This could indicate that the individuals could have different base preferences of clothing. That is, one individual might be be warm most of the time and therefore wear less clothing. Likewise an individual might often be cold and would therefore wear more clothes. This could indicate that our model should have an individual intercept. 
+As we saw from the residuals in Problem A, some of the individuals do produce residuals that are either all positive or all negative. This could indicate that the individuals could have different base preferences of clothing. That is, one individual might be warm most of the time and therefore wear less clothing. Likewise an individual might often be cold and would therefore wear more clothes. This could indicate that our model should have an individual intercept. 
 
 
 Furthermore, dividing the data into individuals rather than just sex, is a more precise grouping. There is also no individual who is both male and female, so the individuals are nested within the sex grouping. Therefore we can discard the groups depending on sex. 
@@ -23,8 +23,8 @@ We cannot estimate any models with both an interaction between both of the indoo
 The first model:
 \begin{equation}\label{eq:prob2_full1}
 \begin{aligned}
-Clo_i=&\beta_0+\beta_1 \cdot t_{in,i}+\beta_2 \cdot t_{out,i}+\beta_3\cdot t_{in,i}\cdot t_{out,i}+\\
-& a(individual_i)+b(t_{in,i},individual_i)
+Clo_i=&\beta_0+\beta_1 \cdot t_{InOp,i}+\beta_2 \cdot t_{Out,i}+\beta_3\cdot t_{InOp,i}\cdot t_{Out,i}+\\
+& a(individual_i)+b(t_{InOp,i},individual_i)
 \end{aligned}
 \end{equation}
 
@@ -32,8 +32,8 @@ The second model:
 
 \begin{equation}\label{eq:prob2_full2}
 \begin{aligned}
-Clo_i=&\beta_0+\beta_1 \cdot t_{in,i}+\beta_2 \cdot t_{out,i}+\beta_3\cdot t_{in,i}\cdot t_{out,i}+\\
-& a(individual_i)+b(t_{out,i},individual_i)
+Clo_i=&\beta_0+\beta_1 \cdot t_{InOp,i}+\beta_2 \cdot t_{Out,i}+\beta_3\cdot t_{InOp,i}\cdot t_{Out,i}+\\
+& a(individual_i)+b(t_{Out,i},individual_i)
 \end{aligned}
 \end{equation}
 where $\beta_j$ is parameters for the overall intercept and continuous variables, while $a$ and $b$ are functions of either just a categorical variable or a combination of categorical and continuous variables. 
@@ -81,13 +81,13 @@ Model & & Sum Sq & Df & F value & Pr($>$F) \\
 &  \texttt{Residuals} & 0.348 & 40 &  &  \\ 
    \hline
 \end{tabular}
-\caption{The first rows (until the horizontal line in the middle) significant parameters for a model with an interaction term between the outdoor temperature and the individuals. Below the horizontal line we have a model with interaction term between the indoor temperature and the indivuduals. We can see that none of these interaction terms between the individuals and the temperature are significant. Furthermore we see that those are the first terms to be dropped. We used a type 3 partitioning for the ANOVA table.}
+\caption{The first rows (until the horizontal line in the middle) significant parameters for a model with an interaction term between the outdoor temperature and the individuals. Below the horizontal line we have a model with interaction term between the indoor temperature and the indivuduals. We can see that none of these interaction terms between the individuals and the temperature are significant. Furthermore we see that those are the first terms to be dropped. We used a Type III partitioning for the ANOVA table.}
 \label{tab:prob2_init}
 \end{table}
 
 \cref{tab:prob2_init} shows that neither of the interaction terms between the temperatures and the individuals are significant. This means that both of our two initial models from equation \cref{eq:prob2_full1} and \cref{eq:prob2_full2} will be reduced to the same model.
 
-As in part 1, we remove first higher order terms before we remove lower order terms. We choose which terms to remove by looking at the type 3 partitioning in the ANOVA table. We start by removing the terms with the highest p-value, and keep removing terms until all terms are significant. Each removed term can be seen in \ref{tab:prob2_deviance}
+As in part 1, we remove first higher order terms before we remove lower order terms. We choose which terms to remove by looking at the Type III partitioning in the ANOVA table. We start by removing the terms with the highest p-value, and keep removing terms until all terms are significant. Each removed term can be seen in table \ref{tab:prob2_deviance}
 
 ```{r}
 # Fitting the reduced model
@@ -163,7 +163,7 @@ grid.arrange(p1,p2,ncol=2)
 
 ## Interpretation of the parameters. 
 
-The interpretation of the parameters by using \cref{eq:prob2_full2} instead of \cref{eq:prob2_full1} become very simple. The subject ID estimates is the individual intercepts, while $\hat{\beta_1}$ is a parameter defines the increase/decrease in clothing level as the indoor temperature increases/decreases. The uncertainty of $\hat{\beta_1}$ can be found in table \ref{tab:prob2_CI}.
+The interpretation of the parameters by using \cref{eq:prob2_full2} instead of \cref{eq:prob2_full1} become very simple. The subject ID estimates is the individual intercepts, while $\hat{\beta_1}$ is a parameter defines the increase/decrease in clothing level as the indoor operating temperature increases/decreases. The uncertainty of $\hat{\beta_1}$ can be found in table \ref{tab:prob2_CI}.
 ```{r}
 # Confidence interval for the fixed effects
 m=confint(fit3B2)[1,]

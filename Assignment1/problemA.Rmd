@@ -108,7 +108,7 @@ lm_sigma_conf<-function(fit,CI=0.95){
 lm_sigma_conf(fit3)
 ```
 
-Finally, the noise term is distributed as $\epsilon_i \backsim\ N(0, \sigma^2)$, meaning that the noise is independent and identically distributed. The variance of the residuals ($\hat{\sigma^2}$) is estimated as 0.120, and an estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136] (can also be seen in table \ref{param_1}).
+Finally, the noise term is distributed as $\epsilon_i \backsim\ N(0, \sigma^2)$, meaning that the noise is independent and identically distributed. The standard deviation of the residuals ($\hat{\sigma}$) is estimated as 0.120, and an estimate of the standard deviation and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136] (can also be seen in table \ref{param_1}).
 
 It is wanted to test whether the model reduction is appropriate and in order to test this a likelihood-ratio test are performed based on theorem 3.6. The likelihood test are performed by comparing the initial model using all interactions (first row in table \ref{dev_1}) and the reduced model (last row in table \ref{dev_1}) and by comparing the deviances of the two models, the resulting p-value computed is: $p = 0.29$ and the model reduction is therefore kept. 
 
@@ -146,6 +146,7 @@ df_param = cbind(conf[,1], fit3$coefficients, conf[,2])
 
 The estimated parameters (and the estimate of the standard deviation of the noise) and 95\% confidence intervals can be seen in table \ref{param_1}. 
 As the exploratory analysis showed, there is a negative correlation (The estimated slopes are negative) between either of the temperatures and the clothing level. 
+
 ## Model predictions
 
 Now that we have found our model, we have to test its ability to make predictions. 
@@ -277,7 +278,7 @@ m=cbind(c(coef(fit),weigh_par=opt$par),m)
 m
 ```
 
-In order to compare the weighted model with the unweighted model information criteria AIC and BIC are used as a measure. The likelihood are not comparable as the models are not nested. The AIC are therefore chosen as criterion and are computed as: -184.59 and -202.64 for the unweighted and weighted model respectively. The BIC are therefore chosen as criterion and are computed as: -167.1172 and  -185.16 for the unweighted and weighted model respectively. Both information criteria appears to prefer the weighted residual model. The model parameters and confidence intervals are presented in table \ref{par_2}.  It should be noted that $\hat{\beta_3}$ has become smaller (-1.365) compared to the previous model with -1.2834 whereas the other parameters appears to be similar. The residual variance $\hat{\sigma^2}$ is estimated to 0.085, and an estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.076, 0.097] (can also be seen in table \ref{param_2}). The residual variance is smaller than for the previous model. Afterwards a full model using all interactions and explanatory variables (indoor operating temperature, outdoor temperature and sex) was reduced using the same approach in the beginning (backward selection using type III partitioning where higher order terms are removed before lower order terms). This resulted in the same model as before and therefore this model is used for the proceeding analysis.
+In order to compare the weighted model with the unweighted model information criteria AIC and BIC are used as a measure. The likelihood are not comparable as the models are not nested. The AIC are therefore chosen as criterion and are computed as: -184.59 and -202.64 for the unweighted and weighted model respectively. The BIC are therefore chosen as criterion and are computed as: -167.1172 and  -185.16 for the unweighted and weighted model respectively. Both information criteria appears to prefer the weighted residual model. The model parameters and confidence intervals are presented in table \ref{par_2}.  It should be noted that $\hat{\beta_3}$ has become smaller (-1.365) compared to the previous model with -1.2834 whereas the other parameters appears to be similar. The residual standard deviation $\hat{\sigma^2}$ is estimated to 0.085, and an estimate of the standard deviation and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.076, 0.097] (can also be seen in table \ref{param_2}). The residual variance is smaller than for the previous model. Afterwards a full model using all interactions and explanatory variables (indoor operating temperature, outdoor temperature and sex) was reduced using the same approach in the beginning (backward selection using type III partitioning where higher order terms are removed before lower order terms). This resulted in the same model as before and therefore this model is used for the proceeding analysis.
 ```{r}
 conf = confint(fit)
 df_param = cbind(conf[,1], fit$coefficients, conf[,2])
@@ -302,7 +303,7 @@ $\hat{\beta_0}$ & 1.49 & 2.22 & 2.95 \\
   $\hat{w}$ & 1.51& 2.93& 4.34 \\
     \hline
 \end{tabular}
-\caption{Parameter estimate with 95\% confidence intervals}
+\caption{Parameter estimate with 95\% confidence intervals and an estimate of $\sigma$, the standard deviation of the uncertainty of the model.}
 \label{par_2}
 \end{table}
 
