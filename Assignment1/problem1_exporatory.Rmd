@@ -15,7 +15,7 @@ library(gridExtra)
 
 \section{Exploratory analysis of the data}
 
-A data set describing the level of comfort in an office consists of 6 variables described in \cref{table:exp}. For the first part of the modeling, the identifier for subject and day variables will be omitted.    
+A data set describing the level of clothing in an office consists of 6 variables described in \cref{table:exp}. For the first part of the modeling, the identifier for subject and day variables will be omitted.    
 
 \begin{table}[h!]
 \centering
@@ -42,7 +42,7 @@ The data set consists of 136 observations with 66 male and 70 female observation
   \begin{tabular}{c c c c c}
   \hline
   & $\hat{\mu}$ & $\hat{\sigma^2}$ & Min & Max \\  \hline
-  \texttt{clo} & 0.02 & 0.15 & 0.25 & 0.96 \\ 
+  \texttt{clo} & 0.55 & 0.02 & 0.25 & 0.96 \\ 
   \texttt{tOut} & 21.54 & 17.27 & 11.93 & 33.08 \\
   \texttt{tInOp} & 26.82 & 1.69 & 23.11 & 29.55 \\ \hline
   \end{tabular}
