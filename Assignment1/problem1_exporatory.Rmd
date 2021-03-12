@@ -75,7 +75,7 @@ grid.arrange(p1,p2,p3, nrow = 3)
 
 On \cref{fig:exp_analysis_2} below, histograms have been computed for the continuous variables for male and females separately. The continuous variables appear to be centered and roughly symmetric with no apparent skewness.
 
-```{r exp_analysis_2, fig.height=5,fig.cap = "Histograms of the continuous variables plotted separately for sex."}
+```{r exp_analysis_2, fig.height=3,fig.cap = "Histograms of the continuous variables plotted separately for sex."}
 #histogrammer
 
 hist1 <- ggplot(df3,aes(x=clo))+geom_histogram(color="white", binwidth = .1)+facet_wrap(~sex) + xlab('Clothing level')
