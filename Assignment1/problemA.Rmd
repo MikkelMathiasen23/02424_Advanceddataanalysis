@@ -28,7 +28,9 @@ df2=read.csv(file="./Data/clothingSum.csv")
 names(df2)[5]="tIn"
 
 ```
-A general linear model (GLM) predicting the level of clothing (clo) using outdoor temperature (tOut), indoor operating temperature (tInOp) and gender (sex) of the subject as explanatory variables will be fitted. The full GLM model using all variables and interactions are used as a starting point, hereafter the model will be reduced using the backward selection based on Type III partitioning and higher order variables are removed first if these are insignificant. 
+## Model Selection
+
+A general linear model (GLM) predicting the level of clothing (\texttt{clo}) using outdoor temperature (\texttt{tOut}), indoor operating temperature (\texttt{tInOp}) and gender (\texttt{sex}) of the subject as explanatory variables will be fitted. The full GLM model using all variables and interactions are used as a starting point, hereafter the model will be reduced using the backward selection based on Type III partitioning and higher order variables are removed first if these are insignificant. If a higher order variables are significant, but the corresponding first order of the variable is non-significant, we will keep both the first order and higher order terms. 
 
 ```{r}
 #######Unweighted model - using backward selection and type III partitioning:
@@ -49,16 +51,17 @@ Anova(fit3, type = 'III')
 #Final optimal model:
 ```
 In table \ref{dev_1} the different models fitted through the backward selection are written in R notation (first column) and the statistics calculated for each model in the following columns.
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \begin{tabular}{lrrrrrr}
   \hline
  & Res.Df & RSS & Df & Sum of Sq & F & Pr($>$F) \\ 
   \hline
 \texttt{clo} $\backsim$ \texttt{tOut * tInOp * sex} & 128 & 1.82 &  &  &  &  \\ 
-\texttt{clo} $\backsim$ \texttt{tOut + tInOp + sex +tOut : sex + } & & & & & &  \\ 
-\texttt{tInOp : sex +tOut : tInOp}  & 129 & 1.85 & -1 & -0.02 & 1.71 & 0.1927 \\
-\texttt{clo} $\backsim$ \texttt{tOut + tInOp + sex + tOut : sex + tInOp : sex} & 130 & 1.85 & -2 & -0.02 & 0.86 & 0.4259 \\ 
+\texttt{clo} $\backsim$ \texttt{tOut + tInOp + sex +tOut:sex + } & & & & & &  \\ 
+\hspace{1cm} \texttt{tInOp:sex + tOut:tInOp}  & 129 & 1.85 & -1 & -0.02 & 1.71 & 0.1927 \\
+\texttt{clo} $\backsim$ \texttt{tOut + tInOp + sex + } & & & & & & \\
+\hspace{1cm} \texttt{tOut:sex + tInOp:sex} & 130 & 1.85 & -2 & -0.02 & 0.86 & 0.4259 \\ 
 \texttt{clo} $\backsim$ \texttt{tOut + tInOp + sex + tInOp:sex} & 131 & 1.88 & -1 & -0.03 & 2.03 & 0.1569 \\ 
    \hline
 \end{tabular}
@@ -71,7 +74,9 @@ In table \ref{dev_1} the different models fitted through the backward selection 
 xtable(anova(fit1, fit2a, fit2b, fit3))
 ```
 
-The result from the backward selection using Type III partitioning are given below where the third-order interaction has been removed and as well the second order interaction between the outdoor temperature \& gender as well as indoor operating temperature  
+## Estimated parameters
+
+The final model from the backward selection using Type III partitioning are shown below where the third-order interaction has been removed and as well the second order interaction between the outdoor temperature \& gender as well as indoor operating temperature. 
 
 $$Clo_i =\beta_0 + \beta_1t_{Out,i} + \beta_2t_{InOp,i} + \beta_3sex_i + \beta_4t_{InOp,i}\cdot sex_i + \epsilon_i$$
 
@@ -95,9 +100,9 @@ lm_sigma_conf<-function(fit,CI=0.95){
 lm_sigma_conf(fit3)
 ```
 
-where $$\epsilon_i \backsim\ N(0, \sigma^2)$$ The residuals are assumed to be i.i.d ie. $\sigma^2I$. The variance of the residuals ($\hat{\sigma^2}$) is estimated as 0.120, and an estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136] (can also be seen in table \ref{param_1}).
+where $\epsilon_i \backsim\ N(0, \sigma^2)$, and the residuals are assumed to be i.i.d ie. $\sigma^2I$. The variance of the residuals ($\hat{\sigma^2}$) is estimated as 0.120, and an estimate of the variance and confidence hereof are computed based on theorem 3.5 resulting in the following 95\% confidence interval: [0.107, 0.136] (can also be seen in table \ref{param_1}).
 
-In the resulting model presented above the $\cdot$ indicates the interaction between the indoor operating temperature and gender of the subject. It is wanted to test whether the model reduction is appropriate and in order to test this a likelihood-ratio test are performed based on theorem 3.6. The likelihood test are performed by comparing the initial model using all interactions (first row in table \ref{dev_1}) and the reduced model (last row in table \ref{dev_1}) and by comparing the deviances of the two models, the resulting p-value computed is: $p = 0.29$ and the model reduction are therefore kept. 
+In the resulting model presented above the $\cdot$ indicates the interaction between the indoor operating temperature and gender of the subject. It is wanted to test whether the model reduction is appropriate and in order to test this a likelihood-ratio test are performed based on theorem 3.6. The likelihood test are performed by comparing the initial model using all interactions (first row in table \ref{dev_1}) and the reduced model (last row in table \ref{dev_1}) and by comparing the deviances of the two models, the resulting p-value computed is: $p = 0.29$ and the model reduction is therefore kept. 
 
 ```{r}
 
@@ -127,13 +132,15 @@ df_param = cbind(conf[,1], fit3$coefficients, conf[,2])
   $\hat{\sigma}$ & 0.107 & 0.120 & 0.136 \\
      \hline
 \end{tabular}
-\caption{Parameter estimates with 95\% confidence intervals}
+\caption{Parameter estimates with 95\% confidence intervals and an estimate of $\sigma$, the standard deviation of the uncertainty of the model.}
 \label{param_1}
 \end{table}
 
 The estimated parameters and 95\% confidence intervals can be seen in table \ref{param_1}. $\hat{\beta_0}$ is the intercept of the model, and contains both the intercept of the model but also the impact of being a female on the clothing level as $sex(female) = 0$, whereas $\hat{\beta_3}$ (because $sex(male) = 1$) determines the effect of being male on the clothing level. $\hat{\beta_1}$ determines the impact of the outdoor temperature on the clothing level for males and females, and as this parameter are negative higher outdoor temperatures results in lower clothing level for both males and females.$\hat{\beta_4}$ is the interaction-term between indoor operating temperature and the gender of the subject. As $sex(female) = 0$ the $\hat{\beta_2}$ must contain the information about the slope of indoor operating temperatures effect on clothing level for females. The interaction term $\hat{\beta_4}$ contains the changes in the slope of $\hat{\beta_2}$ for males as  $t_{InOp,i}\cdot(\hat{\beta_2}+\hat{\beta_4}\cdot sex_i)$ and $sex_i$ is only equal one for men whereas the $\hat{\beta_4}$ vanishes for females resulting in $\hat{\beta_2}$ determining the slope of the indoor operating temperature for females.
 
+## Model predictions
 
+Now that we have found our model, we have to test its ability to make predictions. 
 ```{r pred_1, fig.height=8,fig.cap="The figure presents the 95\\% prediction and confidence interval for three fixed values of the indoor operating temperature (tInOp)"}
 
 ########################Plot prediction and confidence intervals of unweighted model using three fixed 
@@ -191,6 +198,9 @@ grid.arrange(q1,q2,q3)
 
 In figure \ref{fig:pred_1} 95\% confidence and prediction intervals are presented for three indoor operating temperature levels being 25\% quantile, mean and 75\% quantile. From the figure it can be seen that almost all samples for men except one lies within the prediction interval, whereas for females a few samples are out of the prediction interval. As the prediction interval only is a 95\% prediction interval it is expected that some points lies without of the interval. From the figure it should also be noted that males appears to be more constant, whereas females appear to contain larger variance. Also from the fitted line this appears to fit the male samples better than the female samples. Also it should be noted that when elevating the indoor operating temperature this results in the prediction and prediction interval for females are shifted to lower clothing levels whereas this appears to be constant for men. This also makes sense when considering the slope $t_{InOp,i}\hat{\beta_2}$ for the indoor operating temperatures effect on clothing level for females which is negative resulting in lower clothing level when the temperature rises. Whereas the effect of elevated indoor operating temperature for males are dependent on the following expression: $t_{InOp,i}\cdot(\hat{\beta_2}+\hat{\beta_4}\cdot sex_i)$ where $\hat{\beta_4}$ and $\hat{\beta_2}$ almost cancel out resulting in almost no change in clothing level when the indoor operating temperature rises.
 
+## Residual analysis
+
+To ensure that the model lives up to the assumptions that the this type of model requires, we have to analyze the residuals. 
 
 ```{r res_1,fig.height=6,fig.cap="The figure presents the residuals of the model selected from the backward selection with Type III partionioning."}
 par(mfrow = c(2,2))
@@ -228,6 +238,7 @@ qqnorm(res)
 qqline(res)
 ```
 
+## Model with weights on sex
 
 Firstly, the optimal ratio needs to be estimated, this will be done by optimizing the log-likelihood with respect to the weighting of the variance. The optimal weighting of the female residual variance is estimated to: 2.93 which will be used in the weighted residual model. A confidence interval of the weighing of the residuals for females (called: $\hat{w}$) are also computed an can be seen in table \ref{par_2}.
 ```{r}
@@ -287,7 +298,9 @@ $\hat{\beta_0} = \hat{\mu} + female$ & 1.49 & 2.22 & 2.95 \\
 \label{par_2}
 \end{table}
 
+## Weighted model predictions
 
+Once again, we have to test our models ability to make predictions. 
 
 ```{r pred_2, fig.height=8,fig.cap="The figure presents the 95\\% prediction and confidence interval for three fixed values of the indoor operating temperature (tInOp)"}
 tmp_male=data.frame(clo=NA,tOut=seq(min(df2$tOut),max(df2$tOut),0.1),tIn=quantile(df2$tIn,0.25),sex="male")
@@ -358,9 +371,11 @@ grid.arrange(q1,q2,q3)
 ```
 
 
-From figure \ref{fig:pred_2} it can be seen that the prediction interval for the females are more wide compared to the unweighted model (see figure \ref{fig:pred_1}) resulting in more points are within the prediction interval. Clearly, it can be seen that the prediction interval for females are more wide compared to males, which might be due to the weighting of the residuals. Also the prediction interval for males appears to have become more narrow compared to the unweighted residual model (see figure \ref{fig:pred_1}). As in figure \ref{fig:pred_1} it can be seen that the prediction and prediction interval are shifted down when the indoor operating temperature are elevated, whereas it appears to be rather constant for males. From the figure it is apparent that the slope for females has been changed to fit better to the male samples, driving the slope away from the optimal slope for females. This change in slope might be due to the less weight put on the female residuals which is weighted with 2.93 compared to males. This could indicate that a gender specific slope might be needed in order to model this appropriately. 
+From figure \ref{fig:pred_2} it can be seen that the prediction interval for the females are more wide compared to the unweighted model (see figure \ref{fig:pred_1}) resulting in more points are within the prediction interval. Clearly, it can be seen that the prediction interval for females are more wide compared to males, which is due to the weighting of the residuals. Also the prediction interval for males appears to have become more narrow compared to the unweighted residual model (see figure \ref{fig:pred_1}). As in figure \ref{fig:pred_1} it can be seen that the prediction and prediction interval are shifted down when the indoor operating temperature are elevated, whereas it appears to be rather constant for males. From the figure it is apparent that the slope for females has been changed to fit better to the male samples, driving the slope away from the optimal slope for females. This change in slope might be due to the less weight put on the female residuals which is weighted with 2.93 compared to males. This could indicate that a gender specific slope might be needed in order to model this appropriately. 
 
+## Weighted model residuals
 
+Once again, we have to ensure that the model lives up to the assumptions that the this type of model requires, we have to analyze the residuals.
 
 ```{r res_4, fig.height=6,fig.cap="The figure presents the residuals of the weighted model"}
 par(mfrow = c(2,2))

@@ -50,7 +50,7 @@ The data set consists of 136 observations with 66 male and 70 female observation
   \label{table:summary_stat}
 \end{table}
 
-On \cref{fig:exp_analysis_1} below, the variables are plotted against each other separately for male and females. On the first figure, it should be noted how the clothing level of females seems to vary to a greater extent compared to the male counterpart which seem more constant. Additionally, it appears that the level of female clothing decreases as the indoor and outdoor temperature increases. On the second figure, it appears that the outdoor temperature and indoor operating temperature are positively correlated which intuitively makes sense. For the third figure, the indoor operating temperature is plotted aginst the clothing level. The same applies as for figure 1; the clothing seems more constant for males compared to females. 
+On \cref{fig:exp_analysis_1} below, the variables are plotted against each other separately for male and females. On the first upper plot, it should be noted how the clothing level of females seems to vary to a greater extent compared to the male counterpart which seem more constant. Additionally, it appears that the level of female clothing decreases as the indoor and outdoor temperature increases. On the middle plot, it appears that the outdoor temperature and indoor operating temperature are positively correlated which intuitively makes sense. For the lower plot, the indoor operating temperature is plotted against the clothing level. The same applies as for upper plot; the clothing seems more constant for males compared to females. 
 
 
 
@@ -73,9 +73,9 @@ p3 <- ggplot(df3,aes(x=tInOp,y=clo))+geom_point()+facet_wrap(~sex) +xlab("Indoor
 grid.arrange(p1,p2,p3, nrow = 3)
 ```
 
-On \cref{fig:exp_analysis_2} below, histograms have been computed for the continuous variables for male and females separately The continuous variables appear to be centered and roughly symmetric with no apparent skewness.
+On \cref{fig:exp_analysis_2} below, histograms have been computed for the continuous variables for male and females separately. The continuous variables appear to be centered and roughly symmetric with no apparent skewness.
 
-```{r exp_analysis_2, fig.cap = "Histograms of the continuous variables plotted separately for sex."}
+```{r exp_analysis_2, fig.height=5,fig.cap = "Histograms of the continuous variables plotted separately for sex."}
 #histogrammer
 
 hist1 <- ggplot(df3,aes(x=clo))+geom_histogram(color="white", binwidth = .1)+facet_wrap(~sex) + xlab('Clothing level')
