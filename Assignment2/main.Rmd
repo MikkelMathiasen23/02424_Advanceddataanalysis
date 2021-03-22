@@ -1,11 +1,10 @@
 ---
-title: '02424 Assignment 1'
+title: '02424 Assignment 2'
 author:
 - August Thomas Hjortshøj Schreyer s163716 
 - Mikkel Mathiasen s174344
 - Nicolai Piet Dittmann s170589
-
-date: "12/03/2021"
+date: "16/04/2021"
 output:
   pdf_document: 
     fig_caption: yes
@@ -35,7 +34,7 @@ library(xtable)
 library(directlabels)
 ```
 
-```{r child = 'problem1_exporatory.Rmd', cache = T}
+```{r child = 'problem1_exploratory.Rmd', cache = T}
 ```
 
 ```{r child = 'problemA.Rmd', cache = T}
