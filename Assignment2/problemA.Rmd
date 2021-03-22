@@ -22,3 +22,10 @@ library(gridExtra)
 ```
 
 # Problem A
+```{r}
+library(gclus)
+df = read.
+par(mar=c(1,1,1,1))
+cpairs(longley, order= longley.o,panel.color= longley.color)
+```
+
