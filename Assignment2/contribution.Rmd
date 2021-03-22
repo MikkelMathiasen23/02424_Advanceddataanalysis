@@ -1,0 +1,14 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+chunk_output_type: console
+---
+
+```{r}
+source('setup.R')
+```
+
+
+# Contribution to the Assignment
+We made our best attempt to ensure equal contribution to the making of this assignment.

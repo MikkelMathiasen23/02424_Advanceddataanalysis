@@ -1,0 +1,18 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+chunk_output_type: console
+---
+
+```{r}
+source('setup.R')
+```
+
+
+# References 
+\begin{itemize}
+  \item[[1]] Henrik Madsen and Jan Holst, Modelling Non-Linear and Non-Stationary Time Series, December 2006. 
+  \item[[2]] Madsen, H. (2007). Time series analysis. CRC Press.
+  \item[[3]] Bacher, P. and Madsen, H. (2011). Identifying suitable models for the heat dynamics of buildings. Ernegy and Buildings Volume 43. 
+\end{itemize}

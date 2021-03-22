@@ -1,0 +1,98 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+chunk_output_type: console
+---
+
+```{r}
+source('setup.R')
+```
+
+\section{Problem C}
+
+For this section, the full data set of the previously used data will be used. This includes the same variables as previously but now includes six observations per day. The model selected in Problem B will be fitted to the full data and the residuals will be investigated. 
+
+```{r}
+df1=read.csv(file="./Data/clothingFull.csv")
+names(df1)[4]="tIn"
+
+
+```
+
+```{r}
+fit3B = lm( clo ~ -1 +tOut+subjId,data = df1)
+df1$obs.no=as.character(df1$obs.no)
+df1$subjId=as.character(df1$subjId)
+ggplot(df1,aes(x=tOut,y=resid(fit3B),group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Outdoor temperature")+ylab("Residual")
+```
+
+```{r partc_resid, fig.cap = "Residuals of model (eq. 4) fitted on the whole data set."}
+par(mfrow=c(2,2))
+plot(fit3B)
+```
+
+From \cref{fig:partc_resid}, the residuals appear to be normally distributed with no heavy tails according to the QQ-plot. When looking at the residuals and the standardized residuals, however, these do not appear to be independently distributed. The residuals plotted as a function of the outdoor temperature is also presented below. The residuals are split into to columns according to gender and columns depending on the day.
+
+```{r partc_param_resid, fig.height=3, fig.cap = "The residuals of the input variables."}
+df1$residual = resid(fit3B)
+#q1 = ggplot(df1, aes(sample = residual, colour = sex)) +
+#  stat_qq() +
+#  stat_qq_line()
+#q2 =  ggplot(df1, aes(sample = residual)) +
+#  stat_qq() +
+#  stat_qq_line()
+  
+q3=   ggplot(data = df1, aes(x = sex, y= residual, colour = sex))+ geom_boxplot() + geom_jitter(width = 0.3) 
+
+
+q4 = ggplot(data = df1, aes(x = tOut, y= residual, col = sex))+ geom_point() + xlab('Outdoor temperature (tOut)')
+
+grid.arrange(q3,q4, ncol = 2)
+```
+
+From \cref{fig:partc_param_resid} it can be seen, that a higher variance for the female residuals compared to the male is still observed. A negative correlation between the outdoor tempearature and the model residuals can also be seen.  
+
+Finally, the residuals are plotted as a function of the outdoor temperature separately for the 4 different days where data is available. The observations are numbered according to their obsersavation number of the day. 
+
+```{r partc_final, fig.height=3, fig.cap="The residuals as a function of outdoor temperature over the 4 observed days. The observations are numbered accordingly to their observation number of the day."}
+df1$obs.no=as.character(df1$obs.no)
+df1$subjId=as.character(df1$subjId)
+ggplot(df1,aes(x=tOut,y=residual,group=subjId,col=subjId))+
+  geom_text(aes(label=obs.no))+geom_path()+facet_grid(cols=vars(sex),rows=vars(day))+
+  theme(legend.position = "none")+
+  xlab("Outdoor temperature")+ylab("Residual")
+
+```
+
+From \cref{fig:partc_final} it is apparent that the outdoor temperature observations are correlated by day. This violates the assumption for the data that it must be independently distributed.  
+
+
+ ```{r}
+# ll_partA<-function(a,data=df1){
+#   weights=rep(1,nrow(data))
+#   weights[data$sex=="female"]=1/a
+#   fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
+#   return(logLik(fit))
+# }
+# weighted_lm<-function(a,data=df1){
+#   weights=rep(1,nrow(data))
+#   weights[data$sex=="female"]=1/a
+#   fit=lm(clo~ tOut+tIn+tIn:sex+sex,w=weights,data=data)
+#   return(fit)
+# }
+# # Finding optimal weights
+# opt=optim(1,ll_partA,control=list(fnscale=-1),hessian=T)
+# # Fitting model with optimal weights
+# fit=weighted_lm(opt$par)
+```
+
+
+
+
+
+
+
