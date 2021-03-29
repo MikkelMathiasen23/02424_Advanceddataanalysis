@@ -24,8 +24,177 @@ library(gridExtra)
 # Problem A
 ```{r}
 library(gclus)
-df = read.
-par(mar=c(1,1,1,1))
-cpairs(longley, order= longley.o,panel.color= longley.color)
+# Loading is equivalent 
+df = read.table("data/ozone.txt",header=T)
+data(ozone)
+head(ozone)
+all(ozone == df)
+
+#par(mar=c(1,1,1,1))
+#cpairs(longley, order= longley.o,panel.color= longley.color)
+
+# Poisson distribution?
+
+# Continuous? Use real (0,inf)
 ```
+
+
+```{r}
+ozone.cor = cor(ozone)
+ozone.color = dmat.color(ozone.cor)
+ozone.o <- order.hclust(ozone.cor)
+ozone.o = c(1,ozone.o[ozone.o!=1])
+cpairs(ozone,order = ozone.o, panel.colors =ozone.color, main = "Upper triangle: y = row, x = column. \nLower triangle, y = column, x = row")
+# Upper triangle: y = row, x = column
+# Lower triangle: y = column, x = row
+library(GGally)
+p = ggpairs(ozone,diag = list(continuous = wrap("barDiag",bins=30)))
+p
+
+# Any categorical variables?
+# library(reshape2)
+# ozone$logO = log(ozone$Ozone)
+# d <- melt(ozone)
+# ggplot(d,aes(x = value,color = variable)) + 
+#     facet_wrap(~variable,scales = "free") + 
+#     geom_histogram(bins=30)+
+#   theme(legend.position = "none")
+```
+
+```{r}
+
+```
+
+
+```{r}
+###### Question 2:
+fit0 = glm(Ozone~., data = df)
+Anova(fit0, type = 'III')
+#Remove Pres
+
+fit1 = glm(Ozone ~Temp + InvHt + Vis + Hgt + Hum + InvTmp + Wind, data = df)
+Anova(fit1, type = 'III')
+#Remove Wind
+
+fit2 = glm(Ozone ~Temp + InvHt + Vis + Hum + InvTmp + Hgt, data = df)
+Anova(fit2, type = 'III')
+#Remove Hgt
+
+fit3 = glm(Ozone ~Temp + InvHt + Vis + Hum + InvTmp, data = df)
+Anova(fit3, type = 'III')
+#Remove InvTmp
+
+fit4 = glm(Ozone ~Temp + InvHt +Vis + Hum , data = df)
+Anova(fit4, type = 'III')
+#Remove Vis
+
+fit5 = glm(Ozone ~Temp + InvHt +Hum , data = df)
+Anova(fit5, type = 'III')
+
+anova(fit0, fit5, test ='Chisq')
+#Cant reject the model reduction
+#######Without any transformations. 
+library(MASS)
+bc = boxcox(fit5,lambda = seq(0,0.5,0.01))
+lambda=bc$x[bc$y==max(bc$y)]
+#Test if log transformation is better of final model: 
+
+fit5log = glm(log(Ozone) ~Temp + InvHt +Hum , data = df)
+fit5bc = glm(Ozone^lambda ~Temp + InvHt +Hum , data = df)
+Anova(fit5log, type = 'III')
+logLik(fit5,fit5log,fit5bc)
+logLik(fit5)
+logLik(fit5bc)-sum((1-lambda)*log(df$Ozone)-nrow(df)*lambda)
+#Clearly better with log 
+#Refit model with log transformation of log(ozone)
+# x = 1:100
+# y = 5+2*x + rnorm(length(x))
+# test = lm(y~x)
+# boxcox(test,lambda = seq(0.9,1.1,0.0001))
+
+#############################################3
+########################Try log transformation of output variable:
+fit0log = glm(log(Ozone) ~ ., data = df)
+Anova(fit0log, type = 'III')
+#Remove InvTmp
+
+fit1log = glm(log(Ozone) ~Temp + InvHt + Vis + Hgt + Hum + Pres + Wind, data = df)
+Anova(fit1log, type = 'III')
+#Remove Wind
+
+fit2log = glm(log(Ozone) ~Temp + InvHt + Vis +Hgt+ Hum + Pres, data = df)
+Anova(fit2log, type = 'III')
+#Remove Hgt
+
+fit3log = glm(log(Ozone) ~Temp + InvHt + Vis + Hum +Pres, data = df)
+Anova(fit3log, type = 'III')
+#Remove Pres
+
+fit4log = glm(log(Ozone) ~Temp + InvHt + Vis +Hum, data = df)
+Anova(fit4log, type = 'III')
+#Remove Vis
+
+fit5log = glm(log(Ozone) ~Temp + InvHt +Hum , data = df)
+Anova(fit5log, type = 'III')
+#Ended up with same model
+
+#Compare with loglog transformation:
+fit5loglog = lm(log(Ozone) ~Temp + log(InvHt) +log(Hum) , data = df)
+Anova(fit5loglog, type = 'III')
+c(AIC(fit5), AIC(fit5log), AIC(fit5loglog))
+#Only log-transformation of output variable
+par(mfrow=c(2,2))
+plot(fit5log)
+```
+
+```{r}
+fit0Pos = glm(Ozone~.,data=df,family = poisson)
+Anova(fit0Pos, type = 'III')
+# Dropping Hgt
+
+fit1Pos = glm(Ozone~Temp+InvHt+Pres+Vis+Hum+InvTmp+Wind,data=df,family = poisson)
+Anova(fit1Pos, type = 'III')
+# Dropping Wind
+
+fit2Pos = glm(Ozone~Temp+InvHt+Pres+Vis+Hum+InvTmp,data=df,family = poisson)
+Anova(fit2Pos, type = 'III')
+# Dropping Pres
+
+fit3Pos = glm(Ozone~Temp+InvHt+Vis+Hum+InvTmp,data=df,family = poisson)
+Anova(fit3Pos, type = 'III')
+# Dropping InvTmp
+
+fit4Pos = glm(Ozone~Temp+InvHt+Vis+Hum,data=df,family = poisson)
+Anova(fit4Pos, type = 'III')
+AIC(fit4Pos,fit5,fit5log)
+
+```
+
+```{r}
+fit0Gamma = glm(Ozone~.,data=df,family = Gamma)
+Anova(fit0Gamma, type = 'III')
+# Dropping Hgt
+
+fit1Gamma = glm(Ozone~Temp+InvHt+Pres+Vis+Hum+InvTmp+Wind,data=df,family = Gamma)
+Anova(fit1Gamma, type = 'III')
+# Dropping Wind
+
+fit2Gamma = glm(Ozone~Temp+InvHt+Pres+Vis+Hum+InvTmp,data=df,family = Gamma)
+Anova(fit2Gamma, type = 'III')
+# Dropping InvTmp
+
+fit3Gamma = glm(Ozone~Temp+InvHt+Pres+Vis+Hum,data=df,family = Gamma)
+Anova(fit3Gamma, type = 'III')
+# Dropping Vis
+
+fit4Gamma = glm(Ozone~Temp+InvHt+Pres+Hum,data=df,family = Gamma)
+Anova(fit4Gamma, type = 'III')
+# Dropping Pres
+
+fit5Gamma = glm(Ozone~Temp+InvHt+Hum,data=df,family = Gamma)
+Anova(fit5Gamma, type = 'III')
+
+AIC(fit5Gamma,fit4Pos,fit5,fit5log)
+```
+
 
