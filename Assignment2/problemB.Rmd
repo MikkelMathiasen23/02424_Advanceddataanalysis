@@ -10,3 +10,219 @@ source('setup.R')
 ```
 
 # Problem B
+```{r}
+df = read.csv('data/dat_count.csv', sep = ';')
+head(df)
+
+############Question 1 with binomial: 
+
+df$resp = cbind(df$clo, df$nobs - df$clo)
+fit0  = glm(resp ~ time*sex*tOut*tInOp,binomial, data = df)
+drop1(fit0, test = 'Chisq')
+1 - pchisq(fit0$deviance,df=fit0$df.residual)
+#DOES NOT FOLLOW RESIDUAL ASSUMPTIONS
+#Remove time:sex:tOut:tInOp
+
+fit1  = update(fit0, .~ . - time:sex:tOut:tInOp, data = df)
+drop1(fit1, test = 'Chisq')
+1 - pchisq(fit1$deviance,df=fit1$df.residual)
+#DOES NOT FOLLOW RESIDUAL ASSUMPTIONS
+#Remove time:tOut:tInOp
+
+fit2  = update(fit1, .~ . - sex:tOut:tInOp   , data = df)
+drop1(fit2, test = 'Chisq')
+1 - pchisq(fit2$deviance,df=fit2$df.residual)
+#Remove time:tOut:tInOp
+
+fit3  = update(fit2, .~ . - time:tOut:tInOp   , data = df)
+drop1(fit3, test = 'Chisq')
+1 - pchisq(fit3$deviance,df=fit3$df.residual)
+#Remove time:sex:tOut
+
+fit4  = update(fit3, .~ . - time:sex:tOut   , data = df)
+drop1(fit4, test = 'Chisq')
+1 - pchisq(fit4$deviance,df=fit4$df.residual)
+#Remove time:sex:tInOp
+
+fit5  = update(fit4, .~ . - time:sex:tInOp   , data = df)
+drop1(fit5, test = 'Chisq')
+1 - pchisq(fit5$deviance,df=fit5$df.residual)
+#Remove tOut:tInOp
+
+fit6  = update(fit5, .~ . - tOut:tInOp   , data = df)
+drop1(fit6, test = 'Chisq')
+1 - pchisq(fit6$deviance,df=fit6$df.residual)
+#Remove sex:tOut
+
+fit7  = update(fit6, .~ . - sex:tOut   , data = df)
+drop1(fit7, test = 'Chisq')
+1 - pchisq(fit7$deviance,df=fit7$df.residual)
+#Remove time:tOut
+
+fit8  = update(fit7, .~ . - time:tOut   , data = df)
+drop1(fit8, test = 'Chisq')
+1 - pchisq(fit8$deviance,df=fit8$df.residual)
+#Remove time:tInOp - higher order terms first!
+
+fit9  = update(fit8, .~ . - time:tInOp   , data = df)
+drop1(fit9, test = 'Chisq')
+1 - pchisq(fit9$deviance,df=fit9$df.residual)
+#Remove time:sex 
+
+fit10  = update(fit9, .~ . - time:sex   , data = df)
+drop1(fit10, test = 'Chisq')
+1 - pchisq(fit10$deviance,df=fit10$df.residual)
+#Remove tOut 
+
+fit11  = update(fit10, .~ . - tOut   , data = df)
+drop1(fit11, test = 'Chisq')
+1 - pchisq(fit11$deviance,df=fit11$df.residual)
+#Remove time 
+
+fit12  = update(fit11, .~ . - time   , data = df)
+drop1(fit12, test = 'Chisq')
+1 - pchisq(fit12$deviance,df=fit12$df.residual)
+#Remove sex:tInOp
+
+fit13  = update(fit12, .~ . - sex:tInOp   , data = df)
+drop1(fit13, test = 'Chisq')
+1 - pchisq(fit13$deviance,df=fit13$df.residual)
+#Remove tInOp
+
+fit14  = update(fit13, .~ . - tInOp   , data = df)
+drop1(fit14, test = 'Chisq')
+1 - pchisq(fit14$deviance,df=fit14$df.residual)
+anova(fit14, test ='Chisq')
+
+anova(fit0, fit14, test = 'Chisq')
+#Cant reject model reduction 
+c(AIC(fit0),AIC(fit14))
+#Improvement in AIC
+####################################
+#################################### None of above models pass the goodness of fit test therefore try out different link functions!
+#Possible selections: logit(default), probit, cauchit, log, cloglog
+fit14probit = glm(resp~  time*sex*tOut*tInOp, family = binomial(link = 'probit'), data = df)
+drop1(fit14probit, test = 'Chisq')
+1 - pchisq(fit14probit$deviance,df=fit14probit$df.residual)
+#Fails goodness of fit test 
+
+fit14cauchit = glm(resp~ time*sex*tOut*tInOp, family = binomial(link = 'cauchit'), data = df)
+drop1(fit14cauchit, test = 'Chisq')
+1 - pchisq(fit14cauchit$deviance,df=fit14cauchit$df.residual)
+#Fails goodness of fit test 
+
+fit14log = glm(resp~ time*sex*tOut*tInOp, family = binomial(link = 'log'), data = df)
+drop1(fit14log, test = 'Chisq')
+1 - pchisq(fit14log$deviance,df=fit14log$df.residual)
+#Fails goodness of fit test 
+
+fit14cloglog = glm(resp~ time*sex*tOut*tInOp, family = binomial(link = 'cloglog'), data = df)
+drop1(fit14cloglog, test = 'Chisq')
+1 - pchisq(fit14cloglog$deviance,df=fit14cloglog$df.residual)
+#Fails goodness of fit test 
+
+#All link functions with the final and full models fails. 
+##Need to do overdispersion or create more complex model
+fit14quasi = glm(resp~  time*sex*tOut*tInOp, family = quasibinomial, data = df)
+1 - pchisq(fit14quasi$deviance,df=fit14quasi$df.residual)
+anova(fit14quasi, test = 'F')
+
+####Try out different link functions
+#### Overdispersion?
+#### Weighted model?
+#### Other data set-up? See table 4.21 <--> 4.22
+
+fit14quasi = glm(resp ~ sex, quasibinomial, data = df)
+anova(fit14quasi, test = 'Chisq')
+```
+
+```{r}
+##########Question 2 Poisson:
+#Should we include nobs??????? Maybe as offset offset(nobs)
+fit0  = glm(clo ~ time*factor(sex)*tOut*tInOp ,poisson(link = log), data = df)
+drop1(fit0, test = 'Chisq')
+1 - pchisq(fit0$deviance,df=fit0$df.residual)
+#Remove fourth order interaction
+
+fit1  = update(fit0, .~ . -time:factor(sex):tOut:tInOp   , data = df)
+drop1(fit1, test = 'Chisq')
+1 - pchisq(fit1$deviance,df=fit1$df.residual)
+#Remove sex:tOut:tInOp
+
+fit2 = update(fit1, .~ . -factor(sex):tOut:tInOp   , data = df)
+drop1(fit2, test = 'Chisq')
+1 - pchisq(fit2$deviance,df=fit2$df.residual)
+#Remove time:tOut:tInOp
+
+fit3 = update(fit2, .~ . -time:tOut:tInOp   , data = df)
+drop1(fit3, test = 'Chisq')
+1 - pchisq(fit3$deviance,df=fit3$df.residual)
+#Remove time:sex:tOut
+fit4 = update(fit3, .~ . -time:factor(sex):tOut   , data = df)
+drop1(fit4, test = 'Chisq')
+1 - pchisq(fit4$deviance,df=fit4$df.residual)
+fit5 = update(fit4, .~ . -time:factor(sex):tInOp   , data = df)
+drop1(fit5, test = 'Chisq')
+1 - pchisq(fit5$deviance,df=fit5$df.residual)
+#Remove tOut:tInOp
+fit6 = update(fit5, .~ . -tOut:tInOp   , data = df)
+drop1(fit6, test = 'Chisq')
+1 - pchisq(fit6$deviance,df=fit6$df.residual)
+#Remove sex:tOut
+fit7 = update(fit6, .~ . -factor(sex):tOut   , data = df)
+drop1(fit7, test = 'Chisq')
+1 - pchisq(fit7$deviance,df=fit7$df.residual)
+#Remove time:tOut
+fit8 = update(fit7, .~ . -time:tOut   , data = df)
+drop1(fit8, test = 'Chisq')
+1 - pchisq(fit8$deviance,df=fit8$df.residual)
+#Remove time:tInOp
+fit9 = update(fit8, .~ . -time:tInOp   , data = df)
+drop1(fit9, test = 'Chisq')
+1 - pchisq(fit9$deviance,df=fit9$df.residual)
+#Remove sex:tInOp
+fit10 = update(fit9, .~ . -factor(sex):tInOp   , data = df)
+drop1(fit10, test = 'Chisq')
+1 - pchisq(fit10$deviance,df=fit10$df.residual)
+fit11 = update(fit10, .~ . -time:factor(sex)   , data = df)
+drop1(fit11, test = 'Chisq')
+1 - pchisq(fit11$deviance,df=fit11$df.residual)
+#Remove tOut
+fit12 = update(fit11, .~ . -tOut   , data = df)
+drop1(fit12, test = 'Chisq')
+1 - pchisq(fit12$deviance,df=fit12$df.residual)
+#Remove tInOp
+fit13 = update(fit12, .~ . -tInOp   , data = df)
+drop1(fit13, test = 'Chisq')
+1 - pchisq(fit13$deviance,df=fit13$df.residual)
+#remove time
+fit14 = update(fit13, .~ . -time   , data = df)
+drop1(fit14, test = 'Chisq')
+1 - pchisq(fit14$deviance,df=fit14$df.residual)
+anova(fit14, test = 'Chisq')
+
+anova(fit0, fit14, test = 'Chisq')
+#Cant reject model reduction 
+
+###Compare with binomial 
+### Offset??
+#When including offset(nobs) this results in AIC of 272.7234 instead of 271.0270 without the offset 
+
+c(AIC(fit0),AIC(fit14), AIC(fit15))
+#Improvement in AIC
+
+par(mfrow=c(2,2))
+plot(fit14)
+df$residuals = resid(fit14)
+summary(fit14)
+
+ggplot(df, aes(x = sex, y = residuals)) + geom_boxplot()
+
+ggplot(df, aes(sample = residuals, col = sex))  +stat_qq() +
+  stat_qq_line()
+
+#Basis expansion of tInOp and tOut but not significant 
+fit15 <- update(fit14, .~.+ I((tInOp-mean(tInOp))^2) ++ I((tOut-mean(tOut))^2))
+anova(fit15, test = 'Chisq')
+```
+
