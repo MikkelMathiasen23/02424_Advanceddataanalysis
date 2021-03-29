@@ -10,3 +10,130 @@ source('setup.R')
 ```
 
 \section{Problem C}
+
+```{r}
+rm(list=ls())
+library(ggplot2)
+library(ordinal)
+library(GGally)
+df = read.csv("data/CeilingFan.csv",sep=";")
+str(df)
+
+names(df)
+library(dplyr)
+library(tidyverse)
+df2 = df%>%
+  group_by(fanSpeed,TSV,fanType)%>%
+  summarise(count=length(subjId))
+
+p = ggpairs(df,diag = list(continuous = wrap("barDiag",bins=30)))
+p
+df$fanSpeed.f = factor(df$fanSpeed) 
+
+ggplot(df,aes(x=fanSpeed.f,y=TSV,col=fanType))+
+  geom_jitter()+geom_vline(xintercept=c(1.5,2.5),lty=2,lwd=1.1)+
+  xlab("Fan speed")+ylab("Thermal sensation vote (TSV)")+
+  ggtitle("Fan speed vs TSV. The vertical lines are only there to show the seperation")
+
+tab = table(df[,2:3])
+tab
+chisq.test(tab)
+chisq.test(tab,simulate.p.value = TRUE)
+df
+str(df)
+unique(df$TSV)
+df$TSV = factor(df$TSV,levels=c(0,1,2),ordered=T ) 
+#df2$TSV = factor(df2$TSV,levels=c(0,1,2),ordered=T ) 
+str(df)
+
+#df$fanSpeed.f.ord = factor(df$fanSpeed,levels=c(0,1,2),ordered=T ) 
+fit_f = clm(TSV~fanSpeed.f,data=df)
+#fit_f.ord = clm(TSV~fanSpeed.f.ord,data=df) 
+fit = clm(TSV~fanSpeed,data=df)
+# Both are dependent
+anova(fit_f)
+#anova(fit_f.ord)
+anova(fit)
+
+
+anova(fit,fit_f)
+# factor model is best
+AIC(fit_f,fit)
+
+#-----------------------------
+# We assumes fanType is nomial as we don't know
+# if upstream is higher/lower than downstrea,
+
+# # Finding a better model
+# names(df)
+# fit_f1 = clm(TSV~fanSpeed.f*fanType,data=df)
+# anova(fit_f1)
+# 
+# fit_f1 = clm(TSV~fanSpeed.f.ord*fanType,data=df)
+# anova(fit_f1)
+# 
+# fit_f2 = clm(TSV~fanSpeed.f+fanType,data=df)
+# anova(fit_f2)
+# 
+# fit1 = clm(TSV~fanSpeed*fanType,data=df)
+# anova(fit1)
+# fit2 = clm(TSV~fanSpeed+fanType,data=df)
+# anova(fit2)
+
+#-----------------------------
+
+# Nomial
+
+fit_f_nom = clm(TSV~fanSpeed.f,nomial=~fanType,data=df)
+anova(fit_f_nom)
+
+summary(fit_f_nom)
+
+fit_nom = clm(TSV~fanSpeed,nomial=~fanType,data=df)
+anova(fit_nom)
+
+fit_nom_sq = clm(TSV~fanSpeed+I(fanSpeed^2),nomial=~fanType,data=df)
+anova(fit_nom_sq)
+summary(fit_nom_sq)
+
+anova(fit_nom,fit_nom_sq)
+
+anova(fit_f_nom,fit_nom,fit_nom_sq)
+AIC(fit_f_nom,fit_nom,fit_nom_sq)
+# -----------------------------
+links = c("logit", "probit", "cloglog", "loglog", "cauchit", 
+          "log-gamma")
+AICs = c()
+for(i in links){
+  fit_f_nom = clm(TSV~fanSpeed.f,nomial=~fanType,data=df,link=i)
+  #anova(fit_f_nom)
+  
+  #summary(fit_f_nom)
+  
+  fit_nom = clm(TSV~fanSpeed,nomial=~fanType,data=df,link=i)
+  #anova(fit_nom)
+  
+  fit_nom_sq = clm(TSV~fanSpeed+I(fanSpeed^2),nomial=~fanType,data=df,link=i)
+  #anova(fit_nom_sq)
+  #summary(fit_nom_sq)
+  
+  #anova(fit_nom,fit_nom_sq)
+  
+  #anova(fit_f_nom,fit_nom,fit_nom_sq)
+  AICs = rbind(AICs,cbind(i,AIC(fit_f_nom,fit_nom,fit_nom_sq)))
+  
+}
+
+fit_f_probit = clm(TSV~fanSpeed.f,nomial=~fanType,data=df,link="probit")
+fit_probit = clm(TSV~fanSpeed,nomial=~fanType,data=df,link="probit")
+
+fit_f_cloglog = clm(TSV~fanSpeed.f,nomial=~fanType,data=df,link="cloglog")
+fit_cloglog = clm(TSV~fanSpeed,nomial=~fanType,data=df,link="cloglog")
+
+plot(profile(fit_cloglog))
+plot(profile(fit_f_probit))
+fit_f_probit
+par(mfrow=c(1,2))
+plot(fit_f_probit)
+```
+

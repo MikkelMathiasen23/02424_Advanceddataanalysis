@@ -102,8 +102,8 @@ lambda=bc$x[bc$y==max(bc$y)]
 fit5log = glm(log(Ozone) ~Temp + InvHt +Hum , data = df)
 fit5bc = glm(Ozone^lambda ~Temp + InvHt +Hum , data = df)
 Anova(fit5log, type = 'III')
-logLik(fit5,fit5log,fit5bc)
 logLik(fit5)
+#logLik(fit5log)
 logLik(fit5bc)-sum((1-lambda)*log(df$Ozone)-nrow(df)*lambda)
 #Clearly better with log 
 #Refit model with log transformation of log(ozone)
