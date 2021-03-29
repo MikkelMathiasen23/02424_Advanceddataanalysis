@@ -99,6 +99,9 @@ fit1 <- glm(clo ~ ., data = data, family = binomial(link = "logit"))
 Anova(fit1)
 
 
+#-------------------------------------------------------------
+# Part 3
 
-
-
+data <- read.csv('data/ceilingFan.csv', sep = ';')
+tab <- table(data[,2:3])
+fisher.test(tab)
