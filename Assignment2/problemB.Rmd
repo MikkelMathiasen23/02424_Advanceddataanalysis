@@ -7,13 +7,20 @@ chunk_output_type: console
 
 ```{r}
 source('setup.R')
+library(ggplot)
+library(GGally)
+df = read.csv('data/dat_count.csv', sep = ';')
 ```
 
-# Problem B
-```{r}
-df = read.csv('data/dat_count.csv', sep = ';')
-head(df)
+# Clothing insulation level: Count data
 
+#Generalized linear model based on Binomial distribution
+A generalized linear model based on the Binomial distribution predicting the number of times a individual subject changes clothing insulation level throughout the day ($clo$). This will be based on the total time ($time$) of each observation, the number of observations during each day ($nobs$), the sex of the subject ($sex$), and the average indoor ($tInOp$) and outdoor temperature ($tOut$). 
+
+The generalized linear model based on the Binomial distribution will be fitted using the logit link-function. The full model using all interactions will be reduced based on Type III partitioning using backward selection. Higher order terms will be removed before lower order terms. Also a goodness of fit test will be applied in order to test if the model is sufficient.
+
+As the first full model containing all interactions does not pass the goodness of fit test ($p = 0.0086$). This indicates that the residual deviance is larger than what can be explained by the chi-squared distribution (ref Madsen). This could also indicate wrong distributional assumptions. Other link functions are also tried out in order to test if these could pass the goodness of fit test including: probit ($p = 0.00882$), cauchit ($p = 0.0095$), log ($p= 0.0082$) and cloglog ($p= 0.0084$). None of these passes the goodness of fit test. Basis expansion of time, outdoor and indoor temperature as tried up to order three and combined with all the before mentioned link functions but none of these passes the goodness of fit test. This could indicate that either the input variables does not appear to be good predictors of the output variable or that the binomial distribution is not a proper choice.
+```{r}
 ############Question 1 with binomial: 
 
 df$resp = cbind(df$clo, df$nobs - df$clo)
@@ -99,6 +106,7 @@ anova(fit0, fit14, test = 'Chisq')
 c(AIC(fit0),AIC(fit14))
 #Improvement in AIC
 str(df)
+
 ####################################
 #################################### None of above models pass the goodness of fit test therefore try out different link functions!
 #Possible selections: logit(default), probit, cauchit, log, cloglog
@@ -122,6 +130,22 @@ drop1(fit14cloglog, test = 'Chisq')
 1 - pchisq(fit14cloglog$deviance,df=fit14cloglog$df.residual)
 #Fails goodness of fit test 
 
+fit1 = glm(resp~  time*sex*tOut*tInOp + poly(time,degree= 2)+poly(time,degree= 3)+
+             poly(tInOp,degree= 2)+poly(tInOp,degree= 3)+poly(tOut,degree= 2)+
+             poly(tOut,degree= 3), family = binomial(link = 'probit'), data = df)
+
+
+fit1 = glm(resp~  time*sex*tOut*tInOp + I((time-mean(time))^2)+I((time-mean(time))^3)+I((tOut-mean(tOut))^2)+ 
+             I((tInOp-mean(tInOp))^2), family = binomial, data = df)
+fit1 = glm(resp~  time*sex*tOut*tInOp + I((time)^2)+I((tOut)^2)+ 
+             I((tInOp)^2), family = binomial(link = 'cauchit'), data = df)
+1 - pchisq(fit1$deviance,df=fit1$df.residual)
+
+```
+
+
+As different link-functions and basis expansion of the input variables does not pass the goodness of fit test a generalized linear model based on the binomial distribution containing a overdispersion parameter will be proposed. The initial model will be a full model containing all interactions and this will be reduced using backward selection based on Type III partitioning, where higher order terms are removed first. The resulting model is presented below:
+```{r}
 #All link functions with the final and full models fails. 
 ##Need to do overdispersion or create more complex model
 fit1quasi = glm(resp~  time*sex*tOut*tInOp, family = quasibinomial, data = df)
@@ -157,31 +181,71 @@ drop1(fit14quasi, test = 'F')
 fit15quasi  = update(fit14quasi, .~ . -time            , data = df)
 drop1(fit15quasi, test = 'F')
 
+anova(fit1quasi, fit15quasi, test ='Chisq')
 
-fit1 = glm(resp~  time*sex*tOut*tInOp + poly(time,degree= 2)+poly(time,degree= 3)+
-             poly(tInOp,degree= 2)+poly(tInOp,degree= 3)+poly(tOut,degree= 2)+
-             poly(tOut,degree= 3), family = binomial(link = 'cauchit'), data = df)
+fit16quasi <- update(fit15quasi, .~. + I((tInOp-mean(tInOp))^2) + I((tOut-mean(tOut))^2) + I((time-mean(time))^2), data = df)
+drop1(fit16quasi, test = 'F')
+
+fit16quasi <- update(fit16quasi, .~.  -I((tOut-mean(tOut))^2), data = df)
+drop1(fit16quasi, test = 'F')
+fit17quasi <- update(fit16quasi, .~.  -I((tInOp-mean(tInOp))^2), data = df)
+drop1(fit17quasi, test = 'F')
+
+```
+
+$$clo_i = \beta_0 + \beta_1 \cdot sex_i + \epsilon_i$$
+
+where $\epsilon \sim N(0,1)$. The residuals are assumed to be independent and identically distributed. The standard deviation of the residuals ($\hat{\sigma}$) are estimated as 1.13 and a confidence hereof are calculated based on theorem 3.5. The estimated parameters and 95\% confidence intervals calculated based on profile likelihood can be seen in table \ref{table:par_binomial}. 
+To test the model reduction a likelihood-ratio-test are performed based on theorem 3.6 resulting in $p=0.84$ thereby the model reduction is kept. Basis expansions of time, indoor and outdoor temperature are tried out but these are removed due to being insignificant. 
+
+```{r}
+library(xtable)
+fit15quasi$coefficients
+xtable(confint(fit15quasi))
 
 
-fit1 = glm(resp~  time*sex*tOut*tInOp + I((time-mean(time))^2)+I((time-mean(time))^3)+I((tOut-mean(tOut))^2)+ 
-             I((tInOp-mean(tInOp))^2), family = binomial, data = df)
-fit1 = glm(resp~  time*sex*tOut*tInOp + I((time)^2)+I((tOut)^2)+ 
-             I((tInOp)^2), family = binomial(link = 'cauchit'), data = df)
-1 - pchisq(fit1$deviance,df=fit1$df.residual)
+lm_sigma_conf<-function(fit,CI=0.95){
+  # Book page 53: sigma_hat^2~sigma^2*chisq_f/f where f=n-k
+  # rearanging: sigma_hat^2*f/chisq_f
+  sigma=sigma(fit)
+  d_f=fit$df.residual
+  conf_sigma2=d_f*sigma^2/qchisq(c((1-CI)/2,1-(1-CI)/2), df = d_f, lower.tail = FALSE)
+  conf=sqrt(conf_sigma2)
+  names(conf)=paste(c((1-CI)/2,1-(1-CI)/2)*100,"%")
+  return(conf)
+}
+sigma(fit15quasi)
+lm_sigma_conf(fit15quasi)
+```
 
-drop1(fit1, test = 'F')
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrr}
+  \hline
+ & 2.5 \% & Estimate & 97.5 \% \\ 
+  \hline
+$\hat{\beta_0}$ & -1.91 & -1.57 &-1.26 \\ 
+  $\hat{\beta_1}$ & -1.84 & -1.18 & -0.58 \\ 
+  $\hat{\sigma}$ & 1.01 & 1.13 & 1.29 \\
+   \hline
+\end{tabular}
+\label{table:par_binomial}
+\end{table}
+
+
+```{r}
+df$residuals = residuals(fit15quasi,type="pearson")
+ggplot(data = df, aes(x = sex, y = residuals, color = sex))+ geom_boxplot() + geom_jitter()
 
 summary(fit15quasi)
 (sigsq.dev <- fit15quasi$deviance/fit15quasi$df.residual)
 (sigsq.pear <- sum(residuals(fit15quasi,type="pearson")^2)/fit15quasi$df.residual)
 (sigsq.devR <- sum(residuals(fit15quasi,type="deviance")^2)/fit15quasi$df.residual)
-
-
-#### Overdispersion?
-library(ggplot)
-library(GGally)
-ggpairs(df[,3:8])
 ```
+The overdispersions parameter is estimated as: 1.34 based on pearson residuals. 
+
+
+#Generalized linear model based on Poisson distribution
 
 ```{r}
 ##########Question 2 Poisson:
