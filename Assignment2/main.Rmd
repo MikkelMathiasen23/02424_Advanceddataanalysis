@@ -34,18 +34,18 @@ library(xtable)
 library(directlabels)
 ```
 
-```{r child = 'problem1_exploratory.Rmd', cache = T}
-```
+#```{r child = 'problem1_exploratory.Rmd', cache = T}
+#```
 
-```{r child = 'problemA.Rmd', cache = T}
-```
+#```{r child = 'problemA.Rmd', cache = T}
+#```
 
 ```{r child = 'problemB.Rmd', cache = T}
 ```
 
-```{r child = 'problemC.Rmd', cache = T}
-```
+#```{r child = 'problemC.Rmd', cache = T}
+#```
 
 # Appendix: R-code
-```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
-```
+#```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+#```
