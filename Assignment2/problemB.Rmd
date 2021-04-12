@@ -13,11 +13,11 @@ df = read.csv('data/dat_count.csv', sep = ';')
 # Clothing insulation level: Count data
 
 ## Generalized linear model based on Binomial distribution
-A generalized linear model based on the Binomial distribution predicting the number of times a individual subject changes clothing insulation level throughout the day ($clo$). This will be based on the total time ($time$) of each observation, the number of observations during each day ($nobs$), the sex of the subject ($sex$), and the average indoor ($tInOp$) and outdoor temperature ($tOut$). As it is based on a binomial distribution this results in $Y = Z/n$ where $Z \sim B(n, p)$ where $n$ is $nobs$ and $p$ is the probability that a individual subject changes clothing insulation level throughout the day.
+A generalized linear model based on the Binomial distribution predicting the number of times a individual subject changes clothing insulation level throughout the day ($clo$). This will be based on the total time ($time$) of each observation, the number of observations during each day ($nobs$), the sex of the subject ($sex$), and the average indoor ($tInOp$) and outdoor temperature ($tOut$). As it is based on a binomial distribution this results in $Y = Z/n$ where $Z \sim B(n, p)$ where $n$ is $nobs$ and $p$ is the probability that a individual subject changes clothing insulation level per day. The response modeled using the binomial distribution is the number of times that a subject changes clothing insulation level per day and the number times they don't (successes and fails). The model consist of a linear predictor $\eta_i$ which is the mapping of the $\mu_i$ using the link function $g$. Creating the following relation $\eta_i = g(\mu_i)$ and $\mu_i = g^{-1}(\eta_i)$. 
 
 The generalized linear model based on the Binomial distribution will be fitted using the logit link-function. The full model using all interactions will be reduced based on Type II partitioning (based on the Chi-squared distribution) using backward selection. Higher order terms will be removed before lower order terms. Also a goodness of fit test will be applied in order to test if the model is sufficient.
 
-As the first full model containing all interactions does not pass the goodness of fit test ($p = 0.0086$). This indicates that the residual deviance is larger than what can be explained by the chi-squared distribution (ref Madsen). This could also indicate wrong distributional assumptions. Other link functions are also tried out in order to test if these could pass the goodness of fit test including: probit ($p = 0.00882$), cauchit ($p = 0.0095$), log ($p= 0.0082$) and cloglog ($p= 0.0084$). None of these passes the goodness of fit test. Basis expansion of time, outdoor and indoor temperature as tried up to order three and combined with all the before mentioned link functions but none of these passes the goodness of fit test. This could indicate that either the input variables does not appear to be good predictors of the output variable or that the binomial distribution is not a proper choice.
+As the first full model containing all interactions does not pass the goodness of fit test ($p = 0.0086$). This indicates that the residual deviance is larger than what can be explained by the chi-squared distribution (ref Madsen). This could also indicate wrong distributional assumptions. Other link functions are also tried out in order to test if these could pass the goodness of fit test including: probit ($p = 0.00882$), cauchit ($p = 0.0095$), log ($p= 0.0082$) and cloglog ($p= 0.0084$). None of these passes the goodness of fit test. Basis expansion of time, outdoor and indoor temperature are tried up to order three and combined with all the before mentioned link functions but none of these passes the goodness of fit test. This could indicate that either the input variables does not appear to be good predictors of the output variable or that the binomial distribution is not a proper choice.
 
 
 ```{r}
@@ -72,7 +72,7 @@ fit1 = glm(resp~  time*sex*tOut*tInOp + poly(time,degree= 2)+poly(time,degree= 3
 
 
 
-As different link-functions and basis expansion of the input variables does not pass the goodness of fit test a generalized linear model based on the binomial distribution containing a overdispersion parameter will be proposed. The initial model will be a full model containing all interactions and this will be reduced using backward selection based on Type II partitioning (based on F-distribution), where higher order terms are removed first. The resulting model is presented below:
+As different link-functions and basis expansion of the input variables does not pass the goodness of fit test a generalized linear model based on the binomial distribution containing an overdispersion parameter will be proposed. The initial model will be a full model containing all interactions and this will be reduced using backward selection based on Type II partitioning (based on F-distribution), where higher order terms are removed first. The resulting model is presented below using the logit link functions:
 ```{r}
 #All link functions with the final and full models fails. 
 ##Need to do overdispersion or create more complex model
@@ -121,10 +121,10 @@ drop1(fit17quasi, test = 'F')
 ```
 
 
-$$clo_i = \beta_0 + \beta_1 \cdot sex_i + \epsilon_i$$
+$$p_{clo,i} = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + \epsilon_i)$$
 
-where $\epsilon \sim N(0,1)$. The residuals are assumed to be independent and identically distributed. The standard deviation of the residuals ($\hat{\sigma}$) are estimated as 1.13 and a confidence hereof are calculated based on theorem 3.5. The estimated parameters and 95\% confidence intervals calculated based on profile likelihood can be seen in table \ref{table:par_binomial}. 
-To test the model reduction a likelihood-ratio-test are performed based on theorem 3.6 resulting in $p=0.84$ thereby the model reduction is kept. Basis expansions of time, indoor and outdoor temperature are tried out but these are removed due to being insignificant. 
+where $\epsilon_i \sim B_i(0,\sigma^2)$. Here $p_{clo,i}$ is the probability of changing clothing level. The residuals are assumed to be independent and identically distributed. The standard deviation of the residuals ($\hat{\sigma}$) are estimated as 1.13 and a confidence hereof are calculated based on theorem 3.5. The estimated parameters and 95\% confidence intervals calculated based on profile likelihood can be seen in table \ref{table:par_binomial}. 
+To test the model reduction a likelihood-ratio-test are performed based on theorem 3.6 resulting in $p=0.84$ thereby the model reduction is kept. Basis expansions of time, indoor and outdoor temperature are tried out but these are removed as they appear not to be significant. 
 
 ```{r}
 library(xtable)
@@ -160,24 +160,24 @@ $\hat{\beta_0}$ & -1.91 & -1.57 &-1.26 \\
 \label{table:par_binomial}
 \caption{Estimated parameter values for the generalized linear model based on binomial distribution and 95 \% confidence interval based on profile likelihood. Also 95\% confidence interval of residual standard deviation. }
 \end{table}
-
-
-
 ```{r}
-df$residuals = residuals(fit15quasi,type="pearson")
-ggplot(data = df, aes(x = sex, y = residuals, color = sex))+ geom_boxplot() + geom_jitter()
-
 summary(fit15quasi)
 (sigsq.dev <- fit15quasi$deviance/fit15quasi$df.residual)
 (sigsq.pear <- sum(residuals(fit15quasi,type="pearson")^2)/fit15quasi$df.residual)
 (sigsq.devR <- sum(residuals(fit15quasi,type="deviance")^2)/fit15quasi$df.residual)
+
 ```
-The overdispersions parameter is estimated as: 1.34 based on pearson residuals. 
+The overdispersions parameter is estimated as: 1.34 based on pearson residuals. The residuals of the final model are investigated further in figure \ref{residuals_binomial}. From the Residuals vs. Fitted and Scale-Location plots in figure \ref{residuals_binomial} there does not appear to be any apparent issues with the residuals. The input variables are discrete as this is the gender of the subject and therefore this is expected. The Normal-QQ plot does not look correct, but as the $nobs_i$ of the data are low it is not expected that the standardized deviance residuals are approximately Gaussian. 
+
+```{r residuals_binomial,fig.height=4,fig.cap="Residuals analysis of the generalized linear model based on the binomial distribution."}
+par(mfrow= c(2,2))
+plot(fit15quasi)
+```
 
 
 ## Generalized linear model based on Poisson distribution
 
-A new generalized linear model similar the the one proposed above are fitted. Instead of being based on the binomial distribution the new model will be based on the Poisson distribution using the log link-function. The initial model are again the full model using all interactions, and are reduced using the backward selection method using Type II partitioning (based on the Chi-squared distribution), where higher order terms are removed before lower order terms. A goodness of fit test are performed on the initial model resulting in: $p = 0.13$ and therefore passes the initial goodness of fit test. The final from the model reduction is presented below: 
+A new generalized linear model similar the the one proposed above are fitted. Instead of being based on the binomial distribution the new model will be based on the Poisson distribution using the log link-function. The predictor $\eta_i$ is the mapped version of $\mu$ using the link function $g$ giving the following relation: $\eta_i = g(\mu_i)$. The initial model are again the full model using all interactions, and are reduced using the backward selection method using Type II partitioning (based on the Chi-squared distribution), where higher order terms are removed before lower order terms. A goodness of fit test are performed on the initial model resulting in: $p = 0.13$ and therefore passes the initial goodness of fit test. The final from the model reduction is presented below: 
 
 ```{r}
 fit0  = glm(clo ~ time*factor(sex)*tOut*tInOp ,poisson(link = log), data = df)
@@ -243,12 +243,13 @@ drop1(fit14, test = 'Chisq')
 anova(fit0, fit14, test = 'Chisq')
 ```
 
-$$clo_i = \beta_0 + \beta_1 \cdot sex_i + \epsilon_i$$
+$$clo_i = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + \epsilon_i)$$
 
 
-where $\epsilon \sim N(0,1)$. Again the reduced model passes the goodness of fit test ($p=0.16$). Also the reduced model are compared with the full initial model in order to test the model reduction (likelihood-ratio-test) and results in the following p-value: $p=0.59$ and the model reduction are therefore kept. The residuals are assumed to be independent and identically distributed. It is further tested whether including an offset will improve the performance of the model. An offset using $log(nobs)$ and another using $log(time)$ are implemented. The model including the $log(time)$ offset performs best and are also tested whether it is a sufficient model and both the full initial model and the reduced model passes the goodness of fit test (initial model: $p = 0.11$, reduced model: $0.16$). Also the reduced model containing an offset ends up with same model as presented above, but including an offset. In order to compare the model including an offset and the previous model the AIC (but the same result emerges when using log-likelihood). The computed AIC scores are: 270.61 and 271.03 for the model including an offset and the one without respectively. Thereby indicating that the model including the $log(time)$ offset are best. When using the time offset the $nobs$ becomes redundant and are therefore removed. 
+where $\epsilon_i \sim P_i(0,\sigma^2)$. Again the reduced model passes the goodness of fit test ($p=0.16$). Also the reduced model are compared with the full initial model in order to test the model reduction (likelihood-ratio-test) and results in the following p-value: $p=0.59$ and the model reduction are therefore kept. The residuals are assumed to be independent and identically distributed. It is further tested whether including an offset will improve the performance of the model. An offset using $log(nobs)$ and another using $log(time)$ are implemented. This would result in the following model when using the log link-function:$\eta_i = log(\dfrac{\mu_i}{offset_i})$. Both models containing offsets performs slightly better than the model without, and all models passes the goodness of fit test. 
 
-SKAL VI OGSÅ FJERNE DEN NÅR VI BRUGER NOBS OFFSET???
+The model including the $log(time)$ offset performs slightly better than the other offset model. This model are also tested whether it is a sufficient model and both the full initial model and the reduced model passes the goodness of fit test (initial model: $p = 0.11$, reduced model: $0.16$). Also the reduced model containing an offset ends up with same model as presented above, but including an offset. In order to compare the model including an offset and the previous model the AIC (but the same result emerges when using log-likelihood). The computed AIC scores are: 270.13 and 271.03 for the model including an offset and the one without respectively. Thereby indicating that the model including the $log(time)$ offset are best. When using the time offset the $nobs$ are only added to the model, as this contains the value 1 and when applying the log link-function this results in zeros. Therefore it is only added to the model.   
+
 
 ```{r}
 #####Offset nobs:
@@ -314,7 +315,7 @@ drop1(fit14offset, test = 'Chisq')
 
 
 ###Offset time:
-fit0offsett  = glm(clo ~ factor(sex)*tOut*tInOp + offset(log(time)) ,poisson(link = log), data = df)
+fit0offsett  = glm(clo ~ nobs+factor(sex)*tOut*tInOp + offset(log(time)) ,poisson(link = log), data = df)
 drop1(fit0offsett, test = 'Chisq')
 1 - pchisq(fit0offsett$deviance,df=fit0offsett$df.residual)
 #Reduce with this setting --> compare 
@@ -331,6 +332,10 @@ drop1(fit3offsett, test = 'Chisq')
 1 - pchisq(fit3offsett$deviance,df=fit3offsett$df.residual)
 
 fit4offsett  = update(fit3offsett, .~ . -factor(sex):tInOp    , data = df)
+drop1(fit4offsett, test = 'Chisq')
+1 - pchisq(fit4offsett$deviance,df=fit4offsett$df.residual)
+
+fit4offsett  = update(fit4offsett, .~ . -nobs    , data = df)
 drop1(fit4offsett, test = 'Chisq')
 1 - pchisq(fit4offsett$deviance,df=fit4offsett$df.residual)
 
@@ -376,7 +381,7 @@ glm(clo ~ factor(sex) + offset(log(time)) ,poisson(link = log), data = df)
 
 The final and optimal model are the following: 
 
-$$clo_i = \beta_0 + \beta_1 \cdot sex_i + offset(log(time_i))+ \epsilon_i$$
+$$clo_i = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + offset(log(time_i))+ \epsilon_i)$$
 
 ```{r}
 lm_sigma_conf<-function(fit,CI=0.95){
@@ -414,29 +419,46 @@ To test the model reduction a likelihood-ratio-test are performed based on theor
 \caption{Estimated parameter values for the generalized linear model based on poisson distribution and 95 \% confidence interval based on profile likelihood. Also 95\% confidence interval of residual standard deviation.}
 \end{table}
 
+The residuals are also investigated in figure \ref{residuals_poisson}. From this the Residuals vs Fitted and Scale-Location plots looks fine, as there does not appear to be any structure in the residuals.  The Normal-QQ plot does not look correct, but as the count of the data ($clo_i$) are low it is not expected that the standardized deviance residuals are approximately Gaussian. 
+```{r residuals_poisson,fig.height=4,fig.cap="Residuals analysis of the generalized linear model based on the poisson distribution."}
+plot(fit6offsett)
+```
+
+
 ## Interpretation of the two models
 The initial generalized linear model based on the binomial distribution did not pass the goodness of fit test, and it was needed to include a overdispersion parameter estimate to 1.34. This could be due to the binomial distribution not being an appropriate distributional assumptions using the provided predictors. As the model contains an intercept $\hat{\beta_0}$ and a slope for the sex of the subject $\hat{\beta_1}$, then the intercept will contain the information about how females changes clothing level throughout the day (as $sex(female) = 0$ and $sex(male) = 1$ ). Whereas $\hat{\beta_1}$ contains the adjustment in the intercept for males as $sex(males)= 1$. The probability of females and males changing clothing insulation level can therefore be calculated as using the following formula: $p = \dfrac{exp(\theta)}{1+exp(\theta)}$. 
 
 $$p_{female} = \dfrac{exp(-1.57)}{1+exp(-1.57)}  = 0.17$$
 $$p_{male} = \dfrac{exp(-1.57-1.18)}{1+exp(-1.571.18)}  = 0.06$$
 The probability of females changing insulation clothing level are thereby approximately three times as large as for males. This would also correspond to the higher variation in female clothing level compared to males, which was observed in assignment 1. In order to estimate this more correctly the Odds ratio are calculated: 
-$$OR = \dfrac{p_{females}/(1-p_{females})}{p_{males}/(1-p_{males})} = \dfrac{0.17/(1-0.17)}{0.06/(1-0.06)}= 3.25$$ 
-As the Odds ratio are well above 1 this indicates that females are much more prone to change clothing insulation level than males. 
+$$OR = \dfrac{p_{females}/(1-p_{females})}{p_{males}/(1-p_{males})} = \dfrac{0.17/(1-0.17)}{0.06/(1-0.06)}= 3.27$$ 
+A 95\% confidence interval of the Odds ratio are: [1.79, 6.32]. As the Odds ratio (and confidence interval) are well above 1 this indicates that females are much more prone to change clothing insulation level than males. 
+```{r}
+1/exp(coef(fit15quasi)[2])
+1/exp(confint(fit15quasi)[2, ]) ## 95% confidence interval
+```
 
-For the generalized linear model based on the Poisson distribution the model as well contained an intercept. The model ended up with the same predictors as the generalized linear model based on the binomial distribution. The Poisson model did pass the goodness of fit test thereby indicating that this distributional assumption was more appropriate. Again as described above the intercept would contain information about how the females changes clothing level, whereas the $\hat{beta_1}$ parameter would contain the adjustment for males. The model also included the offset using $log(time)$. From table \ref{table:par_poisson} it can be seen that females again are more prone to changing clothing level than males, as we can see the negative adjustment for males compared to females. 
+For the generalized linear model based on the Poisson distribution the model as well contained an intercept. The model ended up with the same predictors as the generalized linear model based on the binomial distribution. The Poisson model did pass the goodness of fit test thereby indicating that this distributional assumption was more appropriate. Again as described above the intercept would contain information about how the females changes clothing level, whereas the $\hat{beta_1}$ parameter would contain the adjustment for males. The model also included the offset using $log(time)$. From table \ref{table:par_poisson} it can be seen that females again are more prone to changing clothing level than males, as we can see the negative adjustment for males compared to females. As $\hat{\beta_1}$ are negative in the link-space this would result in a smaller mean $\mu_i$ for males and thereby result in a lower probability for changing clothes of males than females. 
 
-SKAL DER SKRIVES MERE TIL POISSON?????
+Again the Odds ratio are calculated between females and males resulting in OR = $2.90$ and 95\% confidence interval (based on the profile-likelihood) [1.76, 4.98]. This again indicates that females are more likelihood to change clothing level than males. 
+
+```{r}
+1/exp(coef(fit6offsett)[2])
+1/exp(confint(fit6offsett)[2, ]) ## 95% confidence interval
+
+```
+
 
 ## Small conclusion
 A generalized linear model based on the binomial distribution was fitted on the clothing insulation data aiming to predict the change in the individual subjects clothing level throughout a day. This was based on the indoor and outdoor temperature, the gender of the subject and the total time of each observations. Different link-functions and basis expansions of the input variables were tried out but none of the models resulted in a model that passed the goodness of fit test. It was therefore needed to introduce a overdispersion parameter, resulting in the following mode: 
 
-$$clo_i = \beta_0 + \beta_1 \cdot sex_i + \epsilon_i$$
+$$p_{clo,i} = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + \epsilon_i)$$
 
 The model was reduced using the backward selection based on Type II partitioning. The odds ratio was calculated between the female and male probability of changing clothing insulation level and this was estimated to $OR = 3.25$ thereby indicating that females are more prone to changing clothing level than males. 
 
 A generalized linear model based on the Poisson distribution was also estimated based on the same input variables. This model did pass the goodness of fit test, and thereby indicating that the distributional assumptions for the Poisson distribution did match the variables much better than the Binomial distribution. It was therefore not needed to estimate an overdispersion parameter. It was found that introducing an offset using the $log(time)$ did improve the performance of the model. The optimal model was as well estimated using the backward selection based on Type II partitioning and result is presented below: 
 
-$$clo_i = \beta_0 + \beta_1 \cdot sex_i +offset(log(time_i)) + \epsilon_i$$
+$$clo_i = g^{-1}(\beta_0 + \beta_1 \cdot sex_i +offset(log(time_i)) + \epsilon_i)$$
 
 It appears for both models that the most important predictor is the gender of the subject. This also appears to be feasible as there are big difference in the variation in the change of clothing level based on the gender. The resulting model for both distributional assumption could indicate that the most predictive and important input variable for determining the change of clothing level are the gender of the subject. 
 
