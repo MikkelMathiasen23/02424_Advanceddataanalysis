@@ -6,54 +6,86 @@ chunk_output_type: console
 ---
 
 ```{r}
-source('setup.R')
-```
-
-\section{Problem C}
-
-```{r}
 rm(list=ls())
+source('setup.R')
 library(ggplot2)
 library(ordinal)
 library(GGally)
+library(dplyr)
+library(tidyverse)
+
 df = read.csv("data/CeilingFan.csv",sep=";")
+df$fanSpeed.f = factor(df$fanSpeed) 
+
+
+
+```
+
+\section{Fan Speed}
+For this section, a ceiling fan data set will be analyzed. The data set consists of a thermal sensation vote (TSV) and fan speed, which are both on a 3-level scale. The type of fan is also included in the data set, including a subject identifier \texttt{subjId} although this will be omitted from the analysis. Firstly, the data is investigated. The relation between fan speed and thermal sensation vote is visualized below in a jitter plot where the different colors picture the fan type.
+
+
+```{r}
+ggplot(df,aes(x=fanSpeed.f,y=TSV,col=fanType))+
+  geom_jitter()+geom_vline(xintercept=c(1.5,2.5),lty=2,lwd=1.1)+
+  xlab("Fan speed")+ylab("Thermal sensation vote (TSV)")+
+  ggtitle("Fan speed vs TSV. The vertical lines are only there to show the seperation")
+```
+
+From the above figure, it can be seen that there is no apparent relation between the fan speed and TSV. It should be noted, however, that the highest level TSV appears to be predominantly fans of type upstream. 
+
+It is now wished to test if independence can be assumed between the thermal sensation vote and fan speed using a contingency table. The contingency table can be seen below. 
+
+TO DO: indsæt tabel
+
+```{r}
+tab = table(df[,2:3])
+tab
+```
+
+Independence is now tested using a $\chi^2$-test. This results in a p value of 0.0001444. Using a significance level of 0.05, this results in a rejection of the null hypothesis and it is therefore assumed that the TSV is not independent of the fan speed.
+
+We will now test the same hypothesis but now by constructing two cumulative link models (CLM) using the \texttt{ordinal} package and the anova method. The two models will both be CLM's but with the difference of whether fan speed is treated as a factor or not. 
+
+TO DO: indsæt model foreskriften?
+
+This results in the p-values of: 0.0004 and 0.0006 for the factorized and non-factorized models respectively. Using the same significance level as previously, we get the same conclusion that the null hypothesis is rejected and it assumed that TSV and fan speed are not indepedent. 
+
+```{r}
+df$TSV = factor(df$TSV,levels=c(0,1,2),ordered=T ) 
+#df$fanSpeed.f.ord = factor(df$fanSpeed,levels=c(0,1,2),ordered=T ) 
+fit_f = clm(TSV~fanSpeed.f,data=df)
+#fit_f.ord = clm(TSV~fanSpeed.f.ord,data=df) 
+fit = clm(TSV~fanSpeed,data=df)
+# Both are dependent
+anova(fit_f)$"Pr(>Chisq)"
+#anova(fit_f.ord)
+anova(fit)$"Pr(>Chisq)"
+
 str(df)
 
 names(df)
-library(dplyr)
-library(tidyverse)
+
 df2 = df%>%
   group_by(fanSpeed,TSV,fanType)%>%
   summarise(count=length(subjId))
 
 p = ggpairs(df,diag = list(continuous = wrap("barDiag",bins=30)))
 p
-df$fanSpeed.f = factor(df$fanSpeed) 
 
-ggplot(df,aes(x=fanSpeed.f,y=TSV,col=fanType))+
-  geom_jitter()+geom_vline(xintercept=c(1.5,2.5),lty=2,lwd=1.1)+
-  xlab("Fan speed")+ylab("Thermal sensation vote (TSV)")+
-  ggtitle("Fan speed vs TSV. The vertical lines are only there to show the seperation")
 
-tab = table(df[,2:3])
-tab
+
+
 chisq.test(tab)
 chisq.test(tab,simulate.p.value = TRUE)
 df
 str(df)
 unique(df$TSV)
-df$TSV = factor(df$TSV,levels=c(0,1,2),ordered=T ) 
+
 #df2$TSV = factor(df2$TSV,levels=c(0,1,2),ordered=T ) 
 str(df)
 
-#df$fanSpeed.f.ord = factor(df$fanSpeed,levels=c(0,1,2),ordered=T ) 
-fit_f = clm(TSV~fanSpeed.f,data=df)
-#fit_f.ord = clm(TSV~fanSpeed.f.ord,data=df) 
-fit = clm(TSV~fanSpeed,data=df)
-# Both are dependent
-anova(fit_f)
-#anova(fit_f.ord)
-anova(fit)
+
 
 
 anova(fit,fit_f)
@@ -136,4 +168,6 @@ fit_f_probit
 par(mfrow=c(1,2))
 plot(fit_f_probit)
 ```
+
+
 
