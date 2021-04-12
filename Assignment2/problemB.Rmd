@@ -167,9 +167,9 @@ summary(fit15quasi)
 (sigsq.devR <- sum(residuals(fit15quasi,type="deviance")^2)/fit15quasi$df.residual)
 
 ```
-The overdispersions parameter is estimated as: 1.34 based on pearson residuals. The residuals of the final model are investigated further in figure \ref{residuals_binomial}. From the Residuals vs. Fitted and Scale-Location plots in figure \ref{residuals_binomial} there does not appear to be any apparent issues with the residuals. The input variables are discrete as this is the gender of the subject and therefore this is expected. The Normal-QQ plot does not look correct, but as the $nobs_i$ of the data are low it is not expected that the standardized deviance residuals are approximately Gaussian. 
+The overdispersions parameter is estimated as: 1.34 based on pearson residuals. The residuals of the final model are investigated further in figure \ref{fig:residuals_binomial}. From the Residuals vs. Fitted and Scale-Location plots in figure \ref{fig:residuals_binomial} there does not appear to be any apparent issues with the residuals. The input variables are discrete as this is the gender of the subject and therefore this is expected. The Normal-QQ plot does not look correct, but as the $nobs_i$ of the data are low it is not expected that the standardized deviance residuals are approximately Gaussian. 
 
-```{r residuals_binomial,fig.height=4,fig.cap="Residuals analysis of the generalized linear model based on the binomial distribution."}
+```{r residuals_binomial,fig.height=8,fig.cap="Residuals analysis of the generalized linear model based on the binomial distribution."}
 par(mfrow= c(2,2))
 plot(fit15quasi)
 ```
@@ -419,8 +419,9 @@ To test the model reduction a likelihood-ratio-test are performed based on theor
 \caption{Estimated parameter values for the generalized linear model based on poisson distribution and 95 \% confidence interval based on profile likelihood. Also 95\% confidence interval of residual standard deviation.}
 \end{table}
 
-The residuals are also investigated in figure \ref{residuals_poisson}. From this the Residuals vs Fitted and Scale-Location plots looks fine, as there does not appear to be any structure in the residuals.  The Normal-QQ plot does not look correct, but as the count of the data ($clo_i$) are low it is not expected that the standardized deviance residuals are approximately Gaussian. 
-```{r residuals_poisson,fig.height=4,fig.cap="Residuals analysis of the generalized linear model based on the poisson distribution."}
+The residuals are also investigated in figure \ref{fig:residuals_poisson}. From this the Residuals vs Fitted and Scale-Location plots looks fine, as there does not appear to be any structure in the residuals.  The Normal-QQ plot does not look correct, but as the count of the data ($clo_i$) are low it is not expected that the standardized deviance residuals are approximately Gaussian. 
+```{r residuals_poisson,fig.height=8,fig.cap="Residuals analysis of the generalized linear model based on the poisson distribution."}
+par(mfrow = c(2,2))
 plot(fit6offsett)
 ```
 
