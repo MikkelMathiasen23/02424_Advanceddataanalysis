@@ -13,6 +13,7 @@ library(ordinal)
 library(GGally)
 library(dplyr)
 library(tidyverse)
+library(xtable)
 
 df = read.csv("data/CeilingFan.csv",sep=";")
 df$fanSpeed.f = factor(df$fanSpeed) 
@@ -22,38 +23,42 @@ df$fanSpeed.f = factor(df$fanSpeed)
 ```
 
 \section{Fan Speed}
-For this section, a ceiling fan data set will be analyzed. The data set consists of a thermal sensation vote (TSV) and fan speed, which are both on a 3-level scale. The type of fan is also included in the data set, including a subject identifier \texttt{subjId} although this will be omitted from the analysis. Firstly, the data is investigated. The relation between fan speed and thermal sensation vote is visualized below in a jitter plot where the different colors picture the fan type.
+For this section, a ceiling fan data set will be analyzed. The data set consists of a thermal sensation vote (TSV) and fan speed, which are both on a 3-level scale. The type of fan is also included in the data set, including a subject identifier \texttt{subjId} which will be omitted from the analysis. Firstly, the data is investigated. The relation between fan speed and thermal sensation vote is visualized below in a jitter plot where the different depicts fan type. 
 
 
-```{r}
+```{r data.exp, fig.cap = "Jitter plot of thermal sensation vote and fan speed colored accordingly to fan type."}
 ggplot(df,aes(x=fanSpeed.f,y=TSV,col=fanType))+
   geom_jitter()+geom_vline(xintercept=c(1.5,2.5),lty=2,lwd=1.1)+
   xlab("Fan speed")+ylab("Thermal sensation vote (TSV)")+
   ggtitle("Fan speed vs TSV. The vertical lines are only there to show the seperation")
 ```
 
-From the above figure, it can be seen that there is no apparent relation between the fan speed and TSV. It should be noted, however, that the highest level TSV appears to be predominantly fans of type upstream. 
+From figure \ref{fig:data.exp}, it can be seen that there is no apparent relation between the fan speed and TSV visually. It should be noted, however, that the highest level TSV appears to be predominantly fans of type upstream. 
 
-It is now wished to test if independence can be assumed between the thermal sensation vote and fan speed using a contingency table. The contingency table can be seen below. 
+It is now wished to test if independence can be assumed between the thermal sensation vote and fan speed using a contingency table. The contingency table can be seen in \cref{tab:con_table}. 
 
-TO DO: indsæt tabel
 
 ```{r}
 tab = table(df[,2:3])
-tab
+chisq.test(tab)
+chisq.test(tab,simulate.p.value = TRUE)
+
+```
+
+```{r echo=F,results='asis',warning=F,message=F}
+xtab <-xtableFtable(ftable(tab), caption = 'Contigency table of thermal sensation vote and fan speed.', label = 'tab:con_table') 
+print(xtab, comment=F)
 ```
 
 Independence is now tested using a $\chi^2$-test. This results in a p value of 0.0001444. Using a significance level of 0.05, this results in a rejection of the null hypothesis and it is therefore assumed that the TSV is not independent of the fan speed.
 
-We will now test the same hypothesis but now by constructing two cumulative link models (CLM) using the \texttt{ordinal} package and the anova method. The two models will both be CLM's but with the difference of whether fan speed is treated as a factor or not. 
-
-TO DO: indsæt model foreskriften?
+We will now test the same hypothesis but by constructing two cumulative link models (CLM) using the \texttt{ordinal} package and the anova method. The two models will both be CLM's but with the difference of whether fan speed is treated as a factor or not. 
 
 This results in the p-values of: 0.0004 and 0.0006 for the factorized and non-factorized models respectively. Using the same significance level as previously, we get the same conclusion that the null hypothesis is rejected and it assumed that TSV and fan speed are not indepedent. 
 
 ```{r}
 df$TSV = factor(df$TSV,levels=c(0,1,2),ordered=T ) 
-#df$fanSpeed.f.ord = factor(df$fanSpeed,levels=c(0,1,2),ordered=T ) 
+df$fanSpeed.f.ord = factor(df$fanSpeed,levels=c(0,1,2),ordered=T ) 
 fit_f = clm(TSV~fanSpeed.f,data=df)
 #fit_f.ord = clm(TSV~fanSpeed.f.ord,data=df) 
 fit = clm(TSV~fanSpeed,data=df)
@@ -61,113 +66,183 @@ fit = clm(TSV~fanSpeed,data=df)
 anova(fit_f)$"Pr(>Chisq)"
 #anova(fit_f.ord)
 anova(fit)$"Pr(>Chisq)"
+```
 
-str(df)
+It is now wished to fit a proportional odds model for TSV as a function of fan speed and fan type. In general, the model thresholds the cumulative probabilities thereby making the ordinal categories binary within that threshold. The cumulative probabilities are then the probability of the response variable, TSV, being less than or equal to a given category:
 
-names(df)
+  
+$$P(Y \leq j) = p_1 + p_2 + p_j, j = 1,2,3$$
 
-df2 = df%>%
-  group_by(fanSpeed,TSV,fanType)%>%
-  summarise(count=length(subjId))
+First, a suitable model will be determined. The tested models can be seen in the table below and are selected based on AIC. The tested models are first a simple model excluding the fan type. For the second model, the fan type is included. For the third model, interactions between fan type and fan speed is included as well. 
 
-p = ggpairs(df,diag = list(continuous = wrap("barDiag",bins=30)))
-p
+\begin{table}[ht]
+\centering
+\begin{tabular}{c l c}
+  \hline
+   fit & model formula & AIC\\ 
+  \hline
+  1 & $TSV \sim fanSpeed.f$ & 429.5\\
+  2 & $TSV \sim fanSpeed.f + fanType$ & 417.77 \\       
+  3 & $TSV \sim fanSpeed.f * fanType$ & 417.43 \\
+   \hline
+\end{tabular}
+\label{table:cfits}
+\caption{Suitable model determination for the proportional odds model in \texttt{r} notation.}
+\end{table}
 
+This gives, for the logistic cumulative probabilities for fit3:
 
+$$  log \left( \frac{P(Y \leq j)}{1 - P(Y \leq j)} \right) = \alpha_i + \beta_j, j =1,2,3 , i= 1,2  $$
+TJEK - er den her model forskift rigtig??? Er slet ikke sikker.
 
-
-chisq.test(tab)
-chisq.test(tab,simulate.p.value = TRUE)
-df
-str(df)
-unique(df$TSV)
-
-#df2$TSV = factor(df2$TSV,levels=c(0,1,2),ordered=T ) 
-str(df)
-
-
-
-
-anova(fit,fit_f)
-# factor model is best
-AIC(fit_f,fit)
-
+```{r}
 #-----------------------------
 # We assumes fanType is nomial as we don't know
 # if upstream is higher/lower than downstrea,
 
-# # Finding a better model
-# names(df)
-# fit_f1 = clm(TSV~fanSpeed.f*fanType,data=df)
-# anova(fit_f1)
-# 
-# fit_f1 = clm(TSV~fanSpeed.f.ord*fanType,data=df)
-# anova(fit_f1)
-# 
-# fit_f2 = clm(TSV~fanSpeed.f+fanType,data=df)
-# anova(fit_f2)
-# 
-# fit1 = clm(TSV~fanSpeed*fanType,data=df)
-# anova(fit1)
-# fit2 = clm(TSV~fanSpeed+fanType,data=df)
-# anova(fit2)
+df2 = df%>%
+   group_by(fanSpeed,TSV,fanType)%>%
+   summarise(count=length(subjId))
+df2$TSV = factor(df2$TSV,levels=c(0,1,2),ordered=T ) 
+df2$fanSpeed.f <- factor(df2$fanSpeed, ordered = TRUE, levels = c(0,1,2))
 
-#-----------------------------
 
-# Nomial
 
-fit_f_nom = clm(TSV~fanSpeed.f,nomial=~fanType,data=df)
-anova(fit_f_nom)
+# Finding a better model
+names(df2)
 
-summary(fit_f_nom)
+# Factored
+fit1 = clm(TSV~fanSpeed.f+fanType,data=df2, weights = count)
+fit1
 
-fit_nom = clm(TSV~fanSpeed,nomial=~fanType,data=df)
-anova(fit_nom)
+# Interactions + factor
+fit2 = clm(TSV~fanSpeed.f*fanType,data=df2, weights = count)
+fit2$beta
+fit2$alpha
 
-fit_nom_sq = clm(TSV~fanSpeed+I(fanSpeed^2),nomial=~fanType,data=df)
-anova(fit_nom_sq)
-summary(fit_nom_sq)
+# Nomial fantype
 
-anova(fit_nom,fit_nom_sq)
+fit3 = clm(TSV~fanSpeed.f,nomial=~fanType,data=df2, weights = count)
+fit3
 
-anova(fit_f_nom,fit_nom,fit_nom_sq)
-AIC(fit_f_nom,fit_nom,fit_nom_sq)
-# -----------------------------
-links = c("logit", "probit", "cloglog", "loglog", "cauchit", 
-          "log-gamma")
-AICs = c()
-for(i in links){
-  fit_f_nom = clm(TSV~fanSpeed.f,nomial=~fanType,data=df,link=i)
-  #anova(fit_f_nom)
-  
-  #summary(fit_f_nom)
-  
-  fit_nom = clm(TSV~fanSpeed,nomial=~fanType,data=df,link=i)
-  #anova(fit_nom)
-  
-  fit_nom_sq = clm(TSV~fanSpeed+I(fanSpeed^2),nomial=~fanType,data=df,link=i)
-  #anova(fit_nom_sq)
-  #summary(fit_nom_sq)
-  
-  #anova(fit_nom,fit_nom_sq)
-  
-  #anova(fit_f_nom,fit_nom,fit_nom_sq)
-  AICs = rbind(AICs,cbind(i,AIC(fit_f_nom,fit_nom,fit_nom_sq)))
-  
-}
 
-fit_f_probit = clm(TSV~fanSpeed.f,nomial=~fanType,data=df,link="probit")
-fit_probit = clm(TSV~fanSpeed,nomial=~fanType,data=df,link="probit")
 
-fit_f_cloglog = clm(TSV~fanSpeed.f,nomial=~fanType,data=df,link="cloglog")
-fit_cloglog = clm(TSV~fanSpeed,nomial=~fanType,data=df,link="cloglog")
-
-plot(profile(fit_cloglog))
-plot(profile(fit_f_probit))
-fit_f_probit
-par(mfrow=c(1,2))
-plot(fit_f_probit)
+anova(fit1,fit2,fit3)
+AIC(fit1,fit2,fit3)
 ```
+
+Next, different link functions are investigated. The following link functions are investigated: logit, probit, cloglog, loglog and log-gamma. The selection of link function will, again, be based on the model AIC score. Using this, results in the following table:
+
+
+
+```{r}
+links = c("logit", "probit", "cloglog", "loglog", "log-gamma")
+AICs = c()
+
+for(i in links){
+  fit_f_nom = clm(TSV~fanSpeed.f*fanType,data=df2, weights = count,link=i)
+  AICs = rbind(AICs,cbind(i,AIC(fit_f_nom)))
+}
+```
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll |rr}
+  \hline
+   &  & \multicolumn{1}{l}{                link function} & \multicolumn{1}{l}{                AIC } \\ 
+    &  & \multicolumn{1}{l}{                 } & \multicolumn{1}{l}{                 } \\ 
+   \hline
+A &  & logit            & 417.425338799379 \\ 
+  B &  & probit           & 416.560318920447 \\ 
+  C &  & cloglog          & 417.051135172447 \\ 
+  D &  & loglog           & 420.250968075968 \\ 
+  E &  & log-gamma        & 418.280241748026 \\ 
+   \hline
+\end{tabular}
+\caption{AIC scores for the tested link functions.} 
+\label{tab:clink}
+\end{table}
+ 
+From the above table, the tested link functions and the model AIC score using the respective link functions can be seen. Selecting the link function based on model AIC score results in a final model with the probit link function. Now, the parameters of the model will be investigated. The following model coefficients are estimated with their 95\% confident interval. 
+
+
+
+```{r}
+fit_final <- clm(TSV~fanSpeed.f*fanType,data=df2, weights = count,link='probit')
+
+summary(fit_final)
+confint(fit_final)
+fit_final$coef
+```
+
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{c c c c}
+  \hline
+   Coefficient & Estimate & 2.5\% & 97.5\% \\ 
+  \hline
+  fanSpeed.L      & 0.05731784 &          -0.4709590 & 0.5598617 \\
+  fanSpeed.Q      & -0.29205851 &         -0.7461801 & 0.1596159 \\
+  fanTypeupstream &   0.77490751 &         0.4106972 & 1.1456447 \\
+  fanSpeed.L:fanTypeupstream & 0.50981469  & -0.1146692 & 1.1514795 \\ 
+  fanSpeed.Q:fanTypeupstream & -0.24720510 & -0.8747081 &  0.3803590 \\
+  \hline
+\end{tabular}
+\label{table:ccoeff}
+\caption{Final model coefficients and their 95\% confidence interval.}
+\end{table}
+
+Here, it should be noted that a negative coefficient indicates that the response level increases as the variable increases. And vice versa for the positive coefficients. 
+
+```{r ccum_prob, fig.cap = 'Cumulative probabilities of the response variable TSV, where the red curve is for TSV = 0, the blue curve for TSV = 1 and the green curve for TSV = 2. The independent variables can be referenced in the reference table.'}
+p <- predict(fit2, newdata = data.frame(df2[,c(3,5)]), type = "prob", interval = TRUE)
+plot(p$fit[,1], type = "l", col = 'red', ylim = c(0,1), ylab = 'Probability', main = 'Cumulative probabilities of the response variable TSV',
+     xlab = 'Index (see reference table)', label = 'ccum_prob')
+lines(p$fit[,2], lty = 1, col = 'blue')
+lines(p$fit[,3], lty = 1, col = 'green')
+#lines(p$lwr[,1], col = "red")
+#lines(p$upr[,1], col = "red")
+#for (i in 2:3){
+#  lines(p$fit[,i], lty = i, col = 'blue')
+  #lines(p$lwr[,i], lty = i, col = "red")
+  #lines(p$upr[,i], lty = i, col = "red")
+#
+
+
+```
+
+For figure \ref{fig:ccum_prob}, each index corresponds to a combination of the independent variables. The reference can be found in the table below. The first 6 indexes are for a fan speed of 0, index 7-12 for fan speed 1 and 13-18 for fan speed 2. This is including the different fan type of upstream and downstream. For fans of fan speed 0, the most probable TSV is 0 which corresponds to the red curve. However, for fans of speed 1 and fan type upstream, the most probable TSV is 1 and secound most probable TSV is 2. This is only for fans of type upstream, as the most probable TSV for downstream fans is 0 regardless of fan speed. 
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cll}
+  \hline
+ index & fanType & fanSpeed \\ 
+  \hline
+1 & downstream & 0 \\ 
+  2 & upstream & 0 \\ 
+  3 & downstream & 0 \\ 
+  4 & upstream & 0 \\ 
+  5 & downstream & 0 \\ 
+  6 & upstream & 0 \\ 
+  7 & downstream & 1 \\ 
+  8 & upstream & 1 \\ 
+  9 & downstream & 1 \\ 
+  10 & upstream & 1 \\ 
+  11 & downstream & 1 \\ 
+  12 & upstream & 1 \\ 
+  13 & downstream & 2 \\ 
+  14 & upstream & 2 \\ 
+  15 & downstream & 2 \\ 
+  16 & upstream & 2 \\ 
+  17 & downstream & 2 \\ 
+  18 & upstream & 2 \\ 
+   \hline
+\end{tabular}
+\label{table:ref_table}
+\caption{Reference table for the index of the cumulative probability plot. }
+\end{table}
 
 
 
