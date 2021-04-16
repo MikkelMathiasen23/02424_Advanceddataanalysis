@@ -21,6 +21,9 @@ library(xtable)
 library(gridExtra)
 ```
 
+
+\newpage 
+
 # Ozone model
 
 We are given an Ozone data set, where we are interested in predicting the Ozone level from the other variables. We will only use additive and first order terms. This also means that we will not consider any interaction terms when we try to find the optimal model. 
@@ -487,7 +490,7 @@ p3=ggplot(ozone,aes(x=InvHt,y=Ozone))+geom_point()+
   ggtitle("Predictions with mean humidity \nand Temperature")
 grid.arrange(p1,p2,p3,ncol=3)
 ```
-Figure \ref{fig:pred_A} shows predictions for each of the 3 independent variables. The predictions look very nice with for each of the temperatures. We do not get the same nice fit for the Ozone vs the Humidity or the Inversion Base Height. This could be due to the many data points at the maximum of the Inversion Base Height and the many data points at the minimum of the Humidity, see figure \ref{pairs}. The fit is "forced" to fit all those points very well, as they alone would have a huge impact on the maximum likelihood. 
+Figure \ref{fig:pred_A} shows predictions for each of the 3 independent variables. The predictions look very nice with for each of the temperatures. We do not get the same nice fit for the Ozone vs the Humidity or the Inversion Base Height. This could be due to the many data points at the maximum of the Inversion Base Height and the many data points at the minimum of the Humidity, see figure \ref{fig:pairs}. The fit is "forced" to fit all those points very well, as they alone would have a huge impact on the maximum likelihood. 
 
 The estimated parameters for the model can be found in the following table:
 ```{r}
