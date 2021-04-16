@@ -123,9 +123,7 @@ drop1(fit17quasi, test = 'F')
 
 $$p_{clo,i} = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + \epsilon_i)$$
 
-ER DENNE NOTATION KORREKT? JEG ER I TVIVL OG DET SAMME FOR POISSON MODELLEN
-
-where $\epsilon_i \sim B_i(0,\sigma^2)$. Here $p_{clo,i}$ is the probability of changing clothing level. The residuals are assumed to be independent and identically distributed. The residual standard deviation is estimated to $\hat{\sigma} = 1.13$ and a confidence interval is computed based on theorem 3.5. The estimated parameters and 95\% confidence intervals calculated based on profile likelihood can be seen in table \ref{tab:par_binomial}. 
+where $\epsilon_i \sim B_i(0,\sigma^2)$, and $g^{-1}$ is the inverse logit link function. Here $p_{clo,i}$ is the probability of changing clothing level. The residuals are assumed to be independent and identically distributed. The residual standard deviation is estimated to $\hat{\sigma} = 1.13$ and a confidence interval is computed based on theorem 3.5. The estimated parameters and 95\% confidence intervals calculated based on profile likelihood can be seen in table \ref{tab:par_binomial}. 
 The reduced model are compared with the full initial model using a likelihood-ratio-test based resulting in $p=0.84$ and the model reduction is therefore kept. Basis expansions of time, indoor and outdoor temperature are tried out but these are removed as they appear not to be significant. 
 
 ```{r}
@@ -461,3 +459,4 @@ It appears for both models that the most important predictor is the gender of th
 
 
 
+\newpage

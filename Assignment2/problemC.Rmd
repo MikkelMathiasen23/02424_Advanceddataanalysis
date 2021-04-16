@@ -97,7 +97,6 @@ First, a suitable model will be determined. The tested models can be seen in the
 This gives, for the logistic cumulative probabilities for fit3:
 
 $$  log \left( \frac{P(Y \leq j)}{1 - P(Y \leq j)} \right) = \alpha_i + \beta_j, j =1,2,3 , i= 1,2  $$
-TJEK - er den her model forskift rigtig??? Er slet ikke sikker.
 
 ```{r}
 #-----------------------------
