@@ -23,7 +23,7 @@ library(gridExtra)
 
 # Ozone model
 
-We are given an Ozone data set, where we are interested in predicting the Ozone level from the other variables. We will only use additive and first order terms. This means that we will not consider any interaction terms when we try to find the optimal model. 
+We are given an Ozone data set, where we are interested in predicting the Ozone level from the other variables. We will only use additive and first order terms. This also means that we will not consider any interaction terms when we try to find the optimal model. 
 
 
 \begin{table}[H]
@@ -43,7 +43,7 @@ Wind Speed                    & \texttt{Wind}   & mph        & Integer, Positive
 \caption{This table shows the given data and what type the data is. The \textit{type} column only shows how the data is given, not if it makes sense to only have integers and/or positive values.}\label{tab:prob_A1}
 \end{table}
 
-Table \ref{tab:prob_A1} shows all the variables in the data set and their units. All the data is given as integers, but it does seem like it is only because of roundings. We will assume that all variables are continuous and not just integers. The dependent variable, the Ozone concentration is given only as positive values. This also fits with negative concentrations would not make sense. Independent variables such as Wind speed and Visibility will also only be sensible as positive values. The humidity would range from 0 to 100 as it is given as percentage. The distribution of the variables can be seen in the diagonal of the following figure:
+Table \ref{tab:prob_A1} shows all the variables in the data set and their units. All the data is given as integers, but it does seem like it is only because of roundings. We will assume that all variables are continuous and not just integers. The dependent variable, the Ozone concentration, is given only as positive values. Negative concentrations would also not make any sense. Independent variables such as Wind speed and Visibility will also only be sensible as positive values. The humidity would range from 0 to 100 as it is given as percentage. The distribution of the variables can be seen in the diagonal of the following figure:
 
 
 ```{r}
@@ -92,34 +92,34 @@ We start by fitting a general linear model with all the variables from the data 
 \begin{equation}
 ozone_i=\beta_0+\beta_1 Temp_i+\beta_2 InvHt_i+ \beta_3 Press_i+\beta_4 Vis_i + \beta_5 Hgt_i+\beta_6 Hum_i+\beta_7 InvTmp_i+\beta_8 wind_i
 \end{equation}
-We will reduce the model with type 3 partitioning until all variables are significant:
+We will reduce the model with type 3 partitioning with an exact F test until all variables are significant:
 
 
 ```{r}
 ###### Question 2:
 fit0 = glm(Ozone~., data = df)
 summary(fit0)
-Anova(fit0, type = 'III')
+Anova(fit0, type = 'III',test="F")
 #Remove Pres
 
 fit1 = glm(Ozone ~Temp + InvHt + Vis + Hgt + Hum + InvTmp + Wind, data = df)
 summary(fit1)
-Anova(fit1, type = 'III')
+Anova(fit1, type = 'III',teset="F")
 #Remove Wind
 
 fit2 = glm(Ozone ~Temp + InvHt + Vis + Hum + InvTmp + Hgt, data = df)
 summary(fit2)
-Anova(fit2, type = 'III')
+Anova(fit2, type = 'III',teset="F")
 #Remove intercept
 
 fit3 = glm(Ozone ~-1+Temp + InvHt + Vis + Hum + InvTmp + Hgt, data = df)
 summary(fit3)
-Anova(fit3, type = 'III')
+Anova(fit3, type = 'III',teset="F")
 #Remove vis
 
 fit4 = glm(Ozone ~-1+Temp + InvHt + Hum + InvTmp + Hgt , data = df)
 summary(fit4)
-Anova(fit4, type = 'III')
+Anova(fit4, type = 'III',teset="F")
 
 
 library(xtable)
@@ -148,13 +148,13 @@ Removed & Resid. Df & Resid. Dev & Df & Deviance & F & Pr($>$F) \\
 \caption{Analysis of Variance table of each of the fitted General linear models. The final model ended up being $ozone_i=\beta_1 Temp_i+\beta_2 InvHt_i+ \beta_5 Hgt_i+\beta_6 Hum_i$}\label{tab:AoV1}
 \end{table}
 
-Table \ref{tab:AoV1} shows that the final genaral linear model will be:
+Table \ref{tab:AoV1} shows that the final general linear model, after the non-significant variables have been removed will be:
 
 \begin{equation}
 ozone_i=\beta_1 Temp_i+\beta_2 InvHt_i+ \beta_5 Hgt_i+\beta_6 Hum_i
 \end{equation}
 
-This model does however not fit very well (HVOR KAN VI SE DET). A quick investigation of the residuals would suggest a log-transformation of the response variable. We could also try a Box Cox transformation to see if another transformation might be more useful:
+If we were to investigate the residuals of this model, we would see a slight parabola shape of the residuals vs. the predicted values (we will not show the graph). The variance also seems to be increasing for higher predicted values. This would suggest a log-transformation. We could also try a Box Cox transformation to see if another transformation might be more useful:
 
 ## Box Cox transformation
 
@@ -178,19 +178,19 @@ For our model, we will not subtract with 1 and divide by $\lambda$ as it will on
 
 We will however have to correct for this variable transformation when we compare models. We will take the information about the transformation into account with the formula from Lecture 3's R-code:
 \begin{equation}\label{eq:corrected_ll}
-l_{corrected}(\theta|ozone^\lambda)= l(\theta|ozone^\lambda)-\left(-N\lambda +\sum_i (1-\lambda)\cdot ozone_i \right)
+l_{corrected}(\theta|ozone^\lambda)= l(\theta|ozone^\lambda)-\left(-N\cdot \log(\lambda) +\sum_i (1-\lambda)\cdot \log(ozone_i) \right)
 \end{equation}
 where $l(\theta|ozone^\lambda)$ is the estimated log-likelihood using the transformed response variable, and where $l_{corrected}(\theta|ozone^\lambda)$ is the corrected log-likelihood that makes it comparable to the log-likelihood/AIC of models that does not transform the response variable. 
 
-The Box Cox-transformed Gaussian model will be selected with the same method as shown in table \ref{tab:AoV1}
+The Box Cox-transformed Gaussian model will be selected with the same method as shown in table \ref{tab:AoV1}.
 
 ## Gamma and Inverse Gaussian GLMs
 
-We could also try fitting a generalized linear model with either an Gamma distribution or an Inverse Gaussian distribution. Both of these distributions will ensure that the Ozone concentration is always 0 or positive. The Box Cox transformed Gaussian model (backtransformed) will also stay above 0, but the initial Gaussian model could potentially produce a negative result if the inputs were extreme enough. 
+We could also try fitting a generalized linear model (GLM) with either an Gamma distribution or an Inverse Gaussian distribution. Both of these distributions will ensure that the Ozone concentration is always 0 or positive. The Box Cox transformed Gaussian model (backtransformed) will also stay above 0, but the initial Gaussian model could potentially produce a negative result if the inputs were extreme enough. 
 
-We will not attempt to fit with a Poisson distribution as it is a discrete distribution and we assume that the dependent variable is continuous. 
+We will not attempt to fit with a Poisson distribution as it is a discrete distribution and we assume that the dependent variable is continuous. We tested multiple the link functions for each of the models and chose the ones that resulted in the highest log-likelihood
 
-We reduced the two Generalized Linear Models with the same methods as described about the General Linear Model. 
+We reduced the two Generalized Linear Models with the same methods as described about the General Linear Model, but we will use a Chi squared test instead of the F test. 
 
 Finally we compared the AIC for each of the fitted models to find the most optimal model:
 
@@ -213,28 +213,34 @@ AIC_list=c(AIC_list,2*(length(coef(fit5bc))+1)-2*(logLik(fit5bc)-(sum((1-lambda)
 
 #############################################3
 ########################Try log transformation of output variable:
-fit0bc = lm(Ozone^lambda ~ ., data = df)
-Anova(fit0bc, type = 'III')
+fit0bc = glm(Ozone^lambda ~ ., data = df)
+summary(fit0bc)
+Anova(fit0bc, type = 'III',teset="F")
 #Remove wind
 
-fit1bc = lm(Ozone^lambda ~Temp + InvHt + Vis + Hgt + Hum + Pres +InvTmp, data = df)
-Anova(fit1bc, type = 'III')
+fit1bc = glm(Ozone^lambda ~Temp + InvHt + Vis + Hgt + Hum + Pres +InvTmp, data = df)
+summary(fit0bc)
+Anova(fit1bc, type = 'III',teset="F")
 #Remove InvTmp
 
-fit2bc = lm(Ozone^lambda ~Temp + InvHt + Vis +Hgt+ Hum + Pres, data = df)
-Anova(fit2bc, type = 'III')
+fit2bc = glm(Ozone^lambda ~Temp + InvHt + Vis +Hgt+ Hum + Pres, data = df)
+summary(fit2bc)
+Anova(fit2bc, type = 'III',teset="F")
 #Remove Hgt
 
-fit3bc = lm(Ozone^lambda ~Temp + InvHt + Vis + Hum +Pres, data = df)
-Anova(fit3bc, type = 'III')
+fit3bc = glm(Ozone^lambda ~Temp + InvHt + Vis + Hum +Pres, data = df)
+summary(fit3bc)
+Anova(fit3bc, type = 'III',teset="F")
 #Remove Pres
 
-fit4bc = lm(Ozone^lambda ~Temp + InvHt + Vis +Hum, data = df)
-Anova(fit4bc, type = 'III')
+fit4bc = glm(Ozone^lambda ~Temp + InvHt + Vis +Hum, data = df)
+summary(fit4bc)
+Anova(fit4bc, type = 'III',teset="F")
 #Remove Vis
 
-fit5bc = lm(Ozone^lambda ~Temp + InvHt +Hum , data = df)
-Anova(fit5bc, type = 'III')
+fit5bc = glm(Ozone^lambda ~Temp + InvHt +Hum , data = df)
+summary(fit5bc)
+Anova(fit5bc, type = 'III',teset="F")
 ```
 
 
@@ -265,27 +271,51 @@ Anova(fit5bc, type = 'III')
 ```
 
 ```{r}
+# Choosing link function
 fit0Gamma = glm(Ozone~.,data=df,family = Gamma)
+logLik(fit0Gamma)
+fit0Gamma = glm(Ozone~.,data=df,family = Gamma(link="inverse"))
+logLik(fit0Gamma)
+
+fit0Gamma = glm(Ozone~.,data=df,family = Gamma(link="log"))
+logLik(fit0Gamma)
+
+
+fit0Gamma = glm(Ozone~.,data=df,family = Gamma(link="sqrt"))
+logLik(fit0Gamma)
+
+# The rest gives errors. 
+#fit0Gamma = glm(Ozone~.,data=df,family = Gamma(link="1/mu^2"))
+#logLik(fit0Gamma)
+
+# 
+fit0Gamma = glm(Ozone~.,data=df,family = Gamma(link="log"))
+
 Anova(fit0Gamma, type = 'III')
+# Dropping wind
+
+fit1Gamma = glm(Ozone~Temp+InvHt+Pres+Vis+Hgt+Hum+InvTmp,data=df,family = Gamma(link="log"))
+drop1(fit1Gamma,test = 'Chisq')
+Anova(fit1Gamma, type = 'III')
 # Dropping Hgt
 
-fit1Gamma = glm(Ozone~Temp+InvHt+Pres+Vis+Hum+InvTmp+Wind,data=df,family = Gamma)
-Anova(fit1Gamma, type = 'III')
-# Dropping Wind
-
-fit2Gamma = glm(Ozone~Temp+InvHt+Pres+Vis+Hum+InvTmp,data=df,family = Gamma)
+fit2Gamma = glm(Ozone~Temp+InvHt+Pres+Vis+Hum+InvTmp,data=df,family = Gamma(link="log"))
 Anova(fit2Gamma, type = 'III')
+drop1(fit2Gamma,test = 'Chisq')
 # Dropping InvTmp
 
-fit3Gamma = glm(Ozone~Temp+InvHt+Pres+Vis+Hum,data=df,family = Gamma)
+fit3Gamma = glm(Ozone~Temp+InvHt+Pres+Vis+Hum,data=df,family = Gamma(link="log"))
+drop1(fit3Gamma,test = 'Chisq')
 Anova(fit3Gamma, type = 'III')
-# Dropping Vis
-
-fit4Gamma = glm(Ozone~Temp+InvHt+Pres+Hum,data=df,family = Gamma)
-Anova(fit4Gamma, type = 'III')
 # Dropping Pres
 
-fit5Gamma = glm(Ozone~Temp+InvHt+Hum,data=df,family = Gamma)
+fit4Gamma = glm(Ozone~Temp+InvHt+Vis+Hum,data=df,family = Gamma(link="log"))
+drop1(fit4Gamma,test = 'Chisq')
+Anova(fit4Gamma, type = 'III')
+# Dropping Vis
+
+fit5Gamma = glm(Ozone~Temp+InvHt+Hum,data=df,family = Gamma(link="log"))
+drop1(fit5Gamma,test = 'Chisq')
 Anova(fit5Gamma, type = 'III')
 
 AIC_list=c(AIC_list,AIC(fit5Gamma))
@@ -301,9 +331,12 @@ fit0invG$aic
 fit0invG = glm(Ozone~.,data=df,family = inverse.gaussian(link="inverse"))
 #plot(fit0invG)
 fit0invG$aic
-tmp = summary(fit0invG)
 
 fit0invG = glm(Ozone~.,data=df,family = inverse.gaussian(link="identity"))
+#plot(fit0invG)
+fit0invG$aic
+
+fit0invG = glm(Ozone~.,data=df,family = inverse.gaussian(link="sqrt"))
 #plot(fit0invG)
 fit0invG$aic
 #init=coef(fit0invG)
@@ -359,10 +392,14 @@ Gaussian (Identity)& \texttt{Ozone} $\sim$ \texttt{-1 + Temp +} & & & \\ & \text
  Inverse Gaussian (log) & \texttt{Ozone $\sim$ Temp + InvHt + Pres} & 5.00 & 1927.95 & 0.16 \\ 
    \hline
 \end{tabular}
-\caption{AIC of each of the fitted models. AIC for the Box Cox transformed model (still Gaussian) is calculated using the corrected log-likelihood. The link functions are written in the paranthesis after the model type.}\label{tab:AICs}
+\caption{AIC of each of the fitted models. AIC for the Box Cox transformed (Gaussian) model is calculated using the corrected log-likelihood. The link functions are written in the paranthesis after the model type.}\label{tab:AICs}
 \end{table}
 
-Table \ref{tab:AICs} shows that the optimal model is the Box Cox transformed model (while taking the correction of the log-likelihood into account). If we would should pick a model without doing a transformation, the optimal model would be model with the Gamma distribution. It is worth noting that the dispersion parameters cannot be compared directly. For instance, it is the dispersion parameter in the transformed space of the Box Cox transformed model. 
+Table \ref{tab:AICs} shows that the optimal model is the Box Cox transformed model (while taking the correction of the log-likelihood into account). If we would should pick a model without doing a transformation, the optimal model would be the model with the Gamma distribution. It is worth noting that the dispersion parameters cannot be compared directly. For instance, it is the dispersion parameter in the transformed space of the Box Cox transformed model:
+
+\begin{equation}
+ozone_i^{\frac{1}{4}} = \beta_0+\beta_1 Temp_i+\beta_2 InvHt_i+ \beta_6 Hum_i
+\end{equation}
 
 ## Residual analysis
 
@@ -382,13 +419,13 @@ From figure \ref{fig:partA_resid}, we can see that the Residuals vs Fitted seem 
 
 All of the residuals are in the transformed space. 
 
-## Predictions
+## Predictions and parameter estimates
 
 To get a better understanding of how the model works in the non-transformed space, we can try to use the models to make some predictions. 
 
 ```{r pred_A,fig.cap = "The figure shows predictions for Temperature, Humidity and Inversion base Height, while each of the other variables are fixed as the mean."}
 #Ozone^lambda ~Temp + InvHt +Hum 
-fit5bc = lm(Ozone^(1/4)~Temp+InvHt+Hum,data=ozone)
+fit5bc_lm = lm(Ozone^(1/4)~Temp+InvHt+Hum,data=ozone)
 df_new_temp = data.frame(ozone=NA,Temp = seq(min(ozone$Temp),max(ozone$Temp),0.1),
                      InvHt = mean(ozone$InvHt),
                      Hum = mean(ozone$Hum))
@@ -398,24 +435,24 @@ df_new_hum = data.frame(ozone=NA,Temp = mean(ozone$Temp),
 df_new_inv = data.frame(ozone=NA,Temp = mean(ozone$Temp),
                      InvHt =seq(min(ozone$InvHt),max(ozone$InvHt),0.1),
                      Hum = mean(ozone$Hum))
-temp_conf = data.frame(predict(fit5bc,newdata=df_new_temp,interval=c("confidence")))
-temp_pred = data.frame(predict(fit5bc,newdata=df_new_temp,interval = 'prediction'))
+temp_conf = data.frame(predict(fit5bc_lm,newdata=df_new_temp,interval=c("confidence")))
+temp_pred = data.frame(predict(fit5bc_lm,newdata=df_new_temp,interval = 'prediction'))
 df_new_temp$ozone=temp_conf$fit
 df_new_temp$cl=temp_conf$lwr
 df_new_temp$cu=temp_conf$upr
 df_new_temp$pl=temp_pred$lwr
 df_new_temp$pu=temp_pred$upr
 
-hum_conf = data.frame(predict(fit5bc,newdata=df_new_hum,interval=c("confidence")))
-hum_pred = data.frame(predict(fit5bc,newdata=df_new_hum,interval = 'prediction'))
+hum_conf = data.frame(predict(fit5bc_lm,newdata=df_new_hum,interval=c("confidence")))
+hum_pred = data.frame(predict(fit5bc_lm,newdata=df_new_hum,interval = 'prediction'))
 df_new_hum$ozone=hum_conf$fit
 df_new_hum$cl=hum_conf$lwr
 df_new_hum$cu=hum_conf$upr
 df_new_hum$pl=hum_pred$lwr
 df_new_hum$pu=hum_pred$upr
 
-inv_conf = data.frame(predict(fit5bc,newdata=df_new_inv,interval=c("confidence")))
-inv_pred = data.frame(predict(fit5bc,newdata=df_new_inv,interval = 'prediction'))
+inv_conf = data.frame(predict(fit5bc_lm,newdata=df_new_inv,interval=c("confidence")))
+inv_pred = data.frame(predict(fit5bc_lm,newdata=df_new_inv,interval = 'prediction'))
 df_new_inv$ozone=inv_conf$fit
 df_new_inv$cl=inv_conf$lwr
 df_new_inv$cu=inv_conf$upr
@@ -423,31 +460,59 @@ df_new_inv$pl=inv_pred$lwr
 df_new_inv$pu=inv_pred$upr
 
 p1=ggplot(ozone,aes(x=Temp,y=Ozone))+geom_point()+
-  geom_line(data = df_new_temp,aes(x=Temp,y=ozone^4))+
-  geom_line(data = df_new_temp,aes(x=Temp,y=cu^4),lty=2)+
-  geom_line(data = df_new_temp,aes(x=Temp,y=cl^4),lty=2)+
-  geom_line(data = df_new_temp,aes(x=Temp,y=pu^4),lty=3)+
-  geom_line(data = df_new_temp,aes(x=Temp,y=pl^4),lty=3)+
+  geom_line(data = df_new_temp,aes(x=Temp,y=ozone^4),col="red")+
+  geom_line(data = df_new_temp,aes(x=Temp,y=cu^4),lty=2,col="red")+
+  geom_line(data = df_new_temp,aes(x=Temp,y=cl^4),lty=2,col="red")+
+  geom_line(data = df_new_temp,aes(x=Temp,y=pu^4),lty=3,col="red")+
+  geom_line(data = df_new_temp,aes(x=Temp,y=pl^4),lty=3,col="red")+
   xlab("Temperature")+ylab("Ozone Concentration")+
   ggtitle("Predictions with mean humidity and \nInversion base height")
 
 p2=ggplot(ozone,aes(x=Hum,y=Ozone))+geom_point()+
-  geom_line(data = df_new_hum,aes(x=Hum,y=ozone^4))+
-  geom_line(data = df_new_hum,aes(x=Hum,y=cu^4),lty=2)+
-  geom_line(data = df_new_hum,aes(x=Hum,y=cl^4),lty=2)+
-  geom_line(data = df_new_hum,aes(x=Hum,y=pu^4),lty=3)+
-  geom_line(data = df_new_hum,aes(x=Hum,y=pl^4),lty=3)+
+  geom_line(data = df_new_hum,aes(x=Hum,y=ozone^4),col="red")+
+  geom_line(data = df_new_hum,aes(x=Hum,y=cu^4),lty=2,col="red")+
+  geom_line(data = df_new_hum,aes(x=Hum,y=cl^4),lty=2,col="red")+
+  geom_line(data = df_new_hum,aes(x=Hum,y=pu^4),lty=3,col="red")+
+  geom_line(data = df_new_hum,aes(x=Hum,y=pl^4),lty=3,col="red")+
   xlab("Humidity")+ylab("Ozone Concentration")+
   ggtitle("Predictions with mean Temperature \nand Inversion base height")
 
 p3=ggplot(ozone,aes(x=InvHt,y=Ozone))+geom_point()+
-  geom_line(data = df_new_inv,aes(x=InvHt,y=ozone^4))+
-  geom_line(data = df_new_inv,aes(x=InvHt,y=cu^4),lty=2)+
-  geom_line(data = df_new_inv,aes(x=InvHt,y=cl^4),lty=2)+
-  geom_line(data = df_new_inv,aes(x=InvHt,y=pu^4),lty=3)+
-  geom_line(data = df_new_inv,aes(x=InvHt,y=pl^4),lty=3)+
+  geom_line(data = df_new_inv,aes(x=InvHt,y=ozone^4),col="red")+
+  geom_line(data = df_new_inv,aes(x=InvHt,y=cu^4),lty=2,col="red")+
+  geom_line(data = df_new_inv,aes(x=InvHt,y=cl^4),lty=2,col="red")+
+  geom_line(data = df_new_inv,aes(x=InvHt,y=pu^4),lty=3,col="red")+
+  geom_line(data = df_new_inv,aes(x=InvHt,y=pl^4),lty=3,col="red")+
   xlab("Inversion base height")+ylab("Ozone Concentration")+
   ggtitle("Predictions with mean humidity \nand Temperature")
 grid.arrange(p1,p2,p3,ncol=3)
 ```
-Figure \ref{fig:pred_A} shows predictions for each of the 3 independent variables. The predictions look very nice for the temperature, but it is clear that the model does not catch everything from the Humidity and Inversion Base Height plots. 
+Figure \ref{fig:pred_A} shows predictions for each of the 3 independent variables. The predictions look very nice with for each of the temperatures. We do not get the same nice fit for the Ozone vs the Humidity or the Inversion Base Height. This could be due to the many data points at the maximum of the Inversion Base Height and the many data points at the minimum of the Humidity, see figure \ref{pairs}. The fit is "forced" to fit all those points very well, as they alone would have a huge impact on the maximum likelihood. 
+
+The estimated parameters for the model can be found in the following table:
+```{r}
+
+tmp_df = data.frame(signif((cbind(coef(fit5bc),confint(fit5bc))),3))
+tmp_df[,1]=as.character(tmp_df[,1])
+tmp_df[,2]=as.character(tmp_df[,2])
+tmp_df[,3]=as.character(tmp_df[,3])
+xtable(tmp_df)
+```
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rrrrr}
+  \hline
+  & Parameter & Estimate & 2.5 \% & 97.5 \% \\ 
+  \hline
+\texttt{(Intercept)} &$\beta_0$&  0.914 & 0.792 & 1.03  \\ 
+  \texttt{Temp} &$\beta_1$& 0.0131 & 0.0115 & 0.0146 \\ 
+ \texttt{InvHt} &$ \beta_2$& -4.85e-05 & -6.08e-05 & -3.62e-05 \\ 
+ \texttt{Hum} & $\beta_6$ & 0.00298 & 0.00197 & 0.00398 \\ 
+   \hline
+\end{tabular}
+\caption{Estimated parameters of the Box Cox transformed model.}
+\end{table}
+
+\newpage
+
