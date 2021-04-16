@@ -123,7 +123,7 @@ drop1(fit17quasi, test = 'F')
 
 $$p_{clo,i} = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + \epsilon_i)$$
 
-where $\epsilon_i \sim B_i(0,\sigma^2)$. Here $p_{clo,i}$ is the probability of changing clothing level. The residuals are assumed to be independent and identically distributed. The standard deviation of the residuals ($\hat{\sigma}$) are estimated as 1.13 and a confidence hereof are calculated based on theorem 3.5. The estimated parameters and 95\% confidence intervals calculated based on profile likelihood can be seen in table \ref{table:par_binomial}. 
+where $\epsilon_i \sim B_i(0,\sigma^2)$. Here $p_{clo,i}$ is the probability of changing clothing level. The residuals are assumed to be independent and identically distributed. The standard deviation of the residuals ($\hat{\sigma}$) are estimated to 1.13 and a confidence hereof are calculated based on theorem 3.5. The estimated parameters and 95\% confidence intervals calculated based on profile likelihood can be seen in table \ref{table:par_binomial}. 
 To test the model reduction a likelihood-ratio-test are performed based on theorem 3.6 resulting in $p=0.84$ thereby the model reduction is kept. Basis expansions of time, indoor and outdoor temperature are tried out but these are removed as they appear not to be significant. 
 
 ```{r}
@@ -243,7 +243,7 @@ drop1(fit14, test = 'Chisq')
 anova(fit0, fit14, test = 'Chisq')
 ```
 
-$$clo_i = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + \epsilon_i)$$
+$$p_{clo,i} = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + \epsilon_i)$$
 
 
 where $\epsilon_i \sim P_i(0,\sigma^2)$. Again the reduced model passes the goodness of fit test ($p=0.16$). Also the reduced model are compared with the full initial model in order to test the model reduction (likelihood-ratio-test) and results in the following p-value: $p=0.59$ and the model reduction are therefore kept. The residuals are assumed to be independent and identically distributed. It is further tested whether including an offset will improve the performance of the model. An offset using $log(nobs)$ and another using $log(time)$ are implemented. This would result in the following model when using the log link-function:$\eta_i = log(\dfrac{\mu_i}{offset_i})$. Both models containing offsets performs slightly better than the model without, and all models passes the goodness of fit test. 
@@ -372,16 +372,10 @@ fit2  = update(fit1, .~ . -I((tInOp - mean(tInOp))^2)    , data = df)
 drop1(fit2, test = 'Chisq')
 ```
 
-Lastly different link-functions are tested whether they can improve the model performance. 
-```{r}
-glm(clo ~ factor(sex) + offset(log(time)) ,poisson(link = log), data = df)
-#ERROR?
-#ALSO ERROR WITH TIME^2
-```
 
 The final and optimal model are the following: 
 
-$$clo_i = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + offset(log(time_i))+ \epsilon_i)$$
+$$p_{clo,i} = g^{-1}(\beta_0 + \beta_1 \cdot sex_i + offset(log(time_i))+ \epsilon_i)$$
 
 ```{r}
 lm_sigma_conf<-function(fit,CI=0.95){
@@ -459,7 +453,7 @@ The model was reduced using the backward selection based on Type II partitioning
 
 A generalized linear model based on the Poisson distribution was also estimated based on the same input variables. This model did pass the goodness of fit test, and thereby indicating that the distributional assumptions for the Poisson distribution did match the variables much better than the Binomial distribution. It was therefore not needed to estimate an overdispersion parameter. It was found that introducing an offset using the $log(time)$ did improve the performance of the model. The optimal model was as well estimated using the backward selection based on Type II partitioning and result is presented below: 
 
-$$clo_i = g^{-1}(\beta_0 + \beta_1 \cdot sex_i +offset(log(time_i)) + \epsilon_i)$$
+$$p_{clo,i} = g^{-1}(\beta_0 + \beta_1 \cdot sex_i +offset(log(time_i)) + \epsilon_i)$$
 
 It appears for both models that the most important predictor is the gender of the subject. This also appears to be feasible as there are big difference in the variation in the change of clothing level based on the gender. The resulting model for both distributional assumption could indicate that the most predictive and important input variable for determining the change of clothing level are the gender of the subject. 
 
