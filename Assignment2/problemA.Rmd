@@ -21,7 +21,7 @@ library(xtable)
 library(gridExtra)
 ```
 
-# Problem A
+# Ozone model
 
 We are given an Ozone data set, where we are interested in predicting the Ozone level from the other variables. We will only use additive and first order terms. This means that we will not consider any interaction terms when we try to find the optimal model. 
 
@@ -43,7 +43,7 @@ Wind Speed                    & \texttt{Wind}   & mph        & Integer, Positive
 \caption{This table shows the given data and what type the data is. The \textit{type} column only shows how the data is given, not if it makes sense to only have integers and/or positive values.}\label{tab:prob_A1}
 \end{table}
 
-Table \ref{tab:prob_A1} shows all the variables in the data set and their units. All the data is given as integers, but it does seem like it is only because of roundings. We will assume that all variables are continuous and not just integers. The dependent variable, the Ozone concentration is given only as positive values. This also fits with negative concentrations would be not make sense. Independent variables such as Wind speed and Visibility will also only be sensible as positive values. The humidity would range from 0 to 100 as it is given as percentage. The distribution of the variables can be seen in the diagonal of the following figure:
+Table \ref{tab:prob_A1} shows all the variables in the data set and their units. All the data is given as integers, but it does seem like it is only because of roundings. We will assume that all variables are continuous and not just integers. The dependent variable, the Ozone concentration is given only as positive values. This also fits with negative concentrations would not make sense. Independent variables such as Wind speed and Visibility will also only be sensible as positive values. The humidity would range from 0 to 100 as it is given as percentage. The distribution of the variables can be seen in the diagonal of the following figure:
 
 
 ```{r}
@@ -154,7 +154,7 @@ Table \ref{tab:AoV1} shows that the final genaral linear model will be:
 ozone_i=\beta_1 Temp_i+\beta_2 InvHt_i+ \beta_5 Hgt_i+\beta_6 Hum_i
 \end{equation}
 
-This model does however not fit very well. A quick investigation of the residuals would suggest a log-transformation of the response variable. We could also try a Box Cox transformation to see if another transformation might be more useful:
+This model does however not fit very well (HVOR KAN VI SE DET). A quick investigation of the residuals would suggest a log-transformation of the response variable. We could also try a Box Cox transformation to see if another transformation might be more useful:
 
 ## Box Cox transformation
 

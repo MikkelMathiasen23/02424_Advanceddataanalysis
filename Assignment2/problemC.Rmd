@@ -163,7 +163,7 @@ A &  & logit            & 417.425338799379 \\
 \label{tab:clink}
 \end{table}
  
-From the above table, the tested link functions and the model AIC score using the respective link functions can be seen. Selecting the link function based on model AIC score results in a final model with the probit link function. Now, the parameters of the model will be investigated. The following model coefficients are estimated with their 95\% confident interval. 
+From the above table, the tested link functions and the model AIC score using the respective link functions can be seen. Selecting the link function based on model AIC score results in a final model with the probit link function. Now, the parameters of the model will be investigated. The following model coefficients are estimated with their 95\% confidence interval. 
 
 
 
