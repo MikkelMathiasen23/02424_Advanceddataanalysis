@@ -35,6 +35,8 @@ ggplot(df,aes(x=fanSpeed.f,y=TSV,col=fanType))+
 
 From figure \ref{fig:data.exp}, it can be seen that there is no apparent relation between the fan speed and TSV visually. It should be noted, however, that the highest level TSV appears to be predominantly fans of type upstream. 
 
+## Independence testing of thermal sensation vote and fan speed
+
 It is now wished to test if independence can be assumed between the thermal sensation vote and fan speed using a contingency table. The contingency table can be seen in \cref{tab:con_table}. 
 
 
@@ -54,7 +56,7 @@ Independence is now tested using a $\chi^2$-test. This results in a p value of 0
 
 We will now test the same hypothesis but by constructing two cumulative link models (CLM) using the \texttt{ordinal} package and the anova method. The two models will both be CLM's but with the difference of whether fan speed is treated as a factor or not. 
 
-This results in the p-values of: 0.0004 and 0.0006 for the factorized and non-factorized models respectively. Using the same significance level as previously, we get the same conclusion that the null hypothesis is rejected and it assumed that TSV and fan speed are not indepedent. 
+This results in the p-values of: 0.0004 and 0.0006 for the factorized and non-factorized models respectively. Using the same significance level as previously, we get the same conclusion that the null hypothesis is rejected and it assumed that TSV and fan speed are not independent. 
 
 ```{r}
 df$TSV = factor(df$TSV,levels=c(0,1,2),ordered=T ) 
@@ -67,6 +69,8 @@ anova(fit_f)$"Pr(>Chisq)"
 #anova(fit_f.ord)
 anova(fit)$"Pr(>Chisq)"
 ```
+
+## Cumulative link model
 
 It is now wished to fit a proportional odds model for TSV as a function of fan speed and fan type. In general, the model thresholds the cumulative probabilities thereby making the ordinal categories binary within that threshold. The cumulative probabilities are then the probability of the response variable, TSV, being less than or equal to a given category:
 
