@@ -1,0 +1,25 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+chunk_output_type: console
+---
+
+```{r}
+source('setup.R')
+```
+
+```{r}
+rm(list=ls())
+library(ggplot2)
+library(knitr)
+library(RColorBrewer)
+library(tidyverse)
+library(latex2exp)
+library(car)
+library(xtable)
+library(gridExtra)
+```
+
+
+

@@ -1,0 +1,52 @@
+---
+title: '02424 Assignment 2'
+author:
+- August Thomas Hjortshøj Schreyer s163716 
+- Mikkel Mathiasen s174344
+- Nicolai Piet Dittmann s170589
+date: "16/04/2021"
+geometry: "left=3cm,right=3cm,top=2cm,bottom=2cm"
+output:
+  pdf_document: 
+    fig_caption: yes
+    toc: yes
+header-includes:
+- \usepackage{bm}
+- \usepackage{todonotes}
+- \usepackage[noabbrev,nameinlink,capitalise]{cleveref}
+- \usepackage{float}
+- \usepackage{placeins}
+- \usepackage[format=plain,labelfont={bf,it},textfont=it]{caption}
+- \usepackage{amsmath}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+source('setup.R')
+```
+
+```{r}
+rm(list=ls())
+library(ggplot2)
+library(knitr)
+library(gridExtra)
+library(latex2exp)
+library(tidyverse)
+library(xtable)
+library(directlabels)
+```
+
+\newpage
+```{r child = 'problemA.Rmd', cache = T}
+```
+\newpage
+```{r child = 'problemB.Rmd', cache = T}
+```
+\newpage
+```{r child = 'problemC.Rmd', cache = T}
+```
+
+# Appendix: R-code
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
