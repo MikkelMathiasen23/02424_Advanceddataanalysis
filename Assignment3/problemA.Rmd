@@ -19,7 +19,178 @@ library(latex2exp)
 library(car)
 library(xtable)
 library(gridExtra)
+library(nlme)
+```
+# Part 1
+
+## Exploratory
+
+
+```{r}
+# Loading the data
+df = read.csv(file="data/clothingFullAss03.csv")
+df$time2=factor(df$time2)
+df$day = factor(df$day)
+df$subjId = factor(df$subjId)
+df$sex = factor(df$sex)
+```
+
+```{r part1_exploratory,fig.cap="This graph shows the office temperatures..."}
+# Exploratory analysis
+p1=ggplot(df,aes(x=tOut,y=clo,col=subjId))+
+  geom_path()+
+  geom_text(aes(label=time2))+
+  facet_grid(rows=vars(sex),cols=vars(paste("day",day)))+
+  theme(legend.position = "None")+
+  ggtitle("Clothing Level vs Outdoor Temperature")+
+  xlab("Outdoor Temperature")+ylab("Clothing level")
+
+p2=ggplot(df,aes(x=tInOp,y=clo,col=subjId))+
+  geom_path()+
+  geom_text(aes(label=time2))+
+  facet_grid(rows=vars(sex),cols=vars(paste("day",day)))+
+  theme(legend.position = "None")+
+  ggtitle("Clothing Level vs Office Temperature")+
+  xlab("Office Temperature")+ylab("Clothing level")
+
+#grid.arrange(p1,p2,nrow=2)
+p2
+
+```
+The plot shows auto-correlation for each subject within each day.
+We see that some subjects have different preferred clothing levels. 
+There seem to be more variation within the female subjects. 
+
+We will not estimate individual slopes as the clothing levels seem to be constant for each subject during each day. WE PROBABLY SHOULD ANYWAYS!!!
+
+DONT USE DAY AS independent variable.
+We do not see an increase/decrease in clothing level for each day which is why we will consider the variable as a factor. 
+
+TRY RANDOM SLOPES
+
+## Initial fixed effect models with subject ID as random effect
+
+```{r}
+# Try 1+tOut|subjId or 1+tInOp|subjId 
+
+# Does not make sense
+#init_fit1 = lme(clo~sex*(tOut+tInOp)+time,random=~ 1+sex|subjId,data=df,method="ML")
+init_fit2 = lme(clo~sex*(tOut+tInOp)+time,random=~ 1|subjId,data=df,method="ML")
+#init_fit3 = lme(clo~sex*(tOut+tInOp)+time2,random=~ 1+sex|subjId,data=df,method="ML")
+init_fit4 = lme(clo~sex*(tOut+tInOp)+time2,random=~ 1|subjId,data=df,method="ML")
+
+
+
+ranef(init_fit1)[,1]
+hist(ranef(init_fit1)[,1])
+hist(ranef(init_fit1)[,2])
+
+df2=data.frame(ranef1 =ranef(init_fit1)[,1],ranef2 = ranef(init_fit1)[,2],sex =unique(df[,c("sex","subjId")])$sex  )
+df2$sum = df2$ranef1
+df2$sum[df2$sex=="male"]=df2$sum[df2$sex=="male"]+df2$ranef2[df2$sex=="male"]
+
+p1=ggplot(df2,aes(x=sum,col=sex))+geom_histogram()+facet_wrap(~sex)
+
+
+df3=data.frame(intercept = ranef(init_fit2)[,1],sex =unique(df[,c("sex","subjId")])$sex )
+df3
+p2=ggplot(df3,aes(x=intercept,col=sex))+geom_histogram()+facet_wrap(~sex)
+grid.arrange(p1,p2,nrow=2)
+
+rbind(df3$intercept,df2$sum)
+
+anova(init_fit1,init_fit2,init_fit3,init_fit4)
+unique(df$subjId)
+# small difference between the intercepts
+# We will continue with both models
+#test = lmer(clo~sex*(tOut+tInOp)+day+time2+(1+sex|subjId),data=df)
+
+
+fit0_1 = lme(clo~sex*(tOut+tInOp)+day+time2,random=~ 1+sex|subjId,data=df,method="REML")
+fit0_2 = lme(clo~sex*(tOut+tInOp)+day+time2,random=~ 1|subjId,data=df,method="REML")
+
+#drop1(fit0_1,test="Chisq")
+Anova(fit0_1,type=3)
+#drop1(fit0_2,test="Chisq")
+Anova(fit0_2,type=3)
+anova(fit0_1,fit0_2)
+
+fit1_1 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1+sex|subjId,data=df,method="REML")
+fit1_2 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="REML")
+#drop1(fit1_1,test="Chisq")
+#drop1(fit1_2,test="Chisq")
+Anova(fit1_1,type=3)
+Anova(fit1_2,type=3)
+anova(fit1_1,fit1_2)
+intervals(fit1_1,which="fixed")
+intervals(fit1_1,which="var-cov")
+confint(ranef(fit1_1))
+intervals(fit1_2)
+
+plot(fit1_1)
+plot(fit1_2)
 ```
 
 
+## Fixed effect models with subject ID and day as random effects
+
+```{r}
+df
+#init_fit1 = lme(clo~sex*(tOut+tInOp)+time,random=list(~1+sex|subjId,~1+sex|day),data=df,method="ML")
+init_fit1
+init_fit2 = lme(clo~sex*(tOut+tInOp)+time,random=list(~1|subjId,~1|day),data=df,method="ML")
+init_fit2
+
+#init_fit3 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1+sex|subjId,~1+sex|day),data=df,method="ML")
+init_fit4 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1|subjId,~1|day),data=df,method="ML")
+anova(init_fit1,init_fit2,init_fit3,init_fit4)
+
+
+#fit0_1 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1+sex|subjId,~1+sex|day),data=df,method="REML")
+fit0_2 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
+anova(fit0_1,fit0_2)
+Anova(fit0_1,type=3)
+Anova(fit0_2,type=3)
+
+
+#fit1_1 = lme(clo~sex*tInOp+tOut+time2,random=list(~1+sex|subjId,~1+sex|day),data=df,method="REML")
+fit1_2 = lme(clo~sex*tInOp+tOut+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
+anova(fit1_1,fit1_2)
+Anova(fit1_1,type=3)
+Anova(fit1_2,type=3)
+
+intervals(fit1_1)
+
+intervals(fit1_2)
+
+
+```
+
+```{r}
+
+# Jan: "Use at least two"
+# TEST OTHER CORRELATION STRUCTURES
+# USE exponential and gaussian (with AND without NUGGET)
+
+
+str(df)
+df$day = as.numeric(as.character(df$day))
+init_fit1 = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="ML")
+init_fit1
+system.getCurrentDirectory()
+fit0 = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="REML")
+Anova(fit0,type=3)
+
+fit1 = lme(clo~sex*tInOp+tOut,random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="REML")
+Anova(fit1,type=3)
+
+intervals(fit1)
+
+```
 
