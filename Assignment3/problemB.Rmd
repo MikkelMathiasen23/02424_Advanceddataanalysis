@@ -5,6 +5,7 @@ editor_options:
 chunk_output_type: console
 ---
 ```{r}
+rm(list=ls())
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 ```
 
@@ -38,6 +39,8 @@ Where $i$ all the indices for each of the subjects, and where $n_i$ is the numbe
 ```{r}
 pars=c("mu"=0.5,"sex_male"=-0.1,"sigma_s"=0.1,"sigma"=0.1)
 
+kronecker(diag(3),matrix(c(1.1,1,1,1.1),ncol=2))
+
 library(mvnfast)
 
 X = cbind(1,rep(0,nrow(dat)))
@@ -54,7 +57,7 @@ chol2inv(chol(m))
 solve(m)
 qr.solve(m)
 # slow
-library(mvtnorm)
+#library(mvtnorm)
 
 
 nll0<- function(pars){
@@ -70,7 +73,8 @@ nll0<- function(pars){
     # Faster dmvnorm from mvnfast
     #ll = dmvn(y,X%*%beta,V,log=T)
     
-    test=0
+    ll=0
+    
     for(i in unique(dat$subjId)){
       sex = dat$sex[dat$subjId==i][1]
       n = sum(dat$subjId==i)
@@ -82,10 +86,9 @@ nll0<- function(pars){
       sig = diag(n)*pars["sigma"]^2+pars["sigma_s"]^2
       y = dat$clo[dat$subjId==i]
       tmp = dmvn(y,x%*%beta,sig,log=T)
-      test = test+tmp
+      ll = ll+tmp
     }
-    ll = test
-    
+   
     return(-ll)
 }
 
@@ -100,19 +103,26 @@ fixef(fit0)
 VarCorr(fit0)
 
 logLik(fit0)
--nll(opt0$par)
+-nll0(opt0$par)
+
 
 
 ```
-
+CALCULATE RANDOM EFFECTS??? See equation 5.60 or google
 
 ### Question 2
 $u_i$ random effect for subject ID
 $v_{i,j}$ random effect for interaction between subject ID and day
 
 ```{r}
+library(nlme)
 fit1 <- lmer(clo~sex+(1|subjId)+(1|subjId:day),data=dat,REML=F)
 
+dat$new = paste(dat$sex,dat$day)
+fit1_1 <- lme(clo~sex,data=dat,random = list(~1|subjId,~1|new),method="ML")
+
+fit1
+fit1_1
 nll1<- function(pars){
   # ML estimation:
     mu = pars["mu"]
@@ -185,72 +195,144 @@ $v_{i,j}$ random effect for interaction between subject ID, day and sex
 ```{r}
 
 nll2<- function(pars,alpha_sex="male"){
+  #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
+  #print(pars)
   # ML estimation:
-    mu = pars["mu"]
-    sex_male = pars["sex_male"]
-    beta=c(mu,sex_male)
+  mu = pars["mu"]
+  sex_male = pars["sex_male"]
+  beta=c(mu,sex_male)
+  alpha = pars['alpha']
+  
+  
+  ll=0
+  for(i in unique(dat$subjId)){
+    #print(i)
+    df = dat[dat$subjId==i,]
+    df$sex
     if(alpha_sex=="male"){
-      alpha_male = exp(pars["alpha_male"])
+      sex = df$sex_male[1]
+    }
+    if(alpha_sex=="female"){
+      sex = df$sex_female[1]
+    }
+    
+    n = nrow(df)
+    days = unique(df$day)
+    
+    if(df$sex[1]=="male"){
+      x = cbind(1,rep(1,n))
     }else{
-      alpha_female = exp(pars["alpha_female"])
+      x = cbind(1,rep(0,n))
+    }
+    
+    sig = diag(n)*exp(sex*alpha+pars["sigma^2"])+exp(sex*alpha+pars["sigma_s^2"])
+    for(k in days){
+      idx = which(df$day==k)
+      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+pars["sigma_sub_day^2"])
     }
     
     
-    ll=0
-    for(i in unique(dat$subjId)){
-      df = dat[dat$subjId==i,]
-      sex = df$sex[1]
-      n = nrow(df)
-      days = unique(df$day)
-      if(sex=="male"){
-        x = cbind(1,rep(1,n))
-        if(alpha_sex=="male"){
-          alpha = alpha_male
-        }else{
-          alpha=1
-        }
-        
-      }else{
-        x = cbind(1,rep(0,n))
-        if(alpha_sex=="female"){
-          alpha = alpha_female
-        }else{
-          alpha=1
-        }
-      }
-    
-      sig = diag(n)*alpha*exp(pars["sigma^2"])+alpha*exp(pars["sigma_s^2"])
-      for(k in days){
-        idx = which(df$day==k)
-        sig[idx,idx] = sig[idx,idx]+alpha*exp(pars["sigma_sub_day^2"])
-      }
-      sig
-      y = df$clo
-      tmp = dmvn(y,x%*%beta,sig,log=T)
-      #tmp = dmvnorm(y,x%*%beta,sig,log=T)
-      #print(tmp)
-      ll = ll+tmp
-    }
-    return(-ll)
+    y = df$clo
+    tmp = dmvn(y,x%*%beta,sig,log=T)
+    #tmp = dmvnorm(y,x%*%beta,sig,log=T)
+    #print(tmp)
+    ll = ll+tmp
+  }
+  return(-ll)
 }
+dat$sex_male = as.numeric(as.factor(dat$sex))-1
+dat$sex_female = abs(as.numeric(as.factor(dat$sex))-2)
+pars=c("mu"=0.5,"sex_male"=-0.1,"alpha"=1,"sigma_sub_day^2"=0.1,"sigma_s^2"=0.1,"sigma^2"=0.1)
 
-
-pars_male=c("mu"=0.5,"sex_male"=-0.1,"alpha_male"=0,"sigma_sub_day^2"=0,"sigma_s^2"=0,"sigma^2"=0)
-pars_female=c("mu"=0.5,"sex_male"=-0.1,"alpha_female"=0,"sigma_sub_day^2"=0,"sigma_s^2"=0,"sigma^2"=0)
-
-nll2(pars)
 
 # Fitting male alpha, female=1
-opt2<-nlminb(pars_male,nll2,alpha_sex="male")
+opt2<-nlminb(pars,nll2,alpha_sex="male")
 out_par = opt2$par
 c(out_par[1:2],exp(out_par[3:6]))
 exp(out_par[3])*exp(out_par[4:6])
 
 # Fitting female alpha, male=1
-opt2<-nlminb(pars_female,nll2,alpha_sex="female")
+opt2<-nlminb(pars,nll2,alpha_sex="female")
 out_par = opt2$par
 c(out_par[1:2],exp(out_par[3:6]))
 exp(out_par[3])*exp(out_par[4:6])
+
+
+```
+
+
+```{r}
+
+nll3<- function(pars,alpha_sex="male"){
+  #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
+  #print(pars)
+  # ML estimation:
+  mu = pars["mu"]
+  sex_male = pars["sex_male"]
+  beta=c(mu,sex_male)
+  alpha = pars['alpha']
+  
+  ll=0
+  for(i in unique(dat$subjId)){
+    #print(i)
+    df = dat[dat$subjId==i,]
+    df$sex
+    if(alpha_sex=="male"){
+      sex = df$sex_male[1]
+    }
+    if(alpha_sex=="female"){
+      sex = df$sex_female[1]
+    }
+    
+    n = nrow(df)
+    days = unique(df$day)
+    
+    if(df$sex[1]=="male"){
+      x = cbind(1,rep(1,n))
+    }else{
+      x = cbind(1,rep(0,n))
+    }
+    
+    sig = diag(n)*exp(sex*alpha+pars["sigma^2"])+exp(sex*alpha+pars["sigma_s^2"])
+    for(k in days){
+      idx = which(df$day==k)
+      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+pars["sigma_sub_day^2"])
+    }
+    
+    
+    y = df$clo
+    tmp = dmvn(y,x%*%beta,sig,log=T)
+    #tmp = dmvnorm(y,x%*%beta,sig,log=T)
+    #print(tmp)
+    ll = ll+tmp
+  }
+  return(-ll)
+}
+
+pars=c("mu"=0.5,"sex_male"=-0.1,"alpha"=1,"sigma_sub_day^2"=0.1,"sigma_s^2"=0.1,"sigma^2"=0.1)
+
+# Fitting male alpha, female=1
+opt2<-nlminb(pars,nll2,alpha_sex="male")
+out_par = opt2$par
+c(out_par[1:2],exp(out_par[3:6]))
+exp(out_par[3])*exp(out_par[4:6])
+
+# Fitting female alpha, male=1
+opt2<-nlminb(pars,nll2,alpha_sex="female")
+out_par = opt2$par
+c(out_par[1:2],exp(out_par[3:6]))
+exp(out_par[3])*exp(out_par[4:6])
+
+
+
+len = length(unique(dat$subjId))
+N = nrow(dat)
+subj = unique(dat$subjId)
+for(i in 1:length(subj)){
+  print(paste("ID",i,"sex",dat$sex[dat$subjId==subj[i]][1],"sex_male",dat$sex_male[dat$subjId==subj[i]][1],
+              "ours"))
+  
+}
 
 
 ```
