@@ -21,11 +21,8 @@ library(xtable)
 library(gridExtra)
 library(nlme)
 ```
-# Part 1
 
-## Exploratory
-
-
+# Part 1 Clothing insulation level
 ```{r}
 # Loading the data
 df = read.csv(file="data/clothingFullAss03.csv")
@@ -35,7 +32,11 @@ df$subjId = factor(df$subjId)
 df$sex = factor(df$sex)
 ```
 
-```{r part1_exploratory,fig.cap="This graph shows the office temperatures..."}
+## Exploratory data analysis
+
+
+
+```{r part1_exploratory,fig.cap="This graph shows the Clothing level as a function Indoor Operating temperatures. This is further split into day and gender, and in each subplot the observations for each person are connected."}
 # Exploratory analysis
 p1=ggplot(df,aes(x=tOut,y=clo,col=subjId))+
   geom_path()+
@@ -50,27 +51,198 @@ p2=ggplot(df,aes(x=tInOp,y=clo,col=subjId))+
   geom_text(aes(label=time2))+
   facet_grid(rows=vars(sex),cols=vars(paste("day",day)))+
   theme(legend.position = "None")+
-  ggtitle("Clothing Level vs Office Temperature")+
-  xlab("Office Temperature")+ylab("Clothing level")
+  ggtitle("Clothing Level vs Indoor Operating Temperature")+
+  xlab("Indoor Operating Temperature")+ylab("Clothing level")
 
 #grid.arrange(p1,p2,nrow=2)
 p2
 
 ```
-The plot shows auto-correlation for each subject within each day.
-We see that some subjects have different preferred clothing levels. 
-There seem to be more variation within the female subjects. 
 
-We will not estimate individual slopes as the clothing levels seem to be constant for each subject during each day. WE PROBABLY SHOULD ANYWAYS!!!
+From figure \ref{fig:part1_exploratory} it appears that females have a larger variation in clothing level compared to males. We see that some subjects have different preferred clothing level and this seems especially to be the case for females. It should also be noted that this figure also shows the auto-correlation of each subject within each day and there appears to be correlation within each day. This is seen as clothing level appears to be more dependent on the subject within the given day rather than between the days. We do not see an increase/decrease in clothing level for each day which is why we will consider the variable as a factor. 
 
-DONT USE DAY AS independent variable.
-We do not see an increase/decrease in clothing level for each day which is why we will consider the variable as a factor. 
+Further exploratory analysis will not be performed as this already have been presented in assignment 1. 
 
-TRY RANDOM SLOPES
 
 ## Initial fixed effect models with subject ID as random effect
+We will fit a mixed effect model with subject ID as a random effect. The initial model will predict clothing level based on gender of the subject ($sex$), Outdoor temperature ($tOut$), Indoor Operating temperature ($tInOp$) and time ($time$). The initial model is:
+$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_{4t}time_{it} + \beta_5sex_i(tOut_i) + \beta_6sex_i(tInOp_i) + \beta_{7d} day_{id}+ SubjId_i + \epsilon_{ij}$$
+where $SUbjId_i \sim N(0,\sigma_u^2)$, $\epsilon_{ij} \sim N(0,\sigma^2)$ and both are mutually independent. $sex_i(tOut_i)$ indicates the interaction term between gender of the subject and the Outdoor temperature. The model will be reduced based on backward selection using Type III partitioning where higher order terms are removed first. Firstly, it is determined whether time should be included as a factor. Two models are generated according to above equation where the only difference are whether time are included as a factor or numeric. The log-likelihood of the two models are: 706.5 and 711.6 for the model including time as numeric and factor respectively and thereby indicating that time should be included as a factor.
 
 ```{r}
+#We will not estimate individual slopes as the clothing levels seem to be constant for each subject during each day. WE PROBABLY SHOULD ANYWAYS!!! TRY RANDOM SLOPES
+
+init_fit2 = lme(clo~sex*(tOut+tInOp)+time,random=~ 1|subjId,data=df,method="ML")
+init_fit4 = lme(clo~sex*(tOut+tInOp)+time2,random=~ 1|subjId,data=df,method="ML")
+
+
+anova(init_fit2,init_fit4)
+
+```
+
+The model are reduced based on maximum likelihood estimation and the final model are: 
+INDSÆT TABEL OVER HVAD DER FJERNES OG HVORNÅR 
+
+```{r}
+fit0_2 = lme(clo~sex*(tOut+tInOp)+day+time2,random=~ 1|subjId,data=df,method="ML")
+Anova(fit0_2,type=3)
+
+fit1_2 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="ML")
+Anova(fit1_2,type=3)
+
+anova(fit0_2, fit1_2)
+```
+
+$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_{4t}time_{it} + \beta_5sex_i(tInOp_i) + \beta_{6d} day_{id}+ SubjId_i + \epsilon_{ij}$$
+A likelihood ratio test are performed to test the model reduction and results in $p = 0.52$ and the model reduction is therefore kept.
+
+Afterwards the random effect coefficients are estimated using REML estimation. The coefficients for the random effects are presented in the histogram in figure \ref{fig:hist_1} and does appear to be randomly distributed as assumed in the model.The fixed effect coefficients are presented in table \ref{tab:coef_1} including 95 \% confidence intervals.
+
+```{r hist_1,fig.cap="This graph shows the random effect coefficients presented in a histogram."}
+fit1_2 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="REML")
+hist(ranef(fit1_2)[,1], xlab = 'Random effect coefficients', main = 'Histogram of random coefficients', breaks = 10)
+
+xtable(intervals(fit1_2)$fixed)
+```
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & Lower (2.5 \%)& Estimate & Upper (97.5 \%)\\ 
+  \hline
+(Intercept) & 0.98 & 1.17 & 1.36 \\ 
+  sexmale & -0.66 & -0.42 & -0.17 \\ 
+  tInOp & -0.02 & -0.01 & -0.01 \\ 
+  tOut & -0.01 & -0.01 & -0.01 \\ 
+  day2 & -0.02 & -0.01 & 0.01 \\ 
+  day3 & -0.05 & -0.03 & -0.02 \\ 
+  day4 & 0.08 & 0.15 & 0.22 \\ 
+  time22 & 0.02 & 0.04 & 0.06 \\ 
+  time23 & 0.03 & 0.05 & 0.08 \\ 
+  time24 & 0.03 & 0.05 & 0.08 \\ 
+  time25 & 0.03 & 0.06 & 0.08 \\ 
+  time26 & 0.03 & 0.06 & 0.09 \\ 
+  sexmale:tInOp & 0.00 & 0.01 & 0.02 \\ 
+   \hline
+\end{tabular}
+\caption{Estimate of fixed effect coefficients including 95\% confidence intervals.}
+\labe{tab:coef_1}
+\end{table}
+
+The residuals are further investigated in figure \ref{fig:res_1} where the standardized residuals are plotted against the fitted values. From this the residuals appears to be randomly distributed.
+
+```{r res_1,fig.cap="This graph shows the residuals of the first fixed effect model with subject Id as random effect."}
+plot(fit1_2)
+```
+
+
+## Fixed effect models with subject ID and day as random effects
+
+A new fixed effect model with subject ID and day as random effects will be used for modelling the clothing insulation level. The initial model has the following set-up:
+$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_{4t}time_{it} + \beta_5sex_i(tInOp_i) + SubjId_i +day_{id} +  \epsilon_{ij}$$
+The random effect day is nested within the random effect Subject ID. Here $SUbjId_i \sim N(0,\sigma_u^2)$, $\epsilon_{ij} \sim N(0,\sigma^2)$ and $day_{id} \sim N(0, \sigma_d^2)$ and all three are mutually independent. ER DAY AFHÆNGIG AF SUBJECT ID??. Again $sex_i(tOut_i)$ indicates the interaction term between gender of the subject and the Outdoor temperature. Again time will be included as a factor based on the result in the previous subsection.
+
+The initial model will be reduced using backward selection based on type III partitioning where higher order terms are removed first based on maximum-likelihood estimation. INDSÆT TABEL FOR MODEL REDUCTION 
+
+```{r}
+fit0 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1|subjId,~1|day),data=df,method="ML")
+Anova(fit0,type=3)
+fit1 = lme(clo~sex*tInOp+tOut+time2,random=list(~1|subjId,~1|day),data=df,method="ML")
+Anova(fit1,type=3)
+
+anova(fit0, fit1)
+```
+The final model after model reduction are: 
+$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_{4t}time_{it} + \beta_5sex_i(tInOp_i) + SubjId_i +day_{id} +  \epsilon_{ij}$$
+
+A likelihood ratio test are performed to test the model reduction and results in $p = 0.48$ and the model reduction is therefore kept.
+
+HVORDAN PRÆSENTERER VI RANDOM EFFECTS?
+
+The fixed effect coefficients are presented in table \ref{tab:coef_2} including 95 \% confidence intervals.
+
+```{r}
+xtable(intervals(fit1)$fixed)
+```
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & lower & est. & upper \\ 
+  \hline
+(Intercept) & 0.85 & 1.00 & 1.15 \\ 
+  sexmale & -0.54 & -0.37 & -0.21 \\ 
+  tInOp & -0.02 & -0.01 & -0.01 \\ 
+  tOut & -0.01 & -0.00 & -0.00 \\ 
+  time22 & 0.01 & 0.03 & 0.04 \\ 
+  time23 & 0.01 & 0.03 & 0.05 \\ 
+  time24 & 0.00 & 0.02 & 0.04 \\ 
+  time25 & 0.00 & 0.02 & 0.04 \\ 
+  time26 & 0.00 & 0.03 & 0.05 \\ 
+  sexmale:tInOp & 0.01 & 0.01 & 0.02 \\ 
+   \hline
+\end{tabular}
+\caption{Estimate of fixed effect coefficients including 95\% confidence intervals.}
+\labe{tab:coef_2}
+
+\end{table}
+
+
+The residuals are further investigated in figure \ref{fig:res_2} where the standardized residuals are plotted against the fitted values. From this the residuals appears to contain some structure going from small to large residuals when increasing the fitted values. HVAD BETYDER DET??
+
+```{r res_2,fig.cap="This graph shows the residuals of the first fixed effect model with subject Id and day as random effect."}
+plot(fit1)
+```
+
+
+
+
+
+```{r}
+
+# Jan: "Use at least two"
+# TEST OTHER CORRELATION STRUCTURES
+# USE exponential and gaussian (with AND without NUGGET)
+
+
+str(df)
+df$day = as.numeric(as.character(df$day))
+init_fit1 = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="ML")
+init_fit1
+system.getCurrentDirectory()
+fit0 = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="REML")
+Anova(fit0,type=3)
+
+fit1 = lme(clo~sex*tInOp+tOut,random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="REML")
+Anova(fit1,type=3)
+
+intervals(fit1)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+#Exercise 2: 
+#We will not estimate individual slopes as the clothing levels seem to be constant for each subject during each day. WE PROBABLY SHOULD ANYWAYS!!! TRY RANDOM SLOPES
+
 # Try 1+tOut|subjId or 1+tInOp|subjId 
 
 # Does not make sense
@@ -131,17 +303,11 @@ plot(fit1_1)
 plot(fit1_2)
 ```
 
-
-## Fixed effect models with subject ID and day as random effects
-
 ```{r}
-df
-#init_fit1 = lme(clo~sex*(tOut+tInOp)+time,random=list(~1+sex|subjId,~1+sex|day),data=df,method="ML")
-init_fit1
+#Task 2.3
 init_fit2 = lme(clo~sex*(tOut+tInOp)+time,random=list(~1|subjId,~1|day),data=df,method="ML")
 init_fit2
 
-#init_fit3 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1+sex|subjId,~1+sex|day),data=df,method="ML")
 init_fit4 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1|subjId,~1|day),data=df,method="ML")
 anova(init_fit1,init_fit2,init_fit3,init_fit4)
 
@@ -163,34 +329,6 @@ intervals(fit1_1)
 
 intervals(fit1_2)
 
-
-```
-
-```{r}
-
-# Jan: "Use at least two"
-# TEST OTHER CORRELATION STRUCTURES
-# USE exponential and gaussian (with AND without NUGGET)
-
-
-str(df)
-df$day = as.numeric(as.character(df$day))
-init_fit1 = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
-                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
-                data=df,method="ML")
-init_fit1
-system.getCurrentDirectory()
-fit0 = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
-                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
-                data=df,method="REML")
-Anova(fit0,type=3)
-
-fit1 = lme(clo~sex*tInOp+tOut,random=~1|subDay,
-                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
-                data=df,method="REML")
-Anova(fit1,type=3)
-
-intervals(fit1)
 
 ```
 
