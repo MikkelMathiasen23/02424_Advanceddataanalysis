@@ -371,53 +371,22 @@ nllQ5<- function(pars,alpha_sex="male"){
       sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+pars["sigma_sub_day^2"])
     }
     
-    test<<-sig
-    
     y = df$clo
     
-    chol_sig =  chol(sig)
-    chol_sig_inv = chol2inv(chol_sig)
-    
-    test = sqrt(t(y-x%*%beta)%*%chol_sig_inv%*%(y-x%*%beta))
-    print(test)
-    tmp = dt(x = test,df = 2*exp(pars["phi"]),log=T)
-    
+    tmp = dmvt(X = y, mu = x%*%beta ,sigma = sig, df = 2*exp(pars["phi"]),log=T,)
     
 
-    tmp2 = det(chol_sig_inv)*tmp
-    
-    #tmp = dmvn(y,x%*%beta,sig,log=T)
-    #tmp = dmvnorm(y,x%*%beta,sig,log=T)
-    #print(tmp)
-    ll = ll+tmp2
+    ll = ll+tmp
   }
   return(-ll)
 }
-library(mvtnorm)
+#library(mvtnorm)
 library(mvnfast)
 dmvt
 pars=c("mu"=0.59,"sex_male"=-0.08,"alpha"=2.7,"sigma_sub_day^2"=-5.681,"sigma_s^2"=-6.5,"sigma^2"=-8.08,"phi"=2)
-nllQ5(pars)
-unique(diag(test))
-
-m = matrix(c(2,1,1,2),nrow=2)
-det(m)
-
-5^2*det(m/5)
-
-1/det(m)
-
-det(solve(m/5))/5^2
-
-det(test)
 
 # Fitting male alpha, female=1
 optQ5<-nlminb(pars,nllQ5,alpha_sex="male")
-optQ5_2 = optim(pars,fn=nllQ5,alpha_sex="male")
-optQ5_2
-
-
-opt2
 
 out_par = optQ5$par
 c(out_par[1:2],exp(out_par[3:6]),out_par[7])

@@ -190,7 +190,7 @@ xtable(intervals(fit1)$fixed)
 \end{table}
 
 
-The residuals are further investigated in figure \ref{fig:res_2} where the standardized residuals are plotted against the fitted values. From this the residuals appears to contain some structure going from small to large residuals when increasing the fitted values. HVAD BETYDER DET??
+The residuals are further investigated in figure \ref{fig:res_2} where the standardized residuals are plotted against the fitted values. From this the residuals appears to contain some structure going from small to large residuals when increasing the fitted values. HVAD BETYDER DET?? Autocorrelation??
 
 ```{r res_2,fig.cap="This graph shows the residuals of the first fixed effect model with subject Id and day as random effect."}
 plot(fit1)
@@ -198,6 +198,7 @@ plot(fit1)
 
 
 
+#Mixed effect model with autocorrelation
 
 
 ```{r}
@@ -228,6 +229,11 @@ intervals(fit1)
 
 ```
 
+
+#Interpretation of model
+
+
+#Conclusion
 
 
 

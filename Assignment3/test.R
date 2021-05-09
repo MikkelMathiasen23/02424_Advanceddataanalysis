@@ -46,4 +46,11 @@ obj <- MakeADFun(data = new_dat,
                  random = c("u","v","gamma"),
                  DLL = "test"
 )
-obj$fn(obj$par)
+
+opt <- nlminb(obj$par, obj$fn, obj$gr)
+
+opt$objective
+opt$par
+
+rap = sdreport(obj,getJointPrecision = TRUE)
+

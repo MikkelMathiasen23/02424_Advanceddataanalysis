@@ -43,9 +43,6 @@ library(directlabels)
 \newpage
 ```{r child = 'problemB.Rmd', cache = T}
 ```
-\newpage
-```{r child = 'problemC.Rmd', cache = T}
-```
 
 # Appendix: R-code
 ```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
