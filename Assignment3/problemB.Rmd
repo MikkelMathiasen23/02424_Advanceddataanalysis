@@ -337,3 +337,123 @@ for(i in 1:length(subj)){
 
 ```
 
+## Q4
+
+$$
+\begin{align}
+L(\beta,\Psi;u,y) = f_{Y|y}(y;u,\beta)f_U(u,\Psi)\\
+L(\mu,\sigma,\phi;\gamma,y) = \mathcal{N}\left(\mu,\frac{\sigma}{\gamma_i}\right)G(1,\phi)\\
+\\
+\alpha = \phi,  \beta = \phi, x = clo\\
+\\
+ \frac{1}{\sqrt{2\pi}\cdot(\sigma/\gamma_i)}\exp{\left(-\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2/\gamma_i^2}\right)}
+\times \frac{\beta^\alpha}{\Gamma(\alpha)}\gamma^{\alpha-1}\exp{\left(-\beta \gamma\right)}\\
+
+\frac{1}{\sqrt{2\pi}\cdot(\sigma/\gamma_i)}\exp{\left(-\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2/\gamma_i^2}\right)}
+\times \frac{\phi^\phi}{\Gamma(\phi)}\gamma^{\phi-1}\exp{\left(-\phi \gamma\right)}\\
+
+
+\frac{\gamma \phi^\phi}{\Gamma(\phi)\times\sqrt{2\pi}\cdot(\sigma)}\exp{\left(-\phi \gamma-\frac{1}{2}\frac{\gamma^2(x-\mu)^2}{\sigma^2}\right)}
+\times \gamma^{\phi-1}\\
+
+\end{align}
+$$
+$$
+\begin{align}
+\frac{1}{\Gamma(\alpha)\beta}\left(\frac{\gamma}{\beta}\right)^{\alpha-1}\exp{\left(-\frac{\gamma}{\beta}\right)}\\
+
+\frac{1}{\Gamma(\phi)\frac{1}{\phi}}\left(\gamma\phi \right)^{\phi-1}\exp{\left(-\gamma \phi\right)}\\
+\frac{\phi}{\Gamma(\phi)}\left(\gamma \phi \right)^{\phi-1}\exp{\left(-\gamma \phi\right)} \\
+
+\end{align}
+$$
+
+$$
+\begin{align}
+ \frac{\gamma}{\sqrt{2\pi}\cdot(\sigma)}\exp{\left(-\frac{1}{2}\frac{\gamma^2(x-\mu)^2}{\sigma^2}\right)} \times \frac{1}{\Gamma(\alpha)\beta}\left(\frac{\gamma}{\beta}\right)^{\alpha-1}\exp{\left(-\frac{\gamma}{\beta}\right)}\\
+
+\frac{\gamma}{\sqrt{2\pi}\cdot \sigma}\exp{\left(-\frac{\gamma^2(x-\mu)^2}{2\sigma^2} -\frac{\gamma}{\beta}\right)} \times \frac{1}{\Gamma(\alpha)\beta}\left(\frac{\gamma}{\beta}\right)^{\alpha-1}\iff \\
+\int_0^{\infty} \frac{\gamma}{\sqrt{2\pi}\cdot \sigma}\exp{\left(-\frac{\gamma^2(x-\mu)^2}{2\sigma^2} -\frac{\gamma}{\beta}\right)} \times \frac{1}{\Gamma(\alpha)\beta}\left(\frac{\gamma}{\beta}\right)^{\alpha-1} \\
+
+\frac{1}{\sqrt{2\pi}\cdot \sigma} \frac{1}{\Gamma(\alpha)\beta} \frac{1}{\beta^{\alpha-1}}\int_0^{\infty} \gamma \exp{\left(-\frac{\gamma^2(x-\mu)^2}{2\sigma^2} -\frac{\gamma}{\beta}\right)} \times \gamma^{\alpha-1} \\
+
+\frac{1}{\sqrt{2\pi}\cdot \sigma} \frac{1}{\Gamma(\alpha)\beta} \frac{1}{\beta^{\alpha-1}}\int_0^{\infty}  \exp{\left(-\frac{\gamma^2(x-\mu)^2}{2\sigma^2} -\frac{\gamma}{\beta}\right)} \times \gamma^{\alpha} \\
+
+\end{align}
+$$
+
+$$
+\exp (-\gamma/\beta)\gamma^{\alpha-1}
+$$
+gamma function
+$$
+\Gamma(z) = \int_0^\infty t^{z-t}\exp{(-t)} dt = 2\int_0^\infty t^{2z-t}\exp{(-t^2)} dt = \int_0^1 \left[ln\left(\frac{1}{t}\right)\right]^{z-1}dt
+$$
+
+
+
+$$
+\begin{align}
+pdf(x,\nu) = \frac{\Gamma(\frac{\nu+1}{2})}{\sqrt{\nu \pi}\Gamma(\frac{\nu}{2})}\left(1+\frac{x^2}{\nu}\right)^{-\frac{\nu+1}{2}}\\
+
+\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \sigma \frac{\Gamma(\frac{2\phi+1}{2})}{\sqrt{2\phi \pi}\Gamma(\frac{2\phi}{2})}\left(1+\frac{x^2}{2\phi}\right)^{-\frac{2\phi+1}{2}} \\
+
+\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \sigma \frac{\Gamma(\frac{2\phi+1}{2})}{\sqrt{2\phi \pi}\Gamma(\phi)}\left(1+\frac{(\frac{y-\mu}{\sigma})^2}{2\phi}\right)^{-\frac{2\phi+1}{2}} 
+\end{align}
+
+$$
+### WORKS!!
+
+Assuming: $ Y_i|\gamma_i \sim \mathcal{N}(\mu,\sigma^2/\gamma_i)$
+https://people.eecs.berkeley.edu/~jordan/courses/260-spring10/lectures/lecture5.pdf
+
+$$
+\begin{align}
+\int_0^\infty \frac{\sqrt{\gamma}}{\sqrt{2\pi}\cdot(\sigma)}\exp{\left(-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)} 
+\times \frac{\beta^\alpha}{\Gamma(\alpha)}\gamma^{\alpha-1}\exp{(-\gamma\beta)}\\
+
+= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \sqrt{\gamma}\exp{\left(-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)}
+\times\gamma^{\alpha-1}\exp{(-\gamma\beta)} \\
+
+= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma\beta-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)}
+ \\
+ 
+ = \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma \left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right)\right)}
+ \\
+ 
+ = \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{\hat{\alpha}-1}\exp{\left(-\gamma \hat{\beta}\right)}, \hspace{0.5cm}\hat{\beta}=\left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right), \hat{\alpha}=\alpha+1/2\\
+ 
+= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\hat{\alpha})}{\hat{\beta}^{\hat{\alpha}}}\\
+ 
+ 
+= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\alpha+1/2)}{\left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right)^{\alpha+1/2}}\\
+ 
+\end{align}
+$$
+
+$$ 
+\begin{align}
+\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
+\left(\phi+\frac{(x-\mu)^2}{2\sigma^2}\right)^{-\phi-1/2}\\
+
+\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
+\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-\phi-1/2}\\
+
+
+\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}
+\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-1/2}\\
+
+\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi \phi}\Gamma(\phi)}
+\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\\
+
+\end{align}
+$$
+
+$$\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \frac{1}{\sigma} \frac{\Gamma(\phi+\frac{1}{2})}{\sqrt{2\phi \pi}\Gamma(\phi)}\left(1+\frac{(\frac{y-\mu}{\sigma})^2}{2\phi}\right)^{-\phi-\frac{1}{2}} $$
+
+
+
+
+
+
+
