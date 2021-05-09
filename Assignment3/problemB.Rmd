@@ -15,8 +15,7 @@ dat = read.csv(file="data/clothingFullAss03.csv")
 library(lme4)
 fit0 <- lmer(clo~sex+(1|subjId),data=dat,REML=FALSE)
 
-plot(fit0)
-str(fit0)
+
 ```
 
 $$
@@ -37,27 +36,28 @@ l(y,\beta,\sigma_s,\sigma)\propto -\frac{1}{2}\sum_{i}^{N_{subjId}} \log |\sigma
 $$
 Where $i$ all the indices for each of the subjects, and where $n_i$ is the number of observations for each subject. $E_{n_i,n_i}$ is a matrix full of ones with the dimensions $n_i\times n_i$ and $I_{n_i}$ is the identity matrix of the same dimensions.
 ```{r}
-pars=c("mu"=0.5,"sex_male"=-0.1,"sigma_s"=0.1,"sigma"=0.1)
-
-kronecker(diag(3),matrix(c(1.1,1,1,1.1),ncol=2))
-
 library(mvnfast)
+pars=c("mu"=0.5,"sex_male"=-0.1,"sigma_s"=0.1,"sigma"=0.1)
+# 
+# kronecker(diag(3),matrix(c(1.1,1,1,1.1),ncol=2))
+# 
 
-X = cbind(1,rep(0,nrow(dat)))
-X[dat$sex=="male",2]=1
-library(Matrix)
-Z = Matrix(0,nrow=nrow(dat),ncol=length(unique(dat$subjId)),sparse=T)
-for(i in 1:nrow(dat)){
-  Z[i,unique(dat$subjId)==dat$subjId[i]]=1
-}
-m = diag(c(1,2))
-m[1,2]=m[2,1]=0.5
-m
-chol2inv(chol(m))
-solve(m)
-qr.solve(m)
-# slow
-#library(mvtnorm)
+# 
+# X = cbind(1,rep(0,nrow(dat)))
+# X[dat$sex=="male",2]=1
+# library(Matrix)
+# Z = Matrix(0,nrow=nrow(dat),ncol=length(unique(dat$subjId)),sparse=T)
+# for(i in 1:nrow(dat)){
+#   Z[i,unique(dat$subjId)==dat$subjId[i]]=1
+# }
+# m = diag(c(1,2))
+# m[1,2]=m[2,1]=0.5
+# m
+# chol2inv(chol(m))
+# solve(m)
+# qr.solve(m)
+# # slow
+# #library(mvtnorm)
 
 
 nll0<- function(pars){
@@ -66,12 +66,12 @@ nll0<- function(pars){
     sex_male = pars["sex_male"]
     beta=c(mu,sex_male)
     
-    #y = dat$clo
-    #Psi = diag(length(unique(dat$subjId)))*pars["sigma_s"]^2
-    #Sigma = diag(nrow(dat))*pars["sigma"]^2
-    #V = Z%*%Psi%*%t(Z)+Sigma
+    # y = dat$clo
+    # Psi = diag(length(unique(dat$subjId)))*pars["sigma_s"]^2
+    # Sigma = diag(nrow(dat))*pars["sigma"]^2
+    # V = Z%*%Psi%*%t(Z)+Sigma
     # Faster dmvnorm from mvnfast
-    #ll = dmvn(y,X%*%beta,V,log=T)
+    # ll = dmvn(y,X%*%beta,V,log=T)
     
     ll=0
     
@@ -93,7 +93,7 @@ nll0<- function(pars){
 }
 
 
-nll(pars)
+nll0(pars)
 
 opt0<-nlminb(pars,nll0,lower=c(-10,-10,0.001,0.001),
        upper=c(10,10,10,10))
@@ -108,21 +108,16 @@ logLik(fit0)
 
 
 ```
-CALCULATE RANDOM EFFECTS??? See equation 5.60 or google
+
 
 ### Question 2
 $u_i$ random effect for subject ID
 $v_{i,j}$ random effect for interaction between subject ID and day
 
 ```{r}
-library(nlme)
 fit1 <- lmer(clo~sex+(1|subjId)+(1|subjId:day),data=dat,REML=F)
 
-dat$new = paste(dat$sex,dat$day)
-fit1_1 <- lme(clo~sex,data=dat,random = list(~1|subjId,~1|new),method="ML")
 
-fit1
-fit1_1
 nll1<- function(pars){
   # ML estimation:
     mu = pars["mu"]
@@ -260,82 +255,12 @@ exp(out_par[3])*exp(out_par[4:6])
 
 ```
 
+$$
 
-```{r}
+\sqrt{(clo-X\beta)^T\Sigma^{-1}(clo-X\beta)}
 
-nll3<- function(pars,alpha_sex="male"){
-  #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
-  #print(pars)
-  # ML estimation:
-  mu = pars["mu"]
-  sex_male = pars["sex_male"]
-  beta=c(mu,sex_male)
-  alpha = pars['alpha']
-  
-  ll=0
-  for(i in unique(dat$subjId)){
-    #print(i)
-    df = dat[dat$subjId==i,]
-    df$sex
-    if(alpha_sex=="male"){
-      sex = df$sex_male[1]
-    }
-    if(alpha_sex=="female"){
-      sex = df$sex_female[1]
-    }
-    
-    n = nrow(df)
-    days = unique(df$day)
-    
-    if(df$sex[1]=="male"){
-      x = cbind(1,rep(1,n))
-    }else{
-      x = cbind(1,rep(0,n))
-    }
-    
-    sig = diag(n)*exp(sex*alpha+pars["sigma^2"])+exp(sex*alpha+pars["sigma_s^2"])
-    for(k in days){
-      idx = which(df$day==k)
-      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+pars["sigma_sub_day^2"])
-    }
-    
-    
-    y = df$clo
-    tmp = dmvn(y,x%*%beta,sig,log=T)
-    #tmp = dmvnorm(y,x%*%beta,sig,log=T)
-    #print(tmp)
-    ll = ll+tmp
-  }
-  return(-ll)
-}
+$$
 
-pars=c("mu"=0.5,"sex_male"=-0.1,"alpha"=1,"sigma_sub_day^2"=0.1,"sigma_s^2"=0.1,"sigma^2"=0.1)
-
-# Fitting male alpha, female=1
-opt2<-nlminb(pars,nll2,alpha_sex="male")
-out_par = opt2$par
-c(out_par[1:2],exp(out_par[3:6]))
-exp(out_par[3])*exp(out_par[4:6])
-
-# Fitting female alpha, male=1
-opt2<-nlminb(pars,nll2,alpha_sex="female")
-out_par = opt2$par
-c(out_par[1:2],exp(out_par[3:6]))
-exp(out_par[3])*exp(out_par[4:6])
-
-
-
-len = length(unique(dat$subjId))
-N = nrow(dat)
-subj = unique(dat$subjId)
-for(i in 1:length(subj)){
-  print(paste("ID",i,"sex",dat$sex[dat$subjId==subj[i]][1],"sex_male",dat$sex_male[dat$subjId==subj[i]][1],
-              "ours"))
-  
-}
-
-
-```
 
 ## Q4
 
@@ -343,54 +268,10 @@ $$
 \begin{align}
 L(\beta,\Psi;u,y) = f_{Y|y}(y;u,\beta)f_U(u,\Psi)\\
 L(\mu,\sigma,\phi;\gamma,y) = \mathcal{N}\left(\mu,\frac{\sigma}{\gamma_i}\right)G(1,\phi)\\
-\\
-\alpha = \phi,  \beta = \phi, x = clo\\
-\\
- \frac{1}{\sqrt{2\pi}\cdot(\sigma/\gamma_i)}\exp{\left(-\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2/\gamma_i^2}\right)}
-\times \frac{\beta^\alpha}{\Gamma(\alpha)}\gamma^{\alpha-1}\exp{\left(-\beta \gamma\right)}\\
-
-\frac{1}{\sqrt{2\pi}\cdot(\sigma/\gamma_i)}\exp{\left(-\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2/\gamma_i^2}\right)}
-\times \frac{\phi^\phi}{\Gamma(\phi)}\gamma^{\phi-1}\exp{\left(-\phi \gamma\right)}\\
-
-
-\frac{\gamma \phi^\phi}{\Gamma(\phi)\times\sqrt{2\pi}\cdot(\sigma)}\exp{\left(-\phi \gamma-\frac{1}{2}\frac{\gamma^2(x-\mu)^2}{\sigma^2}\right)}
-\times \gamma^{\phi-1}\\
-
-\end{align}
-$$
-$$
-\begin{align}
-\frac{1}{\Gamma(\alpha)\beta}\left(\frac{\gamma}{\beta}\right)^{\alpha-1}\exp{\left(-\frac{\gamma}{\beta}\right)}\\
-
-\frac{1}{\Gamma(\phi)\frac{1}{\phi}}\left(\gamma\phi \right)^{\phi-1}\exp{\left(-\gamma \phi\right)}\\
-\frac{\phi}{\Gamma(\phi)}\left(\gamma \phi \right)^{\phi-1}\exp{\left(-\gamma \phi\right)} \\
-
 \end{align}
 $$
 
-$$
-\begin{align}
- \frac{\gamma}{\sqrt{2\pi}\cdot(\sigma)}\exp{\left(-\frac{1}{2}\frac{\gamma^2(x-\mu)^2}{\sigma^2}\right)} \times \frac{1}{\Gamma(\alpha)\beta}\left(\frac{\gamma}{\beta}\right)^{\alpha-1}\exp{\left(-\frac{\gamma}{\beta}\right)}\\
-
-\frac{\gamma}{\sqrt{2\pi}\cdot \sigma}\exp{\left(-\frac{\gamma^2(x-\mu)^2}{2\sigma^2} -\frac{\gamma}{\beta}\right)} \times \frac{1}{\Gamma(\alpha)\beta}\left(\frac{\gamma}{\beta}\right)^{\alpha-1}\iff \\
-\int_0^{\infty} \frac{\gamma}{\sqrt{2\pi}\cdot \sigma}\exp{\left(-\frac{\gamma^2(x-\mu)^2}{2\sigma^2} -\frac{\gamma}{\beta}\right)} \times \frac{1}{\Gamma(\alpha)\beta}\left(\frac{\gamma}{\beta}\right)^{\alpha-1} \\
-
-\frac{1}{\sqrt{2\pi}\cdot \sigma} \frac{1}{\Gamma(\alpha)\beta} \frac{1}{\beta^{\alpha-1}}\int_0^{\infty} \gamma \exp{\left(-\frac{\gamma^2(x-\mu)^2}{2\sigma^2} -\frac{\gamma}{\beta}\right)} \times \gamma^{\alpha-1} \\
-
-\frac{1}{\sqrt{2\pi}\cdot \sigma} \frac{1}{\Gamma(\alpha)\beta} \frac{1}{\beta^{\alpha-1}}\int_0^{\infty}  \exp{\left(-\frac{\gamma^2(x-\mu)^2}{2\sigma^2} -\frac{\gamma}{\beta}\right)} \times \gamma^{\alpha} \\
-
-\end{align}
-$$
-
-$$
-\exp (-\gamma/\beta)\gamma^{\alpha-1}
-$$
-gamma function
-$$
-\Gamma(z) = \int_0^\infty t^{z-t}\exp{(-t)} dt = 2\int_0^\infty t^{2z-t}\exp{(-t^2)} dt = \int_0^1 \left[ln\left(\frac{1}{t}\right)\right]^{z-1}dt
-$$
-
-
+### Student t distribution
 
 $$
 \begin{align}
@@ -450,10 +331,132 @@ $$
 $$
 
 $$\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \frac{1}{\sigma} \frac{\Gamma(\phi+\frac{1}{2})}{\sqrt{2\phi \pi}\Gamma(\phi)}\left(1+\frac{(\frac{y-\mu}{\sigma})^2}{2\phi}\right)^{-\phi-\frac{1}{2}} $$
+## Q5 
+
+```{r}
+
+nllQ5<- function(pars,alpha_sex="male"){
+  #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
+  #print(pars)
+  # ML estimation:
+  mu = pars["mu"]
+  sex_male = pars["sex_male"]
+  beta=c(mu,sex_male)
+  alpha = pars['alpha']
+  
+  ll=0
+  for(i in unique(dat$subjId)){
+    #print(i)
+    df = dat[dat$subjId==i,]
+    df$sex
+    if(alpha_sex=="male"){
+      sex = df$sex_male[1]
+    }
+    if(alpha_sex=="female"){
+      sex = df$sex_female[1]
+    }
+    
+    n = nrow(df)
+    days = unique(df$day)
+    
+    if(df$sex[1]=="male"){
+      x = cbind(1,rep(1,n))
+    }else{
+      x = cbind(1,rep(0,n))
+    }
+    
+    sig = diag(n)*exp(sex*alpha+pars["sigma^2"])+exp(sex*alpha+pars["sigma_s^2"])
+    for(k in days){
+      idx = which(df$day==k)
+      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+pars["sigma_sub_day^2"])
+    }
+    
+    test<<-sig
+    
+    y = df$clo
+    
+    chol_sig =  chol(sig)
+    chol_sig_inv = chol2inv(chol_sig)
+    
+    test = sqrt(t(y-x%*%beta)%*%chol_sig_inv%*%(y-x%*%beta))
+    print(test)
+    tmp = dt(x = test,df = 2*exp(pars["phi"]),log=T)
+    
+    
+
+    tmp2 = det(chol_sig_inv)*tmp
+    
+    #tmp = dmvn(y,x%*%beta,sig,log=T)
+    #tmp = dmvnorm(y,x%*%beta,sig,log=T)
+    #print(tmp)
+    ll = ll+tmp2
+  }
+  return(-ll)
+}
+library(mvtnorm)
+library(mvnfast)
+dmvt
+pars=c("mu"=0.59,"sex_male"=-0.08,"alpha"=2.7,"sigma_sub_day^2"=-5.681,"sigma_s^2"=-6.5,"sigma^2"=-8.08,"phi"=2)
+nllQ5(pars)
+unique(diag(test))
+
+m = matrix(c(2,1,1,2),nrow=2)
+det(m)
+
+5^2*det(m/5)
+
+1/det(m)
+
+det(solve(m/5))/5^2
+
+det(test)
+
+# Fitting male alpha, female=1
+optQ5<-nlminb(pars,nllQ5,alpha_sex="male")
+optQ5_2 = optim(pars,fn=nllQ5,alpha_sex="male")
+optQ5_2
+
+
+opt2
+
+out_par = optQ5$par
+c(out_par[1:2],exp(out_par[3:6]),out_par[7])
+exp(out_par[3])*exp(out_par[4:6])
+
+# Fitting female alpha, male=1
+optQ5<-nlminb(pars,nllQ5,alpha_sex="female")
+out_par = optQ5$par
+c(out_par[1:2],exp(out_par[3:6]),out_par[7])
+exp(out_par[3])*exp(out_par[4:6])
+
+
+
+len = length(unique(dat$subjId))
+N = nrow(dat)
+subj = unique(dat$subjId)
+for(i in 1:length(subj)){
+  print(paste("ID",i,"sex",dat$sex[dat$subjId==subj[i]][1],"sex_male",dat$sex_male[dat$subjId==subj[i]][1],
+              "ours"))
+  
+}
+
+
+```
 
 
 
 
+```{r}
+N <- 100
+d <- 5
+mu <- 1:d
+df <- 4
+X <- t(t(matrix(rnorm(N*d), N, d)) + mu)
+tmp <- matrix(rnorm(d^2), d, d)
+mcov <- tcrossprod(tmp, tmp)  + diag(0.5, d)
+myChol <- chol(mcov)
+dmvt(X[1,], mu, mcov, df = df)
+```
 
 
 
