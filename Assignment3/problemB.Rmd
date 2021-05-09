@@ -14,7 +14,8 @@ rm(list=ls())
 dat = read.csv(file="data/clothingFullAss03.csv")
 library(lme4)
 fit0 <- lmer(clo~sex+(1|subjId),data=dat,REML=FALSE)
-
+fixef(fit0)
+VarCorr(fit0)
 
 ```
 
@@ -211,6 +212,7 @@ nll2<- function(pars,alpha_sex="male"){
       sex = df$sex_female[1]
     }
     
+    #print(sex)
     n = nrow(df)
     days = unique(df$day)
     
@@ -220,10 +222,10 @@ nll2<- function(pars,alpha_sex="male"){
       x = cbind(1,rep(0,n))
     }
     
-    sig = diag(n)*exp(sex*alpha+pars["sigma^2"])+exp(sex*alpha+pars["sigma_s^2"])
+    sig = diag(n)*exp(sex*alpha+2*pars["sigma"])+exp(sex*alpha+2*pars["sigma_s"])
     for(k in days){
       idx = which(df$day==k)
-      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+pars["sigma_sub_day^2"])
+      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+2*pars["sigma_sub_day"])
     }
     
     
@@ -237,17 +239,21 @@ nll2<- function(pars,alpha_sex="male"){
 }
 dat$sex_male = as.numeric(as.factor(dat$sex))-1
 dat$sex_female = abs(as.numeric(as.factor(dat$sex))-2)
-pars=c("mu"=0.5,"sex_male"=-0.1,"alpha"=1,"sigma_sub_day^2"=0.1,"sigma_s^2"=0.1,"sigma^2"=0.1)
+pars=c("mu"=0.5,"sex_male"=-0.1,"alpha"=1,"sigma_sub_day"=0.1,"sigma_s"=0.1,"sigma"=0.1)
 
 
 # Fitting male alpha, female=1
 opt2<-nlminb(pars,nll2,alpha_sex="male")
+opt2$par
+
+nll2(opt2$par)
 out_par = opt2$par
 c(out_par[1:2],exp(out_par[3:6]))
 exp(out_par[3])*exp(out_par[4:6])
 
 # Fitting female alpha, male=1
 opt2<-nlminb(pars,nll2,alpha_sex="female")
+opt2$par
 out_par = opt2$par
 c(out_par[1:2],exp(out_par[3:6]))
 exp(out_par[3])*exp(out_par[4:6])
@@ -365,10 +371,10 @@ nllQ5<- function(pars,alpha_sex="male"){
       x = cbind(1,rep(0,n))
     }
     
-    sig = diag(n)*exp(sex*alpha+pars["sigma^2"])+exp(sex*alpha+pars["sigma_s^2"])
+    sig = diag(n)*exp(sex*alpha+2*pars["sigma"])+exp(sex*alpha+2*pars["sigma_s"])
     for(k in days){
       idx = which(df$day==k)
-      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+pars["sigma_sub_day^2"])
+      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+2*pars["sigma_sub_day"])
     }
     
     y = df$clo
@@ -383,7 +389,7 @@ nllQ5<- function(pars,alpha_sex="male"){
 #library(mvtnorm)
 library(mvnfast)
 dmvt
-pars=c("mu"=0.59,"sex_male"=-0.08,"alpha"=2.7,"sigma_sub_day^2"=-5.681,"sigma_s^2"=-6.5,"sigma^2"=-8.08,"phi"=2)
+pars=c("mu"=0.59,"sex_male"=-0.08,"alpha"=2.7,"sigma_sub_day"=-5.681,"sigma_s"=-6.5,"sigma"=-8.08,"phi"=2)
 
 # Fitting male alpha, female=1
 optQ5<-nlminb(pars,nllQ5,alpha_sex="male")
@@ -413,19 +419,6 @@ for(i in 1:length(subj)){
 ```
 
 
-
-
-```{r}
-N <- 100
-d <- 5
-mu <- 1:d
-df <- 4
-X <- t(t(matrix(rnorm(N*d), N, d)) + mu)
-tmp <- matrix(rnorm(d^2), d, d)
-mcov <- tcrossprod(tmp, tmp)  + diag(0.5, d)
-myChol <- chol(mcov)
-dmvt(X[1,], mu, mcov, df = df)
-```
 
 
 
