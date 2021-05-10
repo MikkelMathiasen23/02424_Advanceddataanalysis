@@ -34,8 +34,6 @@ df$sex = factor(df$sex)
 
 ## Exploratory data analysis
 
-
-
 ```{r part1_exploratory,fig.cap="This graph shows the Clothing level as a function Indoor Operating temperatures. This is further split into day and gender, and in each subplot the observations for each person are connected."}
 # Exploratory analysis
 p1=ggplot(df,aes(x=tOut,y=clo,col=subjId))+
@@ -96,11 +94,14 @@ anova(fit0_2, fit1_2)
 $$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_{4t}time_{it} + \beta_5sex_i(tInOp_i) + \beta_{6d} day_{id}+ SubjId_i + \epsilon_{ij}$$
 A likelihood ratio test are performed to test the model reduction and results in $p = 0.52$ and the model reduction is therefore kept.
 
-Afterwards the random effect coefficients are estimated using REML estimation. The coefficients for the random effects are presented in the histogram in figure \ref{fig:hist_1} and does appear to be randomly distributed as assumed in the model.The fixed effect coefficients are presented in table \ref{tab:coef_1} including 95 \% confidence intervals.
+SKAL VI TESTE VORES RANDOM EFFECT PARAMETER OM DEN SKAL INKLUDERES VED LIKELIHOOD RATIO TEST?
 
-```{r hist_1,fig.cap="This graph shows the random effect coefficients presented in a histogram."}
+Afterwards the random effect coefficients are estimated using REML estimation. The coefficients for the random effects are presented in the qq-plot in figure \ref{fig:hist_1} and does appear to be randomly distributed as assumed in the model.The fixed effect coefficients are presented in table \ref{tab:coef_1} including 95 \% confidence intervals.
+
+```{r hist_1,fig.cap="This graph shows the random effect coefficients presented in a QQ-plot"}
 fit1_2 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="REML")
-hist(ranef(fit1_2)[,1], xlab = 'Random effect coefficients', main = 'Histogram of random coefficients', breaks = 10)
+qqnorm(ranef(fit1_2)[,1], xlab = 'Random effect coefficients', main = 'Histogram of random coefficients')
+qqline(ranef(fit1_2)[,1], xlab = 'Random effect coefficients', main = 'Histogram of random coefficients')
 
 xtable(intervals(fit1_2)$fixed)
 ```
@@ -158,16 +159,17 @@ $$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_{4
 
 A likelihood ratio test are performed to test the model reduction and results in $p = 0.48$ and the model reduction is therefore kept.
 
-HVORDAN PRÆSENTERER VI RANDOM EFFECTS?
 
-The fixed effect coefficients are presented in table \ref{tab:coef_2} including 95 \% confidence intervals.
+The fixed effect coefficients are presented in table \ref{tab:coef_2} including 95 \% confidence intervals. It should be noted that the majority of the contribution comes from the gender of the subject ie. the intercept and the sex coefficient. In figure \ref{fig:hist_2} that the day random effects appear to be normal-distributed with some tails. The subjectId random effects appears to have some heavy tails, and this might indicate that modeling these as normal distributed might not be the correct choice. 
 
-```{r}
+```{r hist_2,fig.cap="This graph shows the random effect coefficients presented in a QQ-plot"}
 xtable(intervals(fit1)$fixed)
-
+fit1 = lme(clo~sex*tInOp+tOut+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
 par(mfrow=c(1,2))
-hist(ranef(fit1)$day[,1])
-hist(ranef(fit1)$subjId[,1])
+qqnorm(ranef(fit1)$day[,1],xlab = 'Random effect coefficients (day)', main = 'QQ-plot of random coefficients for day')
+qqline(ranef(fit1)$day[,1])
+qqnorm(ranef(fit1)$subjId[,1],xlab = 'Random effect coefficients (subjectID)', main = 'QQ-plot of random coefficients for subjectID')
+qqline(ranef(fit1)$subjId[,1])
 
 ```
 
@@ -212,14 +214,6 @@ $$
 where different autocorrelation-structures for time are tested with subday as a random effect. First, the auto-correlation structure will be investigated where a auto-regressive(1), gaussian and exponential correlation structure will be tested. It should be noted, that for the gaussian and exponential correlations structure time isn't required to be equidistant. For AR(1) time has to be equidistant however. 
 
 ```{r}
-
-# Jan: "Use at least two"
-# TEST OTHER CORRELATION STRUCTURES
-# USE exponential and gaussian (with AND without NUGGET)
-
-# Kommenter på forskellig tid
-
-
 df$day = as.numeric(as.character(df$day))
 init_fit1_ar = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
                 correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
@@ -287,6 +281,9 @@ init_fit2_ml = lme(clo~tOut+sex*tInOp,random=~1|subDay,
                 data=df,method="ML")
 
 anova(init_fit1_ml, init_fit2_ml)
+init_fit2_ml = lme(clo~tOut+sex*tInOp,random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="REML")
 
 xtable(intervals(init_fit2)$fixed)
 
@@ -298,8 +295,6 @@ $$
 clo_i = \beta_0  +  \beta_1tOut_i +  \beta_2sex_i + \beta_3 tInOp_i+  \beta_4sex_i(tInOp_i) + subDay_s +  \epsilon_{ij}.
 $$
 A likelihood ratio test is performed to see if the model reduction is significant. This results in a p-value of 0.44 and the model reduction is thereby kept. In table \ref{tab:q1_52} the estimated parameters and their 95 \% confidence interval is given. Additionally, the AR(1) coefficient $\phi$ was estimated to 0.56. 
-
-EVT INKLUDER VARIOGRAM
 
 \begin{table}[ht]
 \centering
@@ -316,8 +311,6 @@ EVT INKLUDER VARIOGRAM
 \end{tabular}
 \label{tab:q1_52}
 \end{table}
-
-
 
 
 
@@ -362,19 +355,35 @@ grid.arrange(p1,p2)
 # Might be better  fits for tails
 ```
 
-From the qqplot in figure \ref{fig:res_analysis}, it should be noted that the model captures the data for males well with only one subject giving tails. This is not the case for females, however, as can also be seen in the qqplot. Here, heavy tails are present at both sides which indicates that there is still some variance in the data for females that is not accounted for. The same applies to the two bottom plots in figure \ref{fig:res_analysis}. The residuals for females dependent on outdoor temperature still seem randomly distributed. 
-
-discuss if there are any features/structure that might
-be missing in the model set-up you have here
-
-#Conclusion
+From the qqplot in figure \ref{fig:res_analysis}, it should be noted that the model captures the data for males well with only one subject giving tails. This is not the case for females, however, as can also be seen in the qqplot. Here, heavy tails are present at both sides which indicates that there is still some variance in the data for females that is not accounted for. The same applies to the two bottom plots in figure \ref{fig:res_analysis}. The residuals for females dependent on outdoor temperature still seem randomly distributed. This could indicate that another distribution for the random effects than currently assumed would model the data better. Introducing an overdispersion parameter would maybe account for the higher variance in the female group as the residuals appears to be randomly distributed.
 
 
+# Conclusion
+```{r}
+fit1 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="REML")
+fit2 = lme(clo~sex*tInOp+tOut+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
+fit3 = lme(clo~tOut+sex*tInOp,random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="REML")
 
+AIC(fit1,fit2, fit3)
+```
+Three different models were proposed using different set-up of the random effects and correlation structure. The complexity of the models are increased in order to model the clothing level. 
+The first model introduced had the following setup: 
 
+$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_{4t}time_{it} + \beta_5sex_i(tInOp_i) + \beta_{6d} day_{id}+ SubjId_i + \epsilon_{ij}$$
 
+Where subject ID were used as random effect, this resulted in AIC -1326.5 with 15 degrees of freedom. To further improve this model day was introduced as a nested random effect of the subject ID. The used resulting model structure was: 
 
+$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_{4t}time_{it} + \beta_5sex_i(tInOp_i) + SubjId_i +day_{id} +  \epsilon_{ij}$$
 
+By introducing day as a nested random effect this improved the model performance resulting in AIC -1837.2 and 13 degrees of freedom. Finally, due to the repeated measurements a AR(1) correlation structure of time given the subDay feature was implemented. The model set-up was the following:
+
+$$
+clo_i = \beta_0  +  \beta_1tOut_i +  \beta_2sex_i + \beta_3 tInOp_i+  \beta_4sex_i(tInOp_i) + subDay_s +  \epsilon_{ij}.
+$$
+
+This resulted in AIC of -1976.7 with 8 degrees of freedom. It is therefore apparent that by modeling more complex structure leads to improved model performance at the cost of a few degrees of freedom. The random effects of the final model did not appear to be normal distributed (at least for females) which could indicate that these should not be modeled as normal distributed but instead using distributions with heavier tails such as the t-distribution. 
 
 
 
