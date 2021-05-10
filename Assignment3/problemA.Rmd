@@ -127,7 +127,7 @@ xtable(intervals(fit1_2)$fixed)
    \hline
 \end{tabular}
 \caption{Estimate of fixed effect coefficients including 95\% confidence intervals.}
-\labe{tab:coef_1}
+\label{tab:coef_1}
 \end{table}
 
 The residuals are further investigated in figure \ref{fig:res_1} where the standardized residuals are plotted against the fitted values. From this the residuals appears to be randomly distributed.
@@ -164,13 +164,18 @@ The fixed effect coefficients are presented in table \ref{tab:coef_2} including 
 
 ```{r}
 xtable(intervals(fit1)$fixed)
+
+par(mfrow=c(1,2))
+hist(ranef(fit1)$day[,1])
+hist(ranef(fit1)$subjId[,1])
+
 ```
 
 \begin{table}[ht]
 \centering
 \begin{tabular}{rrrr}
   \hline
- & lower & est. & upper \\ 
+ & Lower (2.5 \%)& Estimate & Upper (97.5 \%)\\ 
   \hline
 (Intercept) & 0.85 & 1.00 & 1.15 \\ 
   sexmale & -0.54 & -0.37 & -0.21 \\ 
@@ -185,7 +190,7 @@ xtable(intervals(fit1)$fixed)
    \hline
 \end{tabular}
 \caption{Estimate of fixed effect coefficients including 95\% confidence intervals.}
-\labe{tab:coef_2}
+\label{tab:coef_2}
 
 \end{table}
 
@@ -199,7 +204,12 @@ plot(fit1)
 
 
 #Mixed effect model with autocorrelation
+Now, a mixed effect model with within day autocorrelation will be tested. The initial model has the following set-up
 
+$$
+clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_4sex_i(tInOp_i) + \beta_5sex_i(tOut_i) + subDay_s +  \epsilon_{ij}
+$$
+where different autocorrelation-structures for time are tested with subday as a random effect. First, the auto-correlation structure will be investigated where a auto-regressive(1), gaussian and exponential correlation structure will be tested. It should be noted, that for the gaussian and exponential correlations structure time isn't required to be equidistant. For AR(1) time has to be equidistant however. 
 
 ```{r}
 
@@ -207,31 +217,155 @@ plot(fit1)
 # TEST OTHER CORRELATION STRUCTURES
 # USE exponential and gaussian (with AND without NUGGET)
 
+# Kommenter på forskellig tid
 
-str(df)
+
 df$day = as.numeric(as.character(df$day))
-init_fit1 = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
+init_fit1_ar = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
                 correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
                 data=df,method="ML")
-init_fit1
-system.getCurrentDirectory()
-fit0 = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
-                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
-                data=df,method="REML")
-Anova(fit0,type=3)
 
-fit1 = lme(clo~sex*tInOp+tOut,random=~1|subDay,
-                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
-                data=df,method="REML")
-Anova(fit1,type=3)
 
-intervals(fit1)
+fit_gaus = lme(clo~sex*(tInOp+tOut),random=~1|subDay,
+                correlation = corGaus(form=~as.numeric(as.character(time))|subDay),
+                data=df,method="ML")
+
+fit_gaus_1 = lme(clo~sex*(tInOp+tOut),random=~1|subDay,
+                correlation = corGaus(form=~as.numeric(as.character(time))|subDay, nugget = T),
+                data=df,method="ML")
+
+fit_exp_1 = lme(clo~sex*(tInOp+tOut),random=~1|subDay,
+                correlation = corExp(form=~as.numeric(as.character(time))|subDay),
+                data=df,method="ML")
+
+xtable(anova(fit_gaus,fit_gaus_1, init_fit1_ar,fit_exp_1))
+
 
 ```
 
+\begin{table}[ht]
+\centering
+\begin{tabular}{rlrrrrrlrr}
+  \hline
+ & call & Model & df & AIC & BIC & logLik\\ 
+  \hline
+  Gaussian & corGaus(\~time $|$subDay), &   1 & 9.00 & -1992.40 & -1950.20 & 1005.20  \\ 
+  Gaussian w/ nugget & corGaus(~time $|$subDay, nugget = T) &   2 & 10.00 & -2008.08 & -1961.20 & 1014.04 \\ 
+  AR(1) & corAR1(\~time2 $|$ subDay) &   3 & 9.00 & -2019.59 & -1977.39 & 1018.79  \\ 
+  Exponential & corExp(\~time $|$ subDay) &   4 & 9.00 & -2011.36 & -1969.17 & 1014.68  \\ 
+   \hline
+\end{tabular}
+\label{tab:1.51}
+\end{table}
+
+As can be seen in table \ref{tab:q1.5}, all the information criteria points to using a auto-regressive(1) correlation structure. The model will be reduced using type 3 partitioning and backwards selection. Higher order terms will be removed before lower order terms. 
+
+
+
+```{r}
+
+init_fit1 = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="REML")
+
+Anova(init_fit1,type=3)
+
+init_fit2 = lme(clo~tOut+sex*tInOp,random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="REML")
+
+Anova(init_fit2,type=3)
+
+
+init_fit1_ml = lme(clo~sex*(tOut+tInOp),random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="ML")
+
+
+init_fit2_ml = lme(clo~tOut+sex*tInOp,random=~1|subDay,
+                correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
+                data=df,method="ML")
+
+anova(init_fit1_ml, init_fit2_ml)
+
+xtable(intervals(init_fit2)$fixed)
+
+```
+
+Only the interactions between sex and outdoor temperature is removed. The final model formulation is then given by
+
+$$
+clo_i = \beta_0  +  \beta_1tOut_i +  \beta_2sex_i + \beta_3 tInOp_i+  \beta_4sex_i(tInOp_i) + subDay_s +  \epsilon_{ij}.
+$$
+A likelihood ratio test is performed to see if the model reduction is significant. This results in a p-value of 0.44 and the model reduction is thereby kept. In table \ref{tab:q1_52} the estimated parameters and their 95 \% confidence interval is given. Additionally, the AR(1) coefficient $\phi$ was estimated to 0.56. 
+
+EVT INKLUDER VARIOGRAM
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & Lower (2.5 \%)& Estimate & Upper (97.5 \%)\\ 
+  \hline
+(Intercept) & 0.76 & 0.90 & 1.03 \\ 
+  tOut & -0.01 & -0.00 & -0.00 \\ 
+  sexmale & -0.54 & -0.34 & -0.15 \\ 
+  tInOp & -0.01 & -0.01 & -0.00 \\ 
+  sexmale:tInOp & 0.00 & 0.01 & 0.02 \\ 
+   \hline
+\end{tabular}
+\label{tab:q1_52}
+\end{table}
+
+
+
+
 
 #Interpretation of model
+The model intercept is the female contribution as sex(female) = 0 in our model formulation. Sexmale is the correction to the intercept for male subjects. The same applies for the indoor operating temperature, where it should be noted that the male contribution almost cancels out the effect of change in indoor operating temperature. This could indicate the males are not affected in their clothing level by the indoor operating temperature. The numeric largest fixed coefficient is the gender coefficient which implies it has a big impact on clothing level compared to the other fixed coefficients. 
 
+The random effect will now be investigated. 
+
+```{r}
+qqnorm(ranef(init_fit2)[,1])
+qqline(ranef(init_fit2)[,1])
+
+```
+
+Here, it the heavy tails should be noted. They might indicate that another distribution for the random effect should be applied where the heavy tails are accounted for. 
+
+```{r variogram, fig.cap="Variograms for Gaussian and Exponential correlation structure."}
+par(mfrow = c(2,1))
+plot(Variogram(fit_gaus_1), main = "Gaussian")
+plot(Variogram(fit_exp_1), main = "Exponential")
+```
+
+From figure \ref{fig:variogram}, both the Gaussian and Exponential correlation structure seem to fit well. As AR(1) had the highest likelihood and a AR(1) correlation structure resembles the Exponential correlation structure, it is assumed that the AR(1) is also a good choice for the correlation structure. 
+
+
+```{r res_analysis, fig.cap="Residual analysis of final model. The first plot is the qqplot of the residuals split for each gender. The two bottom plots are the residuals dependent on the outdoor temperature also split for each gender. Additionaly, the residuals are grouped accordingly to the random effect subday and colored according to subjectId."}
+
+library(gridExtra)
+df$residuals <- resid(init_fit2)
+
+p1 <- ggplot(data = df, aes(sample = residuals, col = sex))+
+  stat_qq() + stat_qq_line()
+
+
+p2 <- ggplot(data = df, aes(x = tOut, y = residuals, col = subjId, group = subDay)) +
+  geom_line()+
+  geom_point()+
+  facet_wrap(~sex)+
+  theme(legend.position = "None")
+
+grid.arrange(p1,p2)
+# Might be better  fits for tails
+```
+
+From the qqplot in figure \ref{fig:res_analysis}, it should be noted that the model captures the data for males well with only one subject giving tails. This is not the case for females, however, as can also be seen in the qqplot. Here, heavy tails are present at both sides which indicates that there is still some variance in the data for females that is not accounted for. The same applies to the two bottom plots in figure \ref{fig:res_analysis}. The residuals for females dependent on outdoor temperature still seem randomly distributed. 
+
+discuss if there are any features/structure that might
+be missing in the model set-up you have here
 
 #Conclusion
 
@@ -253,87 +387,87 @@ intervals(fit1)
 
 # Does not make sense
 #init_fit1 = lme(clo~sex*(tOut+tInOp)+time,random=~ 1+sex|subjId,data=df,method="ML")
-init_fit2 = lme(clo~sex*(tOut+tInOp)+time,random=~ 1|subjId,data=df,method="ML")
+# init_fit2 = lme(clo~sex*(tOut+tInOp)+time,random=~ 1|subjId,data=df,method="ML")
 #init_fit3 = lme(clo~sex*(tOut+tInOp)+time2,random=~ 1+sex|subjId,data=df,method="ML")
-init_fit4 = lme(clo~sex*(tOut+tInOp)+time2,random=~ 1|subjId,data=df,method="ML")
-
-
-
-ranef(init_fit1)[,1]
-hist(ranef(init_fit1)[,1])
-hist(ranef(init_fit1)[,2])
-
-df2=data.frame(ranef1 =ranef(init_fit1)[,1],ranef2 = ranef(init_fit1)[,2],sex =unique(df[,c("sex","subjId")])$sex  )
-df2$sum = df2$ranef1
-df2$sum[df2$sex=="male"]=df2$sum[df2$sex=="male"]+df2$ranef2[df2$sex=="male"]
-
-p1=ggplot(df2,aes(x=sum,col=sex))+geom_histogram()+facet_wrap(~sex)
-
-
-df3=data.frame(intercept = ranef(init_fit2)[,1],sex =unique(df[,c("sex","subjId")])$sex )
-df3
-p2=ggplot(df3,aes(x=intercept,col=sex))+geom_histogram()+facet_wrap(~sex)
-grid.arrange(p1,p2,nrow=2)
-
-rbind(df3$intercept,df2$sum)
-
-anova(init_fit1,init_fit2,init_fit3,init_fit4)
-unique(df$subjId)
+# init_fit4 = lme(clo~sex*(tOut+tInOp)+time2,random=~ 1|subjId,data=df,method="ML")
+# 
+# 
+# 
+# ranef(init_fit1)[,1]
+# hist(ranef(init_fit1)[,1])
+# hist(ranef(init_fit1)[,2])
+# 
+# df2=data.frame(ranef1 =ranef(init_fit1)[,1],ranef2 = ranef(init_fit1)[,2],sex =unique(df[,c("sex","subjId")])$sex  )
+# df2$sum = df2$ranef1
+# df2$sum[df2$sex=="male"]=df2$sum[df2$sex=="male"]+df2$ranef2[df2$sex=="male"]
+# 
+# p1=ggplot(df2,aes(x=sum,col=sex))+geom_histogram()+facet_wrap(~sex)
+# 
+# 
+# df3=data.frame(intercept = ranef(init_fit2)[,1],sex =unique(df[,c("sex","subjId")])$sex )
+# df3
+# p2=ggplot(df3,aes(x=intercept,col=sex))+geom_histogram()+facet_wrap(~sex)
+# grid.arrange(p1,p2,nrow=2)
+# 
+# rbind(df3$intercept,df2$sum)
+# 
+# anova(init_fit1,init_fit2,init_fit3,init_fit4)
+# unique(df$subjId)
 # small difference between the intercepts
 # We will continue with both models
 #test = lmer(clo~sex*(tOut+tInOp)+day+time2+(1+sex|subjId),data=df)
 
+# 
+# fit0_1 = lme(clo~sex*(tOut+tInOp)+day+time2,random=~ 1+sex|subjId,data=df,method="REML")
+# fit0_2 = lme(clo~sex*(tOut+tInOp)+day+time2,random=~ 1|subjId,data=df,method="REML")
 
-fit0_1 = lme(clo~sex*(tOut+tInOp)+day+time2,random=~ 1+sex|subjId,data=df,method="REML")
-fit0_2 = lme(clo~sex*(tOut+tInOp)+day+time2,random=~ 1|subjId,data=df,method="REML")
-
-#drop1(fit0_1,test="Chisq")
-Anova(fit0_1,type=3)
-#drop1(fit0_2,test="Chisq")
-Anova(fit0_2,type=3)
-anova(fit0_1,fit0_2)
-
-fit1_1 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1+sex|subjId,data=df,method="REML")
-fit1_2 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="REML")
-#drop1(fit1_1,test="Chisq")
-#drop1(fit1_2,test="Chisq")
-Anova(fit1_1,type=3)
-Anova(fit1_2,type=3)
-anova(fit1_1,fit1_2)
-intervals(fit1_1,which="fixed")
-intervals(fit1_1,which="var-cov")
-confint(ranef(fit1_1))
-intervals(fit1_2)
-
-plot(fit1_1)
-plot(fit1_2)
-```
+# #drop1(fit0_1,test="Chisq")
+# # Anova(fit0_1,type=3)
+# #drop1(fit0_2,test="Chisq")
+# Anova(fit0_2,type=3)
+# anova(fit0_1,fit0_2)
+# 
+# fit1_1 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1+sex|subjId,data=df,method="REML")
+# fit1_2 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="REML")
+# #drop1(fit1_1,test="Chisq")
+# #drop1(fit1_2,test="Chisq")
+# Anova(fit1_1,type=3)
+# Anova(fit1_2,type=3)
+# anova(fit1_1,fit1_2)
+# intervals(fit1_1,which="fixed")
+# intervals(fit1_1,which="var-cov")
+# confint(ranef(fit1_1))
+# intervals(fit1_2)
+# 
+# plot(fit1_1)
+# plot(fit1_2)
+# ```
 
 ```{r}
-#Task 2.3
-init_fit2 = lme(clo~sex*(tOut+tInOp)+time,random=list(~1|subjId,~1|day),data=df,method="ML")
-init_fit2
-
-init_fit4 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1|subjId,~1|day),data=df,method="ML")
-anova(init_fit1,init_fit2,init_fit3,init_fit4)
-
-
-#fit0_1 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1+sex|subjId,~1+sex|day),data=df,method="REML")
-fit0_2 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
-anova(fit0_1,fit0_2)
-Anova(fit0_1,type=3)
-Anova(fit0_2,type=3)
-
-
-#fit1_1 = lme(clo~sex*tInOp+tOut+time2,random=list(~1+sex|subjId,~1+sex|day),data=df,method="REML")
-fit1_2 = lme(clo~sex*tInOp+tOut+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
-anova(fit1_1,fit1_2)
-Anova(fit1_1,type=3)
-Anova(fit1_2,type=3)
-
-intervals(fit1_1)
-
-intervals(fit1_2)
+# #Task 2.3
+# init_fit2 = lme(clo~sex*(tOut+tInOp)+time,random=list(~1|subjId,~1|day),data=df,method="ML")
+# init_fit2
+# 
+# init_fit4 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1|subjId,~1|day),data=df,method="ML")
+# anova(init_fit1,init_fit2,init_fit3,init_fit4)
+# 
+# 
+# #fit0_1 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1+sex|subjId,~1+sex|day),data=df,method="REML")
+# fit0_2 = lme(clo~sex*(tOut+tInOp)+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
+# anova(fit0_1,fit0_2)
+# Anova(fit0_1,type=3)
+# Anova(fit0_2,type=3)
+# 
+# 
+# #fit1_1 = lme(clo~sex*tInOp+tOut+time2,random=list(~1+sex|subjId,~1+sex|day),data=df,method="REML")
+# fit1_2 = lme(clo~sex*tInOp+tOut+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
+# anova(fit1_1,fit1_2)
+# Anova(fit1_1,type=3)
+# Anova(fit1_2,type=3)
+# 
+# intervals(fit1_1)
+# 
+# intervals(fit1_2)
 
 
 ```
