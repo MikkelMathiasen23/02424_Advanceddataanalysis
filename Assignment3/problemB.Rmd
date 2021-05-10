@@ -4,38 +4,66 @@ editor_options:
   chunk_output_type: console
 chunk_output_type: console
 ---
-```{r}
-rm(list=ls())
-setwd(dirname(rstudioapi::getSourceEditorContext()$path))
-```
+
+# Hierarchical models: Random variance
+
+## Question 1
+We are given the following equation:
+
+\begin{equation}
+clo_{i,j,k} = \mu +\beta(sex_i)+u_i+\varepsilon_{ijk};\hspace{0.5cm} u_i\sim N(0,\sigma^2_u), \hspace{0.5cm} \varepsilon_{ijk}\sim N(0,\sigma^2)
+\end{equation}
+
+where $clo_{i,j,k}$ is the clothing insulation level of the subject i on day $j$ and $k$ refer to the observation number within the day. $u_i$ is a subject specific effect/preference. 
+
+As this is a linear (gaussian) mixed effect model that has been written on the standard form (Definition 5.3 [1]), we can estimate the parameters by maximizing the marginal log-likelihood (equation (5.47) and (5.48) [1]):
+
+\begin{equation}
+l_M(y,\beta,\sigma_u,\sigma)\propto -\frac{1}{2}\left[\log|V|+(y-X\beta)^TV^{-1}(y-X\beta) \right]
+\end{equation}
+
+
+where $V= I\sigma^2+Z(I\sigma_u^2) Z^T$ and $U\sim N(0,I\sigma_u^2)$ and $\varepsilon \sim N(0, I\sigma^2)$.
+
+Optimizing this problem is however not the most computationally most efficient method of estimating the likelihood, because the the covariance matrix $V$ has the same number of dimensions as we have observations. 
+The inversion of this matrix is therefore very expensive to compute. We could also run into numerical issues leading to unstable estimations. 
+
+We can however take advantage of the grouping structure of the covariance matrix, as it is is a block diagonal matrix:
+
+\begin{equation}
+\textbf{V}=\begin{bmatrix}\textbf{V}_1 & 0  & \cdots &0\\
+0&\textbf{V}_2 & \cdots & 0 \\
+ \vdots & \vdots & \ddots  &\vdots \\
+ 0 & 0 & \cdots & \textbf{V}_n\end{bmatrix}\label{eq:block_eq}
+ \end{equation}
+
+where $V_i$ corresponds to the observations belonging to subject $i$.
+
+This means that instead of estimating the full covariance matrix all at once, we can separate it into smaller subproblems as subject 1 is independent of all the other subjects. This means we can simply estimate the probability of each of the subjects individually and multiply them together to get the likelihood. 
+
+This will change our marginal log-likelihood function into:
+
+
+
+\begin{equation}
+l_M(y,\beta,\sigma_u,\sigma)\propto -\frac{1}{2}\sum_{i}^{N_{subjId}} \log |\sigma^2I_{n_i}+\sigma_u^2E_{{n_i},{n_i}} |+ (y_i-X_i\beta)^T\left[\sigma^2I_{n_i}+\sigma_u^2E_{{n_i},{n_i}}\right]^{-1}(y_i-X_i\beta)
+\end{equation}
+
+Where $i$ all the indices for each of the subjects, and where $n_i$ is the number of observations for each subject. $E_{n_i,n_i}$ is a matrix full of ones with the dimensions $n_i\times n_i$ and $I_{n_i}$ is the identity matrix of the same dimensions. This means that the covariance matrix for each subject is a full covariance matrix filled with $\sigma_u^2$ and with $\sigma_u^2+\sigma^2$ along the diagonal. 
+
+We construct our $X_i$ matrix such that it has the first column consists of ones, estimating $\mu$, and the second column consists of ones if the subject is male otherwise it consists of zeros to estimate $\beta$. This means that $\mu$ denotes the intercept for females and $\mu+\beta$ denotes the intercept for male subjects.
+
 
 ```{r}
+#setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 rm(list=ls())
 dat = read.csv(file="data/clothingFullAss03.csv")
 library(lme4)
 fit0 <- lmer(clo~sex+(1|subjId),data=dat,REML=FALSE)
-fixef(fit0)
-VarCorr(fit0)
-
 ```
 
-$$
-\begin{align}
-Y\sim&\mathcal{N}(X\beta,Z \Psi Z+\Sigma)\\
-\Sigma = &\sigma I\\
-\Psi = & \sigma_B I \\
-V =&Z \Psi Z+\Sigma \\
-l(y,\beta,\Psi,\Sigma)\propto& -\frac{1}{2}\left\{\log|V|+(y-X\beta)^TV^{-1}(y-X\beta) \right\} \\
-l_{re}(y,\beta,\Psi,\Sigma)\propto& -\frac{1}{2}\left\{\log|V|+(y-X\beta)^TV^{-1}(y-X\beta)+\log |X^T V^{-1} X | \right\}
-
-\end{align}
-$$
 
 
-$$
-l(y,\beta,\sigma_s,\sigma)\propto -\frac{1}{2}\sum_{i}^{N_{subjId}} \log |\sigma^2I_{n_i}+\sigma_s^2E_{{n_i},{n_i}} |+ (y_i-X_i\beta)^T\left[\sigma^2I_{n_i}+\sigma_s^2E_{{n_i},{n_i}}\right]^{-1}(y_i-X_i\beta)
-$$
-Where $i$ all the indices for each of the subjects, and where $n_i$ is the number of observations for each subject. $E_{n_i,n_i}$ is a matrix full of ones with the dimensions $n_i\times n_i$ and $I_{n_i}$ is the identity matrix of the same dimensions.
 ```{r}
 library(mvnfast)
 pars=c("mu"=0.5,"sex_male"=-0.1,"sigma_s"=0.1,"sigma"=0.1)
@@ -93,27 +121,84 @@ nll0<- function(pars){
     return(-ll)
 }
 
-
-nll0(pars)
-
+# Optimization
 opt0<-nlminb(pars,nll0,lower=c(-10,-10,0.001,0.001),
        upper=c(10,10,10,10))
+# estimated parameters
 opt0$par
-
+# lme4 estimates
 fixef(fit0)
 VarCorr(fit0)
 
-logLik(fit0)
--nll0(opt0$par)
+# Difference in ll
+logLik(fit0)+nll0(opt0$par)
 
 
+library(numDeriv)
+H = hessian(nll0,opt0$par)
+
+m1  = cbind(c(fixef(fit0),sqrt(unlist(unlist(VarCorr(fit0)))),
+              sigma(fit0)),opt0$par)
+
+m2 = cbind(opt0$par+qnorm(0.025)*sqrt(diag(solve(H))),
+           opt0$par+qnorm(0.975)*sqrt(diag(solve(H))))
+
+m = cbind(m1,m2)
+xtable::xtable(m,digits=4)
 
 ```
 
+The marginal maximum log-likelihood estimate of our model is 643.79. If we compare our estimate to the build-in functions to estimate the model, we get a difference of $8.8\cdot 10^{-9}$ between the two estimates, which also corresponds to the tolerance level of the used optimizer \texttt{nlminb}. 
 
-### Question 2
-$u_i$ random effect for subject ID
-$v_{i,j}$ random effect for interaction between subject ID and day
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|c|c|ccc|}
+  \hline
+ & \texttt{lme4} & estimate & 2.5\%  & 97.5\% \\ 
+  \hline
+$\mu$ & 0.5918 & 0.5918 & 0.5441 & 0.6394 \\ 
+  $\beta$ & -0.0832 & -0.0832 & -0.1514 & -0.0151 \\ 
+  $\sigma_u$ & 0.1167 & 0.1167 & 0.0921 & 0.1412 \\ 
+  $\sigma$ & 0.0988 & 0.0988 & 0.0939 & 0.1038 \\ 
+   \hline
+\end{tabular}
+\caption{This table shows the \texttt{lme4} estimate along with the estimate of our model. The 95\% Wald confidence interval estimated with our model is also shown.}\label{tab:q2_1}
+\end{table}
+Table \ref{tab:q2_1} shows that our estimated parameters correspond to the estimated parameters from the \texttt{lme4}-package. 
+
+
+
+## Question 2
+We are now given the model:
+
+
+\begin{equation}
+clo_{i,j,k} = \mu +\beta(sex_i)+u_i+v_{ij} +\varepsilon_{ijk};\hspace{0.5cm} u_i\sim N(0,\sigma^2_u),\hspace{0.5cm} v_{ij}\sim N(0,\sigma^2_v), \hspace{0.5cm} \varepsilon_{ijk}\sim N(0,\sigma^2)
+\end{equation}
+
+where $v_{ij}$ is the subject specific within a specific day effect (interaction term between subjects and day). 
+
+Like before, we can write the marginal log-likelihood by estimating each of the subjects likelihood separately. Now, the covariance structure will just get even more complicated. 
+
+
+\begin{equation}
+l_M(y,\beta,\sigma_u,\sigma)\propto -\frac{1}{2}\sum_{i}^{N_{subjId}} \log |\Sigma^{(i)} |+ (y_i-X_i\beta)^T\left(\Sigma^{(i)}\right)^{-1}(y_i-X_i\beta)
+\end{equation}
+
+where $\Sigma^{(i)}$ is the covariance matrix for each subject (the block elements,$\textbf{V}_i$ of the full covariance matrix $\textbf{V}$ from equation \ref{eq:block_eq}).
+
+The structure of $\Sigma^{(i)}$ can be written as:
+
+\begin{equation}
+\Sigma_{n,m}^{(i)} = \begin{cases}\sigma^2+\sigma_u^2+\sigma_v^2 & n=m  \\
+\sigma_u^2+\sigma_v^2&\text{if } day_n = day_m \\
+\sigma_u^2 & \text{if } day_n \neq day_m \
+\end{cases}\label{eq:Sigma_i}
+\end{equation}
+
+where $n$ and $m$ correspond to the observation number for a specific subject. 
+
 
 ```{r}
 fit1 <- lmer(clo~sex+(1|subjId)+(1|subjId:day),data=dat,REML=F)
@@ -173,20 +258,84 @@ nll1(pars)
 
 opt1<-nlminb(pars,nll1,lower=c(-10,-10,0.001,0.001,0.001),
        upper=c(10,10,10,10,10))
-opt1$par
-fixef(fit1)
-VarCorr(fit1)
 
-logLik(fit1)
--nll1(opt1$par)
+logLik(fit1)+nll1(opt1$par)
 
+
+H = hessian(nll1,opt1$par)
+
+
+
+m1  = cbind(c(fixef(fit1),sqrt(unlist(unlist(VarCorr(fit1)))),
+              sigma(fit1)),opt1$par)
+
+m2 = cbind(opt1$par+qnorm(0.025)*sqrt(diag(solve(H))),
+           opt1$par+qnorm(0.975)*sqrt(diag(solve(H))))
+
+m = cbind(m1,m2)
+xtable::xtable(m,digits=4)
 
 ```
 
+The estimated log-likelihood of the model is 943.13 and the difference from the \texttt{lme4} estimate is $2.6\cdot 10^{-9}$. 
 
-### Question 3
-$u_i$ random effect for interaction between subject ID and sex
-$v_{i,j}$ random effect for interaction between subject ID, day and sex
+\begin{table}[ht]
+\centering
+\begin{tabular}{|c|c|ccc|}
+  \hline
+ & \texttt{lme4} & Estimate & 2.5\% & 97.5\% \\ 
+  \hline
+$\mu$ & 0.5924 & 0.5924 & 0.5446 & 0.6402 \\ 
+  $\beta$ & -0.0844 & -0.0844 & -0.1528 & -0.0159 \\ 
+  $\sigma_v$ & 0.0973 & 0.0973 & 0.0823 & 0.1123 \\ 
+  $\sigma_u$ & 0.1039 & 0.1039 & 0.0759 & 0.1320 \\ 
+ $\sigma$  & 0.0560 & 0.0560 & 0.0530 & 0.0590 \\ 
+   \hline
+\end{tabular}
+\caption{This table show the parameter estimates of our model and \texttt{lme4}. We also show 95\% (Wald) confidence interval}\label{tab:q2_2}
+\end{table}
+
+Table \ref{tab:q2_2} shows the estimated parameters of our model. We see that most of the estimates are the same as in table \ref{tab:q2_1}, but the non-modeled variance has decreased and has been moved to $\sigma_v$.
+
+
+
+```{r resit_fit1,fig.cap="This figure shows the residuals for males and females of the \\texttt{lme4} model. The colors indicate different subjects and the connected line shows the same day for a given subject.",fig.height=4}
+
+library(ggplot2)
+dat$resid = resid(fit1)
+ggplot(dat,aes(x=tOut,y=resid,col=factor(subjId),group=subDay))+
+  geom_point()+geom_line()+
+  facet_wrap(~sex)+theme(legend.position = "none")+
+  xlab("Outdoor Temperature")+ylab("Residuals")+
+  ggtitle("Residuals vs outdoor temperature for males and females")
+
+```
+
+Figure \ref{fig:resit_fit1} shows the residuals of the model estimated with \texttt{lme4}. We can see that there is a different variance each sex.
+
+
+
+
+## Question 3
+
+As shown in \ref{fig:resit_fit1}, we the model should estimate a different variance for each sex. This leads to the following model:
+
+\begin{align}
+clo_{i,j,k} &= \mu +\beta(sex_i)+u_i+v_{ij} +\varepsilon_{ijk} \\
+u_i\sim& N(0,\sigma^2_u\alpha(sex_i))\\ 
+v_{ij}\sim &N(0,\sigma^2_v\alpha(sex_i))\\
+\varepsilon_{ijk}\sim& N(0,\sigma^2\alpha(sex_i))
+\end{align}
+
+The marginal log-likelihood of this model is almost equal to the previous question: 
+\begin{equation}
+l_M(y,\beta,\sigma_u,\sigma)\propto -\frac{1}{2}\sum_{i}^{N_{subjId}} \log |\alpha(sex_i) \Sigma^{(i)} |+ (y_i-X_i\beta)^T\left(\alpha(sex_i)\Sigma^{(i)}\right)^{-1}(y_i-X_i\beta)
+\end{equation}
+
+The covariance structure of $\Sigma^{(i)}$ is still the same as in equation (\ref{eq:Sigma_i}). We will however set $\alpha("male")=1$ and $\alpha("female")=a$. 
+
+Furthermore, for our optimization, we estimate the variance parameters and $a$ in the log-domain to ensure that the variance is positive. 
+
 
 ```{r}
 
@@ -242,102 +391,141 @@ dat$sex_female = abs(as.numeric(as.factor(dat$sex))-2)
 pars=c("mu"=0.5,"sex_male"=-0.1,"alpha"=1,"sigma_sub_day"=0.1,"sigma_s"=0.1,"sigma"=0.1)
 
 
-# Fitting male alpha, female=1
-opt2<-nlminb(pars,nll2,alpha_sex="male")
-opt2$par
-
-nll2(opt2$par)
-out_par = opt2$par
-c(out_par[1:2],exp(out_par[3:6]))
-exp(out_par[3])*exp(out_par[4:6])
-
-# Fitting female alpha, male=1
+# Sanity check that we get the same for both
+# Fitting female alpha, alpha_male=1
 opt2<-nlminb(pars,nll2,alpha_sex="female")
-opt2$par
+opt2$objective
 out_par = opt2$par
-c(out_par[1:2],exp(out_par[3:6]))
-exp(out_par[3])*exp(out_par[4:6])
+c(out_par[1:2],exp(out_par[3]),exp(out_par[4:6])^2)
+exp(out_par[3])*exp(out_par[4:6])^2
 
+
+# Fitting male alpha, alpha_female=1
+opt2<-nlminb(pars,nll2,alpha_sex="male")
+opt2$objective
+out_par = opt2$par
+c(out_par[1:2],exp(out_par[3]),exp(out_par[4:6])^2)
+exp(out_par[3])*exp(out_par[4:6])^2
+
+c(out_par[1:2],exp(out_par[3]),exp(out_par[4:6]))
+exp(out_par[4:6])
+sqrt(exp(out_par[3]))*exp(out_par[4:6])
+
+-nll2(opt2$par)
+
+
+H = hessian(nll2,opt2$par)
+
+
+
+
+
+m = cbind(opt2$par,
+           opt2$par+qnorm(0.025)*sqrt(diag(solve(H))),
+           opt2$par+qnorm(0.975)*sqrt(diag(solve(H))))
+m[3:6,] = exp(m[3:6,])
+
+m
+xtable::xtable(m,digits=4)
 
 ```
 
-$$
+The estimated log-likelihood is 1214.929, which means much higher than what we estimated previously. 
 
-\sqrt{(clo-X\beta)^T\Sigma^{-1}(clo-X\beta)}
+\begin{table}[ht]
+\centering
+\begin{tabular}{|c|ccc|}
+  \hline
+ & estimate & 2.5\% & 97.5\% \\ 
+  \hline
+$\mu$ & 0.5926 & 0.5088 & 0.6764 \\ 
+  $\beta$ & -0.0849 & -0.1714 & 0.0016 \\ 
+  $a$ & 0.0612 & 0.0497 & 0.0752 \\ 
+  $\sigma_v$ & 0.2361 & 0.1980 & 0.2814 \\ 
+  $\sigma_u$ & 0.1562 & 0.1052 & 0.2318 \\ 
+  $\sigma$ & 0.0713 & 0.0666 & 0.0763 \\ 
+   \hline
+\end{tabular}
+\caption{This table shows the estimated parameters and their 95\% (Wald) confidence interval.}\label{tab:q2_3}
+\end{table}
+Table \ref{tab:q2_3} shows the estimated parameters of our model. If we compare these estimates with table \ref{tab:q2_2}, we can see that all of the variance (standard deviation) parameters have increased. For this model, the estimates for males and females have however been separated. This means we need to compare these estimates and $\sqrt{a}\sigma_x$ to get a proper understanding of the difference. From the increased likelihood (and figure \ref{fig:resit_fit1}) we can see that this newer model with different variances fit the data better. 
 
-$$
+## Question 4: Gamma-function for variance scaling.
 
+\textit{A model can be formulated as}
 
-## Q4
-
-$$
 \begin{align}
-L(\beta,\Psi;u,y) = f_{Y|y}(y;u,\beta)f_U(u,\Psi)\\
-L(\mu,\sigma,\phi;\gamma,y) = \mathcal{N}\left(\mu,\frac{\sigma}{\gamma_i}\right)G(1,\phi)\\
+Y_i | \gamma_i \sim N(\mu,\sigma^2/\gamma_i)\\
+\gamma_i \sim(G(1,\phi))
 \end{align}
-$$
+\textit{where $\gamma_i$ follows a gamma distribution with mean 1 and variance $1/\phi$. Show that the marginal distribution can be written as: }
+\begin{equation}
+f_{Y_i} \sim \frac{1}{\sigma} f_0\left(\frac{y-\mu}{\sigma};2\phi \right)
+\end{equation}
+\textit{where $f_0$ is the pdf of a student t-distributed random variable with $2\phi$ degrees of freedom.}
 
-### Student t distribution
 
-$$
-\begin{align}
-pdf(x,\nu) = \frac{\Gamma(\frac{\nu+1}{2})}{\sqrt{\nu \pi}\Gamma(\frac{\nu}{2})}\left(1+\frac{x^2}{\nu}\right)^{-\frac{\nu+1}{2}}\\
-
-\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \sigma \frac{\Gamma(\frac{2\phi+1}{2})}{\sqrt{2\phi \pi}\Gamma(\frac{2\phi}{2})}\left(1+\frac{x^2}{2\phi}\right)^{-\frac{2\phi+1}{2}} \\
-
+First, we write up the pdf for a student t-distribution scaled with $1/\sigma$
+\begin{equation}
 \frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \sigma \frac{\Gamma(\frac{2\phi+1}{2})}{\sqrt{2\phi \pi}\Gamma(\phi)}\left(1+\frac{(\frac{y-\mu}{\sigma})^2}{2\phi}\right)^{-\frac{2\phi+1}{2}} 
-\end{align}
+\end{equation}
+Here, we recognize this as a shifted and scaled student t-distribution. 
 
-$$
-### WORKS!!
+Second, we have to estimate the marginal likelihood:
 
-Assuming: $ Y_i|\gamma_i \sim \mathcal{N}(\mu,\sigma^2/\gamma_i)$
-https://people.eecs.berkeley.edu/~jordan/courses/260-spring10/lectures/lecture5.pdf
+\begin{equation}
+L_M (\mu,\sigma,\phi;y) = \int_{\mathbb{R^{\gamma_i}}} f_{Y|\gamma_i}(y;\gamma_i,\mu,\sigma)f_{\gamma_i}(\gamma_i;\phi)
+\end{equation}
 
-$$
+We use the gamma distribution with shape and rate parameters $\alpha$ and $\beta$ such that the mean is $\frac{\alpha}{\beta}$ and the variance is $\frac{\alpha}{\beta^2}$:
+
 \begin{align}
-\int_0^\infty \frac{\sqrt{\gamma}}{\sqrt{2\pi}\cdot(\sigma)}\exp{\left(-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)} 
+L_M (\mu,\sigma,\phi;y) =& \int_{\mathbb{R^{\gamma_i}}} f_{Y|\gamma_i}(y;\gamma_i,\mu,\sigma)f_{\gamma_i}(\gamma_i;\phi)\\
+=&\int_0^\infty \frac{\sqrt{\gamma}}{\sqrt{2\pi}\cdot(\sigma)}\exp{\left(-\frac{1}{2}\frac{\gamma(y-\mu)^2}{\sigma^2}\right)} 
 \times \frac{\beta^\alpha}{\Gamma(\alpha)}\gamma^{\alpha-1}\exp{(-\gamma\beta)}\\
-
-= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \sqrt{\gamma}\exp{\left(-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)}
+=& \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \sqrt{\gamma}\exp{\left(-\frac{1}{2}\frac{\gamma(y-\mu)^2}{\sigma^2}\right)}
 \times\gamma^{\alpha-1}\exp{(-\gamma\beta)} \\
-
-= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma\beta-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)}
- \\
- 
- = \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma \left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right)\right)}
- \\
- 
- = \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{\hat{\alpha}-1}\exp{\left(-\gamma \hat{\beta}\right)}, \hspace{0.5cm}\hat{\beta}=\left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right), \hat{\alpha}=\alpha+1/2\\
- 
-= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\hat{\alpha})}{\hat{\beta}^{\hat{\alpha}}}\\
- 
- 
-= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\alpha+1/2)}{\left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right)^{\alpha+1/2}}\\
- 
+=& \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma\beta-\frac{1}{2}\frac{\gamma(y-\mu)^2}{\sigma^2}\right)} \\
+ =& \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma \left(\beta+\frac{1}{2}\frac{(y-\mu)^2}{\sigma^2}\right)\right)} \\
+ =& \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{\hat{\alpha}-1}\exp{\left(-\gamma \hat{\beta}\right)}\\
 \end{align}
-$$
 
-$$ 
+
+
+Now, we recognize the the gamma integral where we set: 
+
+\begin{equation}
+\hat{\beta}=\left(\beta+\frac{1}{2}\frac{(y-\mu)^2}{\sigma^2}\right), \hat{\alpha}=\alpha+1/2
+\end{equation}
+
+
+We can now replace the gamma integral:
+
 \begin{align}
-\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
-\left(\phi+\frac{(x-\mu)^2}{2\sigma^2}\right)^{-\phi-1/2}\\
-
-\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
-\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-\phi-1/2}\\
-
-
-\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}
-\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-1/2}\\
-
-\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi \phi}\Gamma(\phi)}
-\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\\
-
+L_M (\mu,\sigma,\phi;y) =& \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\hat{\alpha})}{\hat{\beta}^{\hat{\alpha}}}\\
+=& \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\alpha+1/2)}{\left(\beta+\frac{1}{2}\frac{(y-\mu)^2}{\sigma^2}\right)^{\alpha+1/2}}\\
 \end{align}
-$$
 
-$$\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \frac{1}{\sigma} \frac{\Gamma(\phi+\frac{1}{2})}{\sqrt{2\phi \pi}\Gamma(\phi)}\left(1+\frac{(\frac{y-\mu}{\sigma})^2}{2\phi}\right)^{-\phi-\frac{1}{2}} $$
+
+Now, we have to set $\alpha=\phi$ and $\beta =\phi$ to ensure that we get the right mean and variance:
+
+\begin{align}
+L_M (\mu,\sigma,\phi;y) =&\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
+\left(\phi+\frac{(y-\mu)^2}{2\sigma^2}\right)^{-\phi-1/2}\\
+=&\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
+\left(1+\frac{(y-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-\phi-1/2}\\
+=&\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}
+\left(1+\frac{(y-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-1/2}\\
+=&\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi \phi}\Gamma(\phi)}
+\left(1+\frac{(y-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\\
+\end{align}
+
+Thus, we have derived the equation.
+
+
 ## Q5 
+
+
 
 ```{r}
 
@@ -395,30 +583,11 @@ pars=c("mu"=0.59,"sex_male"=-0.08,"alpha"=2.7,"sigma_sub_day"=-5.681,"sigma_s"=-
 optQ5<-nlminb(pars,nllQ5,alpha_sex="male")
 
 out_par = optQ5$par
-c(out_par[1:2],exp(out_par[3:6]),out_par[7])
-exp(out_par[3])*exp(out_par[4:6])
-
-# Fitting female alpha, male=1
-optQ5<-nlminb(pars,nllQ5,alpha_sex="female")
-out_par = optQ5$par
-c(out_par[1:2],exp(out_par[3:6]),out_par[7])
-exp(out_par[3])*exp(out_par[4:6])
+c(out_par[1:2],exp(out_par[3:6]),exp(out_par[7]))
+sqrt(exp(out_par[3]))*exp(out_par[4:6])
 
 
 
-len = length(unique(dat$subjId))
-N = nrow(dat)
-subj = unique(dat$subjId)
-for(i in 1:length(subj)){
-  print(paste("ID",i,"sex",dat$sex[dat$subjId==subj[i]][1],"sex_male",dat$sex_male[dat$subjId==subj[i]][1],
-              "ours"))
-  
-}
 
 
 ```
-
-
-
-
-
