@@ -205,7 +205,7 @@ plot(fit1)
 
 
 
-#Mixed effect model with autocorrelation
+## Mixed effect model with autocorrelation
 Now, a mixed effect model with within day autocorrelation will be tested. The initial model has the following set-up
 
 $$
@@ -314,7 +314,7 @@ A likelihood ratio test is performed to see if the model reduction is significan
 
 
 
-#Interpretation of model
+## Interpretation of model
 The model intercept is the female contribution as sex(female) = 0 in our model formulation. Sexmale is the correction to the intercept for male subjects. The same applies for the indoor operating temperature, where it should be noted that the male contribution almost cancels out the effect of change in indoor operating temperature. This could indicate the males are not affected in their clothing level by the indoor operating temperature. The numeric largest fixed coefficient is the gender coefficient which implies it has a big impact on clothing level compared to the other fixed coefficients. 
 
 The random effect will now be investigated. 
@@ -358,7 +358,7 @@ grid.arrange(p1,p2)
 From the qqplot in figure \ref{fig:res_analysis}, it should be noted that the model captures the data for males well with only one subject giving tails. This is not the case for females, however, as can also be seen in the qqplot. Here, heavy tails are present at both sides which indicates that there is still some variance in the data for females that is not accounted for. The same applies to the two bottom plots in figure \ref{fig:res_analysis}. The residuals for females dependent on outdoor temperature still seem randomly distributed. This could indicate that another distribution for the random effects than currently assumed would model the data better. Introducing an overdispersion parameter would maybe account for the higher variance in the female group as the residuals appears to be randomly distributed.
 
 
-# Conclusion
+## Conclusion
 ```{r}
 fit1 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="REML")
 fit2 = lme(clo~sex*tInOp+tOut+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
