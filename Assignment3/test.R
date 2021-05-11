@@ -15,7 +15,6 @@ parameters <- list(u=rep(0,length(unique(dat$subjId))),
                    beta = 1,
                    mu = 1
 )
-parameters
 tmp_df = unique(dat[,c('sex',"sex_male","subjId")])
 tmp_df2 = unique(dat[,c('sex',"sex_male","subDay","subjId")])
 new_dat = list('clo'=dat$clo,
@@ -52,9 +51,20 @@ opt <- nlminb(obj$par, obj$fn, obj$gr)
 opt$objective
 opt$par
 
+
+H = hessian(obj$fn,opt$par)
+
+m = cbind(opt$par,
+          opt$par+qnorm(0.025)*sqrt(diag(solve(H))),
+          opt$par+qnorm(0.975)*sqrt(diag(solve(H))))
+m[3:7,] = exp(m[3:7,])
+
+
+xtable::xtable(m,digits=4)
+
 rap = sdreport(obj,getJointPrecision = TRUE)
-
-
+mm = c(rap)
+xtable::xtable()
 ###############################################################################
 #Exercise 2.1
 

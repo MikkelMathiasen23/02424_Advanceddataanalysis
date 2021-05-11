@@ -249,10 +249,11 @@ xtable(anova(fit_gaus,fit_gaus_1, init_fit1_ar,fit_exp_1))
   Exponential & corExp(\~time $|$ subDay) &   4 & 9.00 & -2011.36 & -1969.17 & 1014.68  \\ 
    \hline
 \end{tabular}
+\caption{This table displays the estimate likelihood, AIC and BIC using different correlation structure.}
 \label{tab:1.51}
 \end{table}
 
-As can be seen in table \ref{tab:q1.5}, all the information criteria points to using a auto-regressive(1) correlation structure. The model will be reduced using type 3 partitioning and backwards selection. Higher order terms will be removed before lower order terms. 
+As can be seen in table \ref{tab:1.51}, all the information criteria points to using a auto-regressive(1) correlation structure. The model will be reduced using type 3 partitioning and backwards selection. Higher order terms will be removed before lower order terms. 
 
 
 
@@ -309,6 +310,7 @@ A likelihood ratio test is performed to see if the model reduction is significan
   sexmale:tInOp & 0.00 & 0.01 & 0.02 \\ 
    \hline
 \end{tabular}
+\caption{This table shows the estimated coefficients and 95\% confidence intervals.}
 \label{tab:q1_52}
 \end{table}
 
@@ -355,7 +357,7 @@ grid.arrange(p1,p2)
 # Might be better  fits for tails
 ```
 
-From the qqplot in figure \ref{fig:res_analysis}, it should be noted that the model captures the data for males well with only one subject giving tails. This is not the case for females, however, as can also be seen in the qqplot. Here, heavy tails are present at both sides which indicates that there is still some variance in the data for females that is not accounted for. The same applies to the two bottom plots in figure \ref{fig:res_analysis}. The residuals for females dependent on outdoor temperature still seem randomly distributed. This could indicate that another distribution for the random effects than currently assumed would model the data better. Introducing an overdispersion parameter would maybe account for the higher variance in the female group as the residuals appears to be randomly distributed.
+From the qqplot in figure \ref{fig:res_analysis}, it should be noted that the model captures the data for males well with only one subject giving tails. This is not the case for females, however, as can also be seen in the qqplot. Here, heavy tails are present at both sides which indicates that there is still some variance in the data for females that is not accounted for. The same applies to the two bottom plots in figure \ref{fig:res_analysis}. The residuals for females dependent on outdoor temperature still seem randomly distributed. This could indicate that another distribution for the random effects than currently assumed would model the data better. Introducing an overdispersion parameter would maybe account for the higher variance in the female group as the residuals appears to be randomly distributed. Further, as there appear to be a clear difference in variance between males and females one could at a weighted structure for the variance between these two genders. 
 
 
 ## Conclusion
