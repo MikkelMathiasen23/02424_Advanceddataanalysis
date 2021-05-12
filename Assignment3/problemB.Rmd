@@ -150,7 +150,7 @@ xtable::xtable(m,digits=4)
 
 ```
 
-The marginal maximum log-likelihood estimate of our model is 643.79. If we compare our estimate to the build-in functions to estimate the model, we get a difference of $8.8\cdot 10^{-9}$ between the two estimates, which also corresponds to the tolerance level of the used optimizer \texttt{nlminb}. 
+The maximum log-likelihood estimate of our model is 643.79. If we compare our estimate to the build-in functions to estimate the model, we get a difference of $8.8\cdot 10^{-9}$ between the two estimates, which also corresponds to the tolerance level of the used optimizer \texttt{nlminb}. 
 
 
 \begin{table}[ht]
@@ -470,7 +470,7 @@ f_{Y_i} \sim \frac{1}{\sigma} f_0\left(\frac{y-\mu}{\sigma};2\phi \right)
 
 First, we write up the pdf for a student t-distribution scaled with $1/\sigma$
 \begin{equation}
-\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \sigma \frac{\Gamma(\frac{2\phi+1}{2})}{\sqrt{2\phi \pi}\Gamma(\phi)}\left(1+\frac{(\frac{y-\mu}{\sigma})^2}{2\phi}\right)^{-\frac{2\phi+1}{2}} 
+\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \dfrac{1}{\sigma} \frac{\Gamma(\frac{2\phi+1}{2})}{\sqrt{2\phi \pi}\Gamma(\phi)}\left(1+\frac{(\frac{y-\mu}{\sigma})^2}{2\phi}\right)^{-\frac{2\phi+1}{2}} 
 \end{equation}
 Here, we recognize this as a shifted and scaled student t-distribution. 
 
@@ -541,8 +541,6 @@ We know from Question 4 that the marginal distribution can be written as a stude
 \begin{equation}
 L_M(y,\beta,\sigma_u,\sigma) = |\alpha(sex_i)\Sigma^{-1}|\dfrac{\Gamma(\phi+1/2)}{\sqrt{2\pi\phi}\Gamma(\phi)}( 1 + \dfrac{(y-X\beta)^T(y-X\beta)}{2\phi}(\alpha(sex_i)\Sigma^{-1}))^{-\phi-1/2}  
 \end{equation}
-SKAL DET VÆRE SIGMA^-2????
-
 
 
 ```{r}
@@ -625,7 +623,6 @@ xtable::xtable(m,digits=4)
 
 Again, we optimized the variance parameters in the log-domain to ensure positive variance, and we did set $\alpha("male") = 1$ and $\alpha("female") = a$. The estimated log-likelihood was: 1698.6 therefore being higher than the previous model. The covariance structure of $\Sigma$ is still the same as in equation (\ref{eq:Sigma_i}). 
 
-INDSÆT TABEL AF PARAMETRE - PROBLEMER MED NANS FRA HESSIAN 
 
 \begin{table}[ht]
 \centering

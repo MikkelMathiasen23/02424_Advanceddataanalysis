@@ -34,6 +34,7 @@ df$sex = factor(df$sex)
 
 ## Exploratory data analysis
 
+INTRODUCTION 
 ```{r part1_exploratory,fig.cap="This graph shows the Clothing level as a function Indoor Operating temperatures. This is further split into day and gender, and in each subplot the observations for each person are connected.", fig.height=4}
 # Exploratory analysis
 p1=ggplot(df,aes(x=tOut,y=clo,col=subjId))+
@@ -102,6 +103,7 @@ Thereby it is only the interaction term between $sex(tOut)$ that are removed.
 A likelihood ratio test are performed to test the model reduction and results in $p = 0.52$ and the model reduction is therefore kept.
 
 SKAL VI TESTE VORES RANDOM EFFECT PARAMETER OM DEN SKAL INKLUDERES VED LIKELIHOOD RATIO TEST?
+NEJ - VI SÅ I TIDLIGERE OPGAVE DET VAR NØDVENDIGT 
 
 Afterwards the random effect coefficients are estimated using REML estimation. The coefficients for the random effects are presented in the qq-plot in figure \ref{fig:hist_1} and does appear to be randomly distributed as assumed in the model.The fixed effect coefficients are presented in table \ref{tab:coef_1} including 95 \% confidence intervals.
 
@@ -154,7 +156,7 @@ A new fixed effect model with subject ID and day as random effects will be used 
 $$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \mathbf{\beta_{4}time_{i}} + \beta_5sex_i(tInOp_i) + SubjId_i +day_{id} +  \epsilon_{ij}$$
 
 
-The random effect day is nested within the random effect Subject ID. Here $SubjId_i \sim N(0,\sigma_u^2)$, $\epsilon_{ij} \sim N(0,\sigma^2)$ and $day_{id} \sim N(0, \sigma_d^2)$ and all three are mutually independent. ER DAY AFHÆNGIG AF SUBJECT ID??. Again $sex_i(tOut_i)$ indicates the interaction term between gender of the subject and the Outdoor temperature. Again time will be included as a factor based on the result in the previous subsection.
+The random effect day is nested within the random effect Subject ID. Here $SubjId_i \sim N(0,\sigma_u^2)$, $\epsilon_{ij} \sim N(0,\sigma^2)$ and $day_{id} \sim N(0, \sigma_d^2)$ and all three are mutually independent. Again $sex_i(tOut_i)$ indicates the interaction term between gender of the subject and the Outdoor temperature. Again time will be included as a factor based on the result in the previous subsection.
 
 The initial model will be reduced using backward selection based on type III partitioning where higher order terms are removed first based on maximum-likelihood estimation. Again, it is only the interaction term between gender and outdoor temperature that are removed.
 
@@ -168,13 +170,13 @@ anova(fit0, fit1)
 ```
 The final model after model reduction are: 
 
-$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \mathbf{\beta_{4}time_{i}} + \beta_5sex_i(tInOp_i) + SubjId_i +\mathbf{day_{i}} +  \epsilon_{ij}$$
+$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \mathbf{\beta_{4}time_{i}} + \beta_5sex_i(tInOp_i) + SubjId_i +day_{id} +  \epsilon_{ij}$$
 
 A likelihood ratio test are performed to test the model reduction and results in $p = 0.48$ and the model reduction is therefore kept.
 
-The fixed effect coefficients are presented in table \ref{tab:coef_2} including 95 \% confidence intervals. It should be noted that the majority of the contribution comes from the gender of the subject ie. the intercept and the sex coefficient. Also it should be noted that that the male correction term of indoor operating temperature $sexmale:tInOp$ almost cancels out the $tInOp$ coefficient thereby indicating that males clothing level does not appear to be affected by the indoor temperature. The outdoor temperature coefficient are close to zero indicating that either females or males are not very affected by the outdoor temperature. The intercept indicating the female effect on the clothing level are higher than the gender contribution for males (intercept + sexmale) indicating that males generally has a lower clothinglevel than males. 
+The fixed effect coefficients are presented in table \ref{tab:coef_2} including 95 \% confidence intervals. It should be noted that the majority of the contribution comes from the gender of the subject ie. the intercept and the sex coefficient. Also it should be noted that that the male correction term of indoor operating temperature $sexmale:tInOp$ almost cancels out the $tInOp$ coefficient thereby indicating that males clothing level does not appear to be affected by the indoor temperature. The outdoor temperature coefficient are close to zero indicating that either females or males are not very affected by the outdoor temperature. The intercept indicating the female effect on the clothing level are higher than the gender contribution for males ($intercept + sexmale$) indicating that males generally has a lower clothing level than males. 
 
-In figure \ref{fig:hist_2} that the day random effects appear to be normal-distributed with some tails. The subjectId random effects appears to have some heavy tails, and this might indicate that modeling these as normal distributed might not be the correct choice. 
+In figure \ref{fig:hist_2} that the day random effects appear to be normal-distributed with some tails. The subject ID random effects appears to have some heavy tails, and this might indicate that modeling these as normal distributed might not be the correct choice. 
 
 ```{r hist_2,fig.cap="This graph shows the random effect coefficients presented in a QQ-plot", fig.height = 4}
 xtable(intervals(fit1)$fixed)
@@ -339,7 +341,7 @@ A likelihood ratio test is performed to see if the model reduction is significan
 
 
 ## Interpretation of model
-The model intercept is the female contribution as sex(female) = 0 in our model formulation. Sexmale is the correction to the intercept for male subjects. The same applies for the indoor operating temperature, where it should be noted that the male contribution almost cancels out the effect of change in indoor operating temperature. This could indicate the males are not affected in their clothing level by the indoor operating temperature. The numeric largest fixed coefficient is the gender coefficient which implies it has a big impact on clothing level compared to the other fixed coefficients. 
+The model intercept is the female contribution as $sex(female) = 0$ in our model formulation. $Sexmale$ is the correction to the intercept for male subjects. The same applies for the indoor operating temperature, where it should be noted that the male contribution almost cancels out the effect of change in indoor operating temperature. This could indicate the males are not affected in their clothing level by the indoor operating temperature. The numeric largest fixed coefficient is the gender coefficient which implies it has a big impact on clothing level compared to the other fixed coefficients. 
 
 The random effect will now be investigated. 
 
@@ -404,7 +406,7 @@ $$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \mathbf{
 
 Where subject ID were used as random effect, this resulted in AIC -1326.5 with 15 degrees of freedom. To further improve this model day was introduced as a nested random effect of the subject ID. The used resulting model structure was: 
 
-$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \mathbf{\beta_{4}time_{i}} + \beta_5sex_i(tInOp_i) + SubjId_i +\mathbf{day_{i}} +  \epsilon_{ij}$$
+$$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \mathbf{\beta_{4}time_{i}} + \beta_5sex_i(tInOp_i) + SubjId_i +day_{id} +  \epsilon_{ij}$$
 
 By introducing day as a nested random effect this improved the model performance resulting in AIC -1837.2 and 13 degrees of freedom. Finally, due to the repeated measurements a AR(1) correlation structure of time given the subDay feature was implemented. The model set-up was the following:
 
