@@ -5,17 +5,6 @@ editor_options:
 chunk_output_type: console
 ---
 
-
-
-
-
-
-
-
-
-
-
-
 ## Question 5
 
 We are given the following model: 
@@ -30,21 +19,19 @@ In Question 4 we found the marginal likelihood of a normal & gamma distribution.
 
 We have to marginalize $u_i$ and $v_{ij}$ out so that we have $f_{clo|\gamma_i}$. We do however already have this marginalization from Question 3:
 
-$$
 \begin{equation}
 f_{clo|\gamma_i} = N(X\beta,V)
 \end{equation}
-$$
+
 where $V$ is the full covariance matrix of all subjects.
 
 We can therefore replace the univariate normal distribution from Question 4 with this multivariate normal distribution to find our marginal distribution: 
-$$
+
 \begin{align}
 L_M(y,\beta,\sigma_u,\sigma_v,\sigma,\phi) = & \int_0^{\infty} f_{clo|\gamma_i} (y;\gamma_i,\beta,\sigma,\sigma_u,\sigma_v)f_{\gamma}(\phi)\\
-
 L_M(y,\beta,\sigma_u,\sigma_v,\sigma,\phi) = &\frac{1}{\sqrt{|\alpha(sex_i)V|}}\dfrac{\Gamma(\phi+1/2)}{(2\pi\phi)^{d/2}\Gamma(\phi)}\left( 1 + \dfrac{1}{2\phi}(y-X\beta)^T(\alpha(sex_i)V)^{-1}(y-X\beta)\right)^{-\phi-1/2}  
 \end{align}
-$$
+
 We once again recognize this as a shifted and scaled multivariate t-distribution. 
 
 Furthermore, we can utilize the grouping structure of $V$ to solve smaller sub-problems of the marginal distribution like in equation (\ref{eq:margin_Q3}).
