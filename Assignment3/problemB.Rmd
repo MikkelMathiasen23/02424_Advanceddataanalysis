@@ -339,6 +339,7 @@ The covariance structure of $\Sigma^{(i)}$ is still the same as in equation (\re
 Furthermore, for our optimization, we estimate the variance parameters and $a$ in the log-domain to ensure that the variance is positive. 
 
 
+
 ```{r}
 
 nll2<- function(pars,alpha_sex="male"){
@@ -730,11 +731,11 @@ exp(parQ6[-c(1:2)])
 
 When comparing the model results from question 5 and 6 it is clear that the estimated log-likelihood of the model from question 5 yields the highest log-likelihood which could indicate that this model is best. It should be noted that the difference is: 1689.8-1687.9 = 1.9.
 
-Also it should be noted that the Laplace approximation is an approximation and it therefore is expexted that this would yield a difference from the optimal likelihood. 
+Also it should be noted that the Laplace approximation is an approximation and it therefore is expected that this would yield a difference from the optimal likelihood. 
 
 COMPARE WITH PARAMETERS AND gamma|clo_i 
 
-```{r,cache=TRUE}
+```{r Q7_opt,cache=TRUE}
 ll_Y_given_gamma_Q6<- function(pars,gamma,alpha_sex="male"){
   #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
   #print(pars)
