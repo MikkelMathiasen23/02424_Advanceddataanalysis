@@ -331,7 +331,7 @@ v_{ij}\sim &N(0,\sigma^2_v\alpha(sex_i))\\
 
 The marginal log-likelihood of this model is almost equal to the previous question: 
 \begin{equation}
-l_M(y,\beta,\sigma_u,\sigma)\propto -\frac{1}{2}\sum_{i}^{N_{subjId}} \log |\alpha(sex_i) \Sigma^{(i)} |+ (y_i-X_i\beta)^T\left(\alpha(sex_i)\Sigma^{(i)}\right)^{-1}(y_i-X_i\beta)
+l_M(y,\beta,\sigma_u,\sigma)\propto -\frac{1}{2}\sum_{i}^{N_{subjId}} \log |\alpha(sex_i) \Sigma^{(i)} |+ (y_i-X_i\beta)^T\left(\alpha(sex_i)\Sigma^{(i)}\right)^{-1}(y_i-X_i\beta) \label{eq:margin_Q3}
 \end{equation}
 
 The covariance structure of $\Sigma^{(i)}$ is still the same as in equation (\ref{eq:Sigma_i}). We will however set $\alpha("male")=1$ and $\alpha("female")=a$. 
@@ -536,13 +536,26 @@ v_{ij} \sim& \mathcal{N}(0, \sigma_v^2\alpha(sex_i)/\gamma_i)\\
 \gamma_i \sim& \mathcal{G}(1,\phi)
 \end{align}
 
-We know from Question 4 that the marginal distribution can be written as a student t-distribution. The marginal distribution can therefore be written as: 
+In Question 4 we found the marginal likelihood of a normal & gamma distribution. This is not exactly the same for Question 5.
+
+We have to marginalize $u_i$ and $v_{ij}$ out so that we have $f_{clo|\gamma_i}$. We do however already have this marginalization from Question 3:
 
 \begin{equation}
-L_M(y,\beta,\sigma_u,\sigma) = |\alpha(sex_i)\Sigma^{-1}|\dfrac{\Gamma(\phi+1/2)}{\sqrt{2\pi\phi}\Gamma(\phi)}( 1 + \dfrac{(y-X\beta)^T(y-X\beta)}{2\phi}(\alpha(sex_i)\Sigma^{-1}))^{-\phi-1/2}  
+f_{clo|\gamma_i} = N(X\beta,V)
 \end{equation}
 
+where $V$ is the full covariance matrix of all subjects.
 
+We can therefore replace the univariate normal distribution from Question 4 with this multivariate normal distribution to find our marginal distribution: 
+
+\begin{align}
+L_M(y,\beta,\sigma_u,\sigma_v,\sigma,\phi) = & \int_0^{\infty} f_{clo|\gamma_i} (y;\gamma_i,\beta,\sigma,\sigma_u,\sigma_v)f_{\gamma}(\phi)\\
+L_M(y,\beta,\sigma_u,\sigma_v,\sigma,\phi) = &\frac{1}{\sqrt{|\alpha(sex_i)V|}}\dfrac{\Gamma(\phi+1/2)}{(2\pi\phi)^{d/2}\Gamma(\phi)}\left( 1 + \dfrac{1}{2\phi}(y-X\beta)^T(\alpha(sex_i)V)^{-1}(y-X\beta)\right)^{-\phi-1/2}  
+\end{align}
+
+We once again recognize this as a shifted and scaled multivariate t-distribution. 
+
+Furthermore, we can utilize the grouping structure of $V$ to solve smaller sub-problems of the marginal distribution like in equation (\ref{eq:margin_Q3}).
 ```{r}
 
 nllQ5<- function(pars,alpha_sex="male"){
@@ -624,7 +637,7 @@ xtable::xtable(m,digits=4)
 Again, we optimized the variance parameters in the log-domain to ensure positive variance, and we did set $\alpha("male") = 1$ and $\alpha("female") = a$. The estimated log-likelihood was: 1698.6 therefore being higher than the previous model. The covariance structure of $\Sigma$ is still the same as in equation (\ref{eq:Sigma_i}). 
 
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \begin{tabular}{rrrr}
   \hline
@@ -639,7 +652,7 @@ $\mu$ & 0.5943 & 0.5458 & 0.6428 \\
   $\phi$ & 0.3737 & 0.2674 & 0.5222 \\ 
    \hline
 \end{tabular}
-\caption{This table shows the estimated parameters and their 95\% (Wald) confidence interval.}\label{tab:coef_q6}
+\caption{This table shows the estimated parameters and their 95\% (Wald) confidence interval for question 5.}\label{tab:coef_q5}
 \end{table}
 
 It should be noted that the implementation of $dvmt$ the scaling using the $\Sigma$ matrix are implement implicit in the model and therefore the output does not need to be scaled. 
@@ -704,7 +717,7 @@ exp(parQ6[-c(1:2)])
 
 
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \begin{tabular}{rrrr}
   \hline
@@ -719,20 +732,46 @@ exp(parQ6[-c(1:2)])
   $\alpha$ & 0.0514 & 0.0145 & 0.1821 \\ 
    \hline
 \end{tabular}
-\caption{This table shows the estimated parameters and their 95\% (Wald) confidence interval.}\label{tab:coef_q6}
+\caption{This table shows the estimated parameters and their 95\% (Wald) confidence interval for question 6.}\label{tab:coef_q6}
 \end{table}
 
 
 
 ## Question 7
 
-When comparing the model results from question 5 and 6 it is clear that the estimated log-likelihood of the model from question 5 yields the highest log-likelihood which could indicate that this model is best. It should be noted that the difference is: 1689.8-1687.9 = 1.9.
+When comparing the model results from question 5 and 6 it is clear that the estimated log-likelihood of the model from question 5 yields the highest log-likelihood which indicates that this model is best. It should be noted that the difference of log-likelihood is: 1698.6-1687.9 = 10.7.
 
-Also it should be noted that the Laplace approximation is an approximation and it therefore is expected that this would yield a difference from the optimal likelihood. 
+Also it should be noted that the Laplace approximation is an approximation and it therefore is expected that this would yield a difference from the optimal likelihood. In table \ref{tab:q27_allmodels}, an overview of the log-likelihood and number of estimated parameters for all fitted Hierarchical models can be seen 
 
-COMPARE WITH PARAMETERS AND gamma|clo_i 
+\begin{table}[H]
+\centering
+\begin{tabular}{lrr}
+  \hline
+  Model & Log-likelihood & Number of parameters \\ \hline
+  Q1: & 643.8 & 4 \\
+  Q2: & 943.1 & 5\\
+  Q3: & 1214.9 & 6 \\
+  Q5: & 1698.6 & 7\\
+  Q6: & 1687.9 & 7\\ \hline
+\end{tabular}
+\caption{The log-likelihood and number of estimated parameters for all estimated Hierarchical models.}\label{tab:q27_allmodels}
+\end{table}
+
+The parameters of the resulting models of question 5 and 6 can be seen in table \ref{tab:coef_q5} and \ref{tab:coef_q6} respectively. Here, it should be noted that the fixed parameters are approximately equal, at least to the second digit. The variance parameters for the random effects: $\sigma$, $\sigma_s$, $\sigma_{subDay}$ and $\alpha$ are estimated to different optimal values.
+
+Finally, we estimate the random effects $\gamma_i | clo_i$ for the models estimated in the previous two subsections. The problem is set up using Bayes theorem
+
+\begin{equation}
+  f(\gamma_i|clo_i) = f_{y_i, \gamma_i}(u, v,\gamma_i)/f_{clo}(u, v),
+\end{equation}
+
+where the marginal distribution $f_{clo}(u, v)$ is considered constant and the likelihood is therefore only optimized over $f_{y_i, \gamma_i}(u, v,\gamma_i)$. This results in the log-likelihood of 1757.0 and 1676.6 for the random effects $\gamma_i | clo_i$ for the models from question 5 and question 6 respectively. 
+
+
+
 
 ```{r Q7_opt,cache=TRUE}
+#COMPARE WITH PARAMETERS AND gamma|clo_i 
 ll_Y_given_gamma_Q6<- function(pars,gamma,alpha_sex="male"){
   #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
   #print(pars)
@@ -857,7 +896,7 @@ Q6_gamma = nlminb(gamma,get_gamma_Q6,pars = parQ6)
 
 ```
 
-
+The estimated $\gamma$-values for the two separate models are shown in fig \ref{fig:gamma_vs_gamma} where the $\gamma$ values of the model from question 6 is transformed into the same domain so the comparison can be made. The y-axis of the figure on the right has been log-transformed as well.  
 
 ```{r gamma_vs_gamma,fig.cap="This figure shows the estimated $\\gamma$-values for the two values. We transformed the $\\gamma$ values from Question 6 so that they would be in the same domain. Each number correspond to the subject ID and the color corresponds to each sex.",fig.height=5}
 library(ggplot2)
@@ -874,6 +913,9 @@ gridExtra::grid.arrange(p1,p2,ncol=2)
 
 ```
 
+From figure \ref{fig:gamma_vs_gamma}, it should be noted that $\gamma_i|clo_i$ for females appears to be estimated to a numerical larger estimate. It should also be noted, that the gamma estimate of the model from question 6 has a larger spread of estimates compared to that of question 5's model. This is compatible with the higher log-likelihood of $gamma_i|clo_i$ for question 5's model. 
+
+The estimates of all $\gamma$ for the two different models can be seen in \ref{tab:all_gamma}.
 
 
 ```{r}
