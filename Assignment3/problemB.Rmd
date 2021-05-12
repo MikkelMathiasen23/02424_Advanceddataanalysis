@@ -56,7 +56,7 @@ We construct our $X_i$ matrix such that it has the first column consists of ones
 
 ```{r}
 #setwd(dirname(rstudioapi::getSourceEditorContext()$path))
-rm(list=ls())
+#rm(list=ls())
 dat = read.csv(file="data/clothingFullAss03.csv")
 dat$sex_male = as.numeric(as.factor(dat$sex))-1
 dat$sex_female = abs(as.numeric(as.factor(dat$sex))-2)
@@ -772,6 +772,7 @@ where the marginal distribution $f_{clo}(u, v)$ is considered constant and the l
 
 ```{r Q7_opt,cache=TRUE}
 #COMPARE WITH PARAMETERS AND gamma|clo_i 
+library(mvnfast)
 ll_Y_given_gamma_Q6<- function(pars,gamma,alpha_sex="male"){
   #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
   #print(pars)

@@ -226,14 +226,14 @@ $$
 clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_4sex_i(tInOp_i) + \beta_5sex_i(tOut_i) + subDay_s +  \epsilon_{ij}
 $$
 where different autocorrelation-structures for time are tested with $subday$ as a random effect. First, the auto-correlation structure will be investigated where a Auto-Regressive(1), Gaussian and exponential correlation structure will be tested. This means that the covariance structure will be:
-$$
+
 \begin{equation}
-\Sigma_{n,m} = \begin{cases}0 &\text{if} & subject_n\neq subject_m \\
-\sigma_v^2 &\text{if} & subject_n = subject_m \,\&\,day_n \neq day_m\\
-\sigma_v^2+g(time_n,time_m) &\text{if} & subject_n = subject_m \,\&\,day_n = day_m\,\&\, n\neq m\\
-\sigma_v^2+g(time_n,time_m)+\sigma^2 &\text{if} & subject_n = subject_m \,\&\,day_n = day_m\,\&\, n = m\end{cases}
+\Sigma_{n,m} = \begin{cases}0 &\text{if } subject_n\neq subject_m \\
+\sigma_v^2 &\text{if }  subject_n = subject_m \,\&\,day_n \neq day_m\\
+\sigma_v^2+g(time_n,time_m) &\text{if }  subject_n = subject_m \,\&\,day_n = day_m\,\&\, n\neq m\\
+\sigma_v^2+g(time_n,time_m)+\sigma^2 &\text{if }  subject_n = subject_m \,\&\,day_n = day_m\,\&\, n = m\end{cases}
 \end{equation}
-$$
+
 
 The Gaussian correlation structure are given by: 
 
