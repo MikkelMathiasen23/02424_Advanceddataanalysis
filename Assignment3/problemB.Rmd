@@ -58,6 +58,8 @@ We construct our $X_i$ matrix such that it has the first column consists of ones
 #setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 rm(list=ls())
 dat = read.csv(file="data/clothingFullAss03.csv")
+dat$sex_male = as.numeric(as.factor(dat$sex))-1
+dat$sex_female = abs(as.numeric(as.factor(dat$sex))-2)
 library(lme4)
 fit0 <- lmer(clo~sex+(1|subjId),data=dat,REML=FALSE)
 ```
@@ -527,10 +529,10 @@ Thus, we have derived the equation.
 
 We are given the following model: 
 \begin{align}
-clo_{i,j,k}|u_i, v_{ij},\gamma_i \sim \mathcal{N}(\mu + \beta(sex_i)+u_i + v_{ij}, \sigma^2\alpha(sex_i)/\gamma_i)\\
-u_i \sim \mathcal{N}(0,\sigma_u^2\alpha(sex_i)/\gamma_i)\\
-v_{ij} \sim \mathcal{N}(0, \sigma_v^2\alpha(sex_i)/\gamma_i)\\
-\gamma_i \sim \mathcal{G}(1,\phi)
+clo_{i,j,k}|u_i, v_{ij},\gamma_i \sim& \mathcal{N}(\mu + \beta(sex_i)+u_i + v_{ij}, \sigma^2\alpha(sex_i)/\gamma_i)\\
+u_i \sim& \mathcal{N}(0,\sigma_u^2\alpha(sex_i)/\gamma_i)\\
+v_{ij} \sim& \mathcal{N}(0, \sigma_v^2\alpha(sex_i)/\gamma_i)\\
+\gamma_i \sim& \mathcal{G}(1,\phi)
 \end{align}
 
 We know from Question 4 that the marginal distribution can be written as a student t-distribution. The marginal distribution can therefore be written as: 
@@ -591,16 +593,23 @@ nllQ5<- function(pars,alpha_sex="male"){
 }
 #library(mvtnorm)
 library(mvnfast)
-pars=c("mu"=0.59,"sex_male"=-0.08,"alpha"=2.7,"sigma_sub_day"=-5.681,"sigma_s"=-6.5,"sigma"=-8.08,"phi"=2)
+pars=c("mu"=0.59,"sex_male"=-0.08,"alpha"=0,"sigma_sub_day"=0,"sigma_s"=0,"sigma"=0,"phi"=1)
 
 # Fitting male alpha, female=1
 optQ5<-nlminb(pars,nllQ5,alpha_sex="male")
-
+optQ5$objective
 out_par = optQ5$par
+parQ5 = out_par
 c(out_par[1:2],exp(out_par[3:6]),exp(out_par[7]))
 sqrt(exp(out_par[3]))*exp(out_par[4:6])
 
+# # Fitting male alpha, female=1
+# optQ5<-nlminb(pars,nllQ5,alpha_sex="female")
+# out_par = optQ5$par
+# c(out_par[1:2],exp(out_par[3:6]),exp(out_par[7]))
+# sqrt(exp(out_par[3]))*exp(out_par[4:6])
 
+library(numDeriv)
 H = hessian(nllQ5,optQ5$par)
 
 m = cbind(optQ5$par,
@@ -613,9 +622,27 @@ xtable::xtable(m,digits=4)
 
 ```
 
-Again, we optimized the variance parameters in the log-domain to ensure positive variance, and we did set $\alpha("male") = 1$ and $\alpha("female") = a$. The estimated log-likelihood was: 1689.8 therefore being higher than the previous model. The covariance structure of $\Sigma$ is still the same as in equation (\ref{eq:Sigma_i}). 
+Again, we optimized the variance parameters in the log-domain to ensure positive variance, and we did set $\alpha("male") = 1$ and $\alpha("female") = a$. The estimated log-likelihood was: 1698.6 therefore being higher than the previous model. The covariance structure of $\Sigma$ is still the same as in equation (\ref{eq:Sigma_i}). 
 
 INDSÆT TABEL AF PARAMETRE - PROBLEMER MED NANS FRA HESSIAN 
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & Estimate & 2.5\% & 97.5\% \\ 
+  \hline
+$\mu$ & 0.5943 & 0.5458 & 0.6428 \\ 
+  $\beta$ & -0.0881 & -0.1430 & -0.0332 \\ 
+  $\alpha$ & 0.3490 & 0.1270 & 0.9589 \\ 
+  $\sigma_v$ & 0.0875 & 0.0584 & 0.1311 \\ 
+  $\sigma_u$ & 0.0865 & 0.0531 & 0.1408 \\ 
+  $\sigma$ & 0.0073 & 0.0050 & 0.0105 \\ 
+  $\phi$ & 0.3737 & 0.2674 & 0.5222 \\ 
+   \hline
+\end{tabular}
+\caption{This table shows the estimated parameters and their 95\% (Wald) confidence interval.}\label{tab:coef_q6}
+\end{table}
 
 It should be noted that the implementation of $dvmt$ the scaling using the $\Sigma$ matrix are implement implicit in the model and therefore the output does not need to be scaled. 
 
@@ -624,15 +651,59 @@ It should be noted that the implementation of $dvmt$ the scaling using the $\Sig
 The following model are given: 
 
 \begin{align}
-  clo_{i,j,k}|u_i, v_{ij}, \gamma_i \sim \mathcal{N}(\mu + \beta(sex_i) + u_i + v_{ij}, \sigma^2\alpha(sex_i)\exp{(-\gamma_i)})\\
-  u_i \sim \mathcal{N}(0,\sigma_u\alpha(sex_i)\exp{(-\gamma_i)})\\
-  v_{ij}\sim \mathcal{N}(0,\sigma_v\alpha(sex_i)\exp{(-\gamma_i)})\\
-  \gamma_i \sim \mathcal{N}(0, \sigma_G^2)
+  clo_{i,j,k}|u_i, v_{ij}, \gamma_i \sim &\mathcal{N}(\mu + \beta(sex_i) + u_i + v_{ij}, \sigma^2\alpha(sex_i)\exp{(-\gamma_i)})\\
+  u_i \sim& \mathcal{N}(0,\sigma_u\alpha(sex_i)\exp{(-\gamma_i)})\\
+  v_{ij}\sim& \mathcal{N}(0,\sigma_v\alpha(sex_i)\exp{(-\gamma_i)})\\
+  \gamma_i \sim& \mathcal{N}(0, \sigma_G^2)
 \end{align}
 
 The $\gamma_i$ parameter are now modeled using a normal distribution. This is approximated using Laplace approximation and implement using TMB. The model now contains three random effects namely $u,v,\gamma$. Again, the variance parameters are optimized in the log-domain to ensure positive variance, otherwise one could specify the bounds in the $nlminb$ optimizer. As in the previous tasks we set $\alpha("male") = 1$ and $\alpha("female") = a$.
 
 The estimated log-likelihood was: 1687.9 thereby being smaller than the one estimated modeling the random effect $\gamma$ as Gamma-distributed which yielded an analytic solution for the marginal likelihood. The estimated parameters and 95\% wald confidence intervals can be seen in table \ref{tab:coef_q6}. 
+
+```{r}
+library(TMB)
+parameters <- list(u=rep(0,length(unique(dat$subjId))),
+                   v = rep(0,length(unique(dat$subDay))),
+                   gamma = rep(0,length(unique(dat$subjId))),
+                   sigma_u = 1,
+                   sigma_v = 1,
+                   sigma_G = 1,
+                   sigma = 1,
+                   alpha = 1,
+                   beta = 1,
+                   mu = 1
+)
+tmp_df = unique(dat[,c('sex',"sex_male","subjId")])
+tmp_df2 = unique(dat[,c('sex',"sex_male","subDay","subjId")])
+new_dat = list('clo'=dat$clo,
+               'subjId' = dat$subjId,
+               'subjId_day' = dat$subDay,
+               'sex_male' = dat$sex_male,
+               
+               'subjId_u'=tmp_df$subjId,
+               'alpha_u_sex_male'= tmp_df$sex_male,
+               
+               'alpha_v_sex_male'= tmp_df2$sex_male,
+               'subjId_v' = tmp_df2$subjId
+)
+
+
+compile("test.cpp")
+dyn.load(dynlib("test"))
+## Define objective function
+obj <- MakeADFun(data = new_dat,
+                 parameters = parameters,
+                 random = c("u","v","gamma"),
+                 DLL = "test"
+)
+
+opt <- nlminb(obj$par, obj$fn, obj$gr)
+opt$objective
+parQ6 = opt$par
+exp(parQ6[-c(1:2)])
+```
+
 
 
 \begin{table}[ht]
@@ -650,8 +721,7 @@ The estimated log-likelihood was: 1687.9 thereby being smaller than the one esti
   $\alpha$ & 0.0514 & 0.0145 & 0.1821 \\ 
    \hline
 \end{tabular}
-\caption{This table shows the estimated parameters and their 95\% (Wald) confidence interval.}
-\label{tab:coef_q6}
+\caption{This table shows the estimated parameters and their 95\% (Wald) confidence interval.}\label{tab:coef_q6}
 \end{table}
 
 
@@ -663,3 +733,213 @@ When comparing the model results from question 5 and 6 it is clear that the esti
 Also it should be noted that the Laplace approximation is an approximation and it therefore is expexted that this would yield a difference from the optimal likelihood. 
 
 COMPARE WITH PARAMETERS AND gamma|clo_i 
+
+```{r,cache=TRUE}
+ll_Y_given_gamma_Q6<- function(pars,gamma,alpha_sex="male"){
+  #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
+  #print(pars)
+  # ML estimation:
+  mu = pars["mu"]
+  sex_male = pars["sex_male"]
+  beta=c(mu,sex_male)
+  alpha = pars['alpha']
+  ll=0
+  for(i in unique(dat$subjId)){
+    #print(i)
+    df = dat[dat$subjId==i,]
+    df$sex
+    if(alpha_sex=="male"){
+      sex = df$sex_male[1]
+    }
+    if(alpha_sex=="female"){
+      sex = df$sex_female[1]
+    }
+    
+    #print(sex)
+    n = nrow(df)
+    days = unique(df$day)
+    
+    if(df$sex[1]=="male"){
+      x = cbind(1,rep(1,n))
+    }else{
+      x = cbind(1,rep(0,n))
+    }
+    
+    sig = diag(n)*exp(sex*alpha+2*pars["sigma"])+exp(sex*alpha+2*pars["sigma_s"])
+    for(k in days){
+      idx = which(df$day==k)
+      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+2*pars["sigma_sub_day"])
+    }
+    
+    
+    y = df$clo
+    tmp = dmvn(y,x%*%beta,sig*exp(-gamma[i+1]),log=T)
+    #tmp = dmvnorm(y,x%*%beta,sig,log=T)
+    #print(tmp)
+    ll = ll+tmp
+  }
+  return(ll)
+}
+
+ll_Y_given_gamma<- function(pars,gamma,alpha_sex="male"){
+  #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
+  #print(pars)
+  # ML estimation:
+  mu = pars["mu"]
+  sex_male = pars["sex_male"]
+  beta=c(mu,sex_male)
+  alpha = pars['alpha']
+  
+  
+  ll=0
+  for(i in unique(dat$subjId)){
+    #print(i)
+    df = dat[dat$subjId==i,]
+    df$sex
+    if(alpha_sex=="male"){
+      sex = df$sex_male[1]
+    }
+    if(alpha_sex=="female"){
+      sex = df$sex_female[1]
+    }
+    
+    #print(sex)
+    n = nrow(df)
+    days = unique(df$day)
+    
+    if(df$sex[1]=="male"){
+      x = cbind(1,rep(1,n))
+    }else{
+      x = cbind(1,rep(0,n))
+    }
+    
+    sig = diag(n)*exp(sex*alpha+2*pars["sigma"])+exp(sex*alpha+2*pars["sigma_s"])
+    for(k in days){
+      idx = which(df$day==k)
+      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+2*pars["sigma_sub_day"])
+    }
+    
+    
+    y = df$clo
+    tmp = dmvn(y,x%*%beta,sig/gamma[i+1],log=T)
+    #tmp = dmvnorm(y,x%*%beta,sig,log=T)
+    #print(tmp)
+    ll = ll+tmp
+  }
+  return(ll)
+}
+
+gamma_Q5 <-function(gamma,phi){
+  ll = dgamma(gamma,shape=phi,rate=phi,log=T)
+  return(ll)
+}
+
+gamma_Q6 <-function(gamma,sigma_G){
+  dnorm(gamma,mean = 0 ,sd = sigma_G,log=T)
+}
+
+get_gamma_Q5<-function(gamma,pars){
+  marginal = ll_Y_given_gamma(pars = pars, gamma = gamma)
+  gamma_dist = gamma_Q5(gamma = gamma,phi = exp(pars["phi"]))
+  ll = marginal+sum(gamma_dist)
+  return(-ll)
+}
+
+get_gamma_Q6<-function(gamma,pars){
+  #print(gamma)
+  marginal = ll_Y_given_gamma_Q6(pars = pars, gamma = gamma)
+  gamma_dist = gamma_Q6(gamma = gamma,sigma_G = exp(pars["sigma_G"]))
+  ll = marginal+sum(gamma_dist)
+  return(-ll)
+}
+gamma = rep(1,length(unique(dat$subjId)))
+Q5_gamma = nlminb(gamma,get_gamma_Q5,pars = parQ5,lower = 1e-9)
+names(parQ6)[c(2,3,5)] = names(parQ5)[c(2,5,4)]
+Q6_gamma = nlminb(gamma,get_gamma_Q6,pars = parQ6)
+
+```
+
+
+
+```{r gamma_vs_gamma,fig.cap="This figure shows the estimated $\\gamma$-values for the two values. We transformed the $\\gamma$ values from Question 6 so that they would be in the same domain. Each number correspond to the subject ID and the color corresponds to each sex.",fig.height=5}
+library(ggplot2)
+new_df = data.frame(ID = 0:46,Q5 = Q5_gamma$par,Q6= exp(Q6_gamma$par))
+
+
+new_df$sex = unique(dat[,c("subjId","sex")])$sex
+p1 = ggplot(new_df,aes(x=Q5,y=Q6,col=sex))+geom_text(aes(label=ID))+
+  ggtitle("Q5 gamma vs Q6 exp(gamma)")+xlab("Q5 Gamma")+ylab("Q6 exp(gamma)")
+p2 = p1+scale_y_continuous(trans="log")+
+  ggtitle("Q5 gamma vs Q6 exp(gamma)\nwith log-transformed y-axis")
+
+gridExtra::grid.arrange(p1,p2,ncol=2)
+
+```
+
+
+
+```{r}
+gammas = data.frame(cbind(Q5_gamma$par,exp(Q6_gamma$par)))
+row.names(gammas)=0:46
+xtable::xtable(gammas)
+
+```
+
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rrr}
+  \hline
+Subject ID & $\gamma_i$ & $\exp(\gamma_i)$ \\ 
+  \hline
+0 & 1.15 & 34.22 \\ 
+  1 & 0.01 & 0.20 \\ 
+  2 & 0.01 & 0.15 \\ 
+  3 & 1.19 & 68.37 \\ 
+  4 & 0.01 & 0.02 \\ 
+  5 & 0.00 & 0.09 \\ 
+  6 & 0.58 & 4.66 \\ 
+  7 & 1.02 & 2.65 \\ 
+  8 & 0.00 & 0.09 \\ 
+  9 & 0.01 & 0.16 \\ 
+  10 & 0.01 & 0.25 \\ 
+  11 & 0.11 & 0.30 \\ 
+  12 & 0.91 & 1.61 \\ 
+  13 & 0.00 & 0.07 \\ 
+  14 & 0.01 & 0.29 \\ 
+  15 & 0.09 & 0.27 \\ 
+  16 & 1.11 & 38.60 \\ 
+  17 & 0.96 & 1.75 \\ 
+  18 & 1.12 & 4.57 \\ 
+  19 & 0.26 & 0.51 \\ 
+  20 & 1.19 & 71.85 \\ 
+  21 & 0.74 & 1.06 \\ 
+  22 & 1.09 & 3.78 \\ 
+  23 & 1.10 & 3.94 \\ 
+  24 & 1.13 & 5.04 \\ 
+  25 & 1.04 & 2.87 \\ 
+  26 & 0.00 & 0.05 \\ 
+  27 & 0.79 & 6.80 \\ 
+  28 & 1.07 & 3.25 \\ 
+  29 & 1.07 & 16.65 \\ 
+  30 & 0.00 & 0.11 \\ 
+  31 & 1.00 & 2.18 \\ 
+  32 & 1.12 & 4.45 \\ 
+  33 & 0.08 & 0.23 \\ 
+  34 & 0.01 & 0.10 \\ 
+  35 & 0.07 & 0.22 \\ 
+  36 & 0.01 & 0.12 \\ 
+  37 & 0.95 & 1.83 \\ 
+  38 & 0.01 & 0.11 \\ 
+  39 & 0.66 & 5.27 \\ 
+  40 & 0.21 & 0.47 \\ 
+  41 & 0.17 & 2.23 \\ 
+  42 & 1.11 & 4.37 \\ 
+  43 & 0.04 & 0.15 \\ 
+  44 & 0.11 & 0.28 \\ 
+  45 & 0.11 & 1.53 \\ 
+  46 & 0.90 & 8.94 \\ 
+   \hline
+\end{tabular}
+\caption{Table of all gamma values}\label{tab:all_gamma}
+\end{table}

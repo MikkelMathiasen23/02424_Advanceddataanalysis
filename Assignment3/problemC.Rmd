@@ -5,14 +5,80 @@ editor_options:
 chunk_output_type: console
 ---
 
-```{r}
-rm(list=ls())
-source('setup.R')
-library(ggplot2)
-library(ordinal)
-library(GGally)
-library(dplyr)
-library(tidyverse)
-library(xtable)
 
-```
+
+
+
+
+
+
+
+
+
+
+
+$$
+
+\sqrt{(clo-X\beta)^T\Sigma^{-1}(clo-X\beta)}
+
+$$
+
+
+## Q4
+
+
+
+### WORKS!!
+
+Assuming: $ Y_i|\gamma_i \sim \mathcal{N}(\mu,\sigma^2/\gamma_i)$
+https://people.eecs.berkeley.edu/~jordan/courses/260-spring10/lectures/lecture5.pdf
+
+$$
+\begin{align}
+\int_0^\infty \frac{\sqrt{\gamma}}{\sqrt{2\pi}\cdot(\sigma)}\exp{\left(-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)} 
+\times \frac{\beta^\alpha}{\Gamma(\alpha)}\gamma^{\alpha-1}\exp{(-\gamma\beta)}\\
+
+= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \sqrt{\gamma}\exp{\left(-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)}
+\times\gamma^{\alpha-1}\exp{(-\gamma\beta)} \\
+
+= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma\beta-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)}
+ \\
+ 
+ = \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma \left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right)\right)}
+ \\
+ 
+ = \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{\hat{\alpha}-1}\exp{\left(-\gamma \hat{\beta}\right)}, \hspace{0.5cm}\hat{\beta}=\left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right), \hat{\alpha}=\alpha+1/2\\
+ 
+= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\hat{\alpha})}{\hat{\beta}^{\hat{\alpha}}}\\
+ 
+ 
+= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\alpha+1/2)}{\left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right)^{\alpha+1/2}}\\
+ 
+\end{align}
+$$
+
+$$ 
+\begin{align}
+\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
+\left(\phi+\frac{(x-\mu)^2}{2\sigma^2}\right)^{-\phi-1/2}\\
+
+\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
+\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-\phi-1/2}\\
+
+
+\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}
+\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-1/2}\\
+
+\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi \phi}\Gamma(\phi)}
+\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\\
+
+\end{align}
+$$
+
+$$\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \frac{1}{\sigma} \frac{\Gamma(\phi+\frac{1}{2})}{\sqrt{2\phi \pi}\Gamma(\phi)}\left(1+\frac{(\frac{y-\mu}{\sigma})^2}{2\phi}\right)^{-\phi-\frac{1}{2}} $$
+
+
+
+
+
+

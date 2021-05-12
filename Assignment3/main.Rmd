@@ -5,7 +5,7 @@ author:
 - Mikkel Mathiasen s174344
 - Nicolai Piet Dittmann s170589
 date: "16/04/2021"
-geometry: "left=3cm,right=3cm,top=2cm,bottom=2cm"
+geometry: "left=2cm,right=2cm,top=2cm,bottom=2cm"
 output:
   pdf_document: 
     fig_caption: yes
