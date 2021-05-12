@@ -93,7 +93,7 @@ anova(fit0_2, fit1_2)
 
 $$ clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \mathbf{\beta_{4}time_{i}} + \beta_5sex_i(tInOp_i) + \mathbf{\beta_{6}day_{i}}+ SubjId_i + \epsilon_{ij}$$
 
-Thereby it is only the interaction term between $sex_i(tOut_i)$ that are removed.
+Thereby it is only the interaction term between $sex_i(tOut_i)$ that is removed.
 
 A likelihood ratio test are performed to test the model reduction and results in $p = 0.52$ and the model reduction is therefore kept. 
 
@@ -104,7 +104,7 @@ fit1_2 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="REML
 qqnorm(ranef(fit1_2)[,1], xlab = 'Random effect coefficients', main = 'QQ-plt of random coefficients')
 qqline(ranef(fit1_2)[,1], xlab = 'Random effect coefficients', main = 'QQ-plot of random coefficients')
 
-xtable(intervals(fit1_2)$fixed)
+xtable(intervals(fit1_2)$fixed, digits =  4)
 ```
 
 \begin{table}[ht]
@@ -113,20 +113,18 @@ xtable(intervals(fit1_2)$fixed)
   \hline
  & Lower (2.5 \%)& Estimate & Upper (97.5 \%)\\ 
   \hline
-(Intercept) & 0.98 & 1.17 & 1.36 \\ 
-  sexmale & -0.66 & -0.42 & -0.17 \\ 
-  tInOp & -0.02 & -0.01 & -0.01 \\ 
-  tOut & -0.01 & -0.01 & -0.01 \\ 
-  day2 & -0.02 & -0.01 & 0.01 \\ 
-  day3 & -0.05 & -0.03 & -0.02 \\ 
-  day4 & 0.08 & 0.15 & 0.22 \\ 
-  time22 & 0.02 & 0.04 & 0.06 \\ 
-  time23 & 0.03 & 0.05 & 0.08 \\ 
-  time24 & 0.03 & 0.05 & 0.08 \\ 
-  time25 & 0.03 & 0.06 & 0.08 \\ 
-  time26 & 0.03 & 0.06 & 0.09 \\ 
-  sexmale:tInOp & 0.00 & 0.01 & 0.02 \\ 
-   \hline
+(Intercept) & 0.9543 & 1.1466 & 1.3390 \\ 
+  sexmale & -0.7096 & -0.4662 & -0.2229 \\ 
+  tInOp & -0.0198 & -0.0123 & -0.0048 \\ 
+  tOut & -0.0137 & -0.0114 & -0.0090 \\ 
+  day & -0.0183 & -0.0103 & -0.0022 \\ 
+  time22 & 0.0156 & 0.0381 & 0.0605 \\ 
+  time23 & 0.0234 & 0.0484 & 0.0733 \\ 
+  time24 & 0.0216 & 0.0484 & 0.0751 \\ 
+  time25 & 0.0245 & 0.0522 & 0.0800 \\ 
+  time26 & 0.0253 & 0.0545 & 0.0837 \\ 
+  sexmale:tInOp & 0.0058 & 0.0144 & 0.0230 \\ 
+  \hline
 \end{tabular}
 \caption{Estimate of fixed effect coefficients including 95\% confidence intervals.}
 \label{tab:coef_1}
@@ -171,7 +169,7 @@ The fixed effect coefficients are presented in table \ref{tab:coef_2} including 
 In figure \ref{fig:hist_2} that the day random effects appear to be normal-distributed with some tails. The subject ID random effects appears to have some heavy tails, and this might indicate that modeling these as normal distributed might not be the correct choice. 
 
 ```{r hist_2,fig.cap="This graph shows the random effect coefficients presented in a QQ-plot", fig.height = 4}
-xtable(intervals(fit1)$fixed)
+xtable(intervals(fit1)$fixed, digits = 4)
 fit1 = lme(clo~sex*tInOp+tOut+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
 par(mfrow=c(1,2))
 qqnorm(ranef(fit1)$day[,1],xlab = 'Random effect coefficients (day)', main = 'QQ-plot of random coefficients for day')
@@ -187,16 +185,16 @@ qqline(ranef(fit1)$subjId[,1])
   \hline
  & Lower (2.5 \%)& Estimate & Upper (97.5 \%)\\ 
   \hline
-(Intercept) & 0.85 & 1.00 & 1.15 \\ 
-  sexmale & -0.54 & -0.37 & -0.21 \\ 
-  tInOp & -0.02 & -0.01 & -0.01 \\ 
-  tOut & -0.01 & -0.00 & -0.00 \\ 
-  time22 & 0.01 & 0.03 & 0.04 \\ 
-  time23 & 0.01 & 0.03 & 0.05 \\ 
-  time24 & 0.00 & 0.02 & 0.04 \\ 
-  time25 & 0.00 & 0.02 & 0.04 \\ 
-  time26 & 0.00 & 0.03 & 0.05 \\ 
-  sexmale:tInOp & 0.01 & 0.01 & 0.02 \\ 
+(Intercept) & 0.8526 & 0.9990 & 1.1454 \\ 
+  sexmale & -0.5447 & -0.3750 & -0.2053 \\ 
+  tInOp & -0.0186 & -0.0131 & -0.0076 \\ 
+  tOut & -0.0064 & -0.0035 & -0.0007 \\ 
+  time22 & 0.0121 & 0.0262 & 0.0404 \\ 
+  time23 & 0.0118 & 0.0291 & 0.0464 \\ 
+  time24 & 0.0036 & 0.0231 & 0.0425 \\ 
+  time25 & 0.0030 & 0.0237 & 0.0443 \\ 
+  time26 & 0.0030 & 0.0250 & 0.0470 \\ 
+  sexmale:tInOp & 0.0051 & 0.0108 & 0.0165 \\ 
    \hline
 \end{tabular}
 \caption{Estimate of fixed effect coefficients including 95\% confidence intervals.}
@@ -302,7 +300,7 @@ init_fit2_ml = lme(clo~tOut+sex*tInOp,random=~1|subDay,
                 correlation = corAR1(form=~as.numeric(as.character(time2))|subDay),
                 data=df,method="REML")
 
-xtable(intervals(init_fit2)$fixed)
+xtable(intervals(init_fit2)$fixed, digits = 4)
 
 ```
 
@@ -319,11 +317,11 @@ A likelihood ratio test is performed to see if the model reduction is significan
   \hline
  & Lower (2.5 \%)& Estimate & Upper (97.5 \%)\\ 
   \hline
-(Intercept) & 0.76 & 0.90 & 1.03 \\ 
-  tOut & -0.01 & -0.00 & -0.00 \\ 
-  sexmale & -0.54 & -0.34 & -0.15 \\ 
-  tInOp & -0.01 & -0.01 & -0.00 \\ 
-  sexmale:tInOp & 0.00 & 0.01 & 0.02 \\ 
+(Intercept) & 0.7590 & 0.8955 & 1.0320 \\ 
+  tOut & -0.0055 & -0.0028 & -0.0001 \\ 
+  sexmale & -0.5395 & -0.3449 & -0.1504 \\ 
+  tInOp & -0.0149 & -0.0092 & -0.0034 \\ 
+  sexmale:tInOp & 0.0028 & 0.0098 & 0.0168 \\ 
    \hline
 \end{tabular}
 \caption{This table shows the estimated coefficients and 95\% confidence intervals.}
