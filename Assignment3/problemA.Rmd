@@ -34,7 +34,7 @@ df$sex = factor(df$sex)
 
 ## Exploratory data analysis
 
-```{r part1_exploratory,fig.cap="This graph shows the Clothing level as a function Indoor Operating temperatures. This is further split into day and gender, and in each subplot the observations for each person are connected."}
+```{r part1_exploratory,fig.cap="This graph shows the Clothing level as a function Indoor Operating temperatures. This is further split into day and gender, and in each subplot the observations for each person are connected.", fig.height=4}
 # Exploratory analysis
 p1=ggplot(df,aes(x=tOut,y=clo,col=subjId))+
   geom_path()+
@@ -105,7 +105,7 @@ SKAL VI TESTE VORES RANDOM EFFECT PARAMETER OM DEN SKAL INKLUDERES VED LIKELIHOO
 
 Afterwards the random effect coefficients are estimated using REML estimation. The coefficients for the random effects are presented in the qq-plot in figure \ref{fig:hist_1} and does appear to be randomly distributed as assumed in the model.The fixed effect coefficients are presented in table \ref{tab:coef_1} including 95 \% confidence intervals.
 
-```{r hist_1,fig.cap="This graph shows the random effect coefficients presented in a QQ-plot"}
+```{r hist_1,fig.cap="This graph shows the random effect coefficients presented in a QQ-plot", fig.height = 4}
 fit1_2 = lme(clo~sex*tInOp+tOut+day+time2,random=~ 1|subjId,data=df,method="REML")
 qqnorm(ranef(fit1_2)[,1], xlab = 'Random effect coefficients', main = 'QQ-plt of random coefficients')
 qqline(ranef(fit1_2)[,1], xlab = 'Random effect coefficients', main = 'QQ-plot of random coefficients')
@@ -142,7 +142,7 @@ From table \ref{tab:coef_1} it should also be noted that it appears that the gen
 
 The residuals are further investigated in figure \ref{fig:res_1} where the standardized residuals are plotted against the fitted values. From this the residuals appears to be randomly distributed.
 
-```{r res_1,fig.cap="This graph shows the residuals of the first fixed effect model with subject Id as random effect."}
+```{r res_1,fig.cap="This graph shows the residuals of the first fixed effect model with subject Id as random effect.", fig.height = 4}
 plot(fit1_2)
 ```
 
@@ -176,7 +176,7 @@ The fixed effect coefficients are presented in table \ref{tab:coef_2} including 
 
 In figure \ref{fig:hist_2} that the day random effects appear to be normal-distributed with some tails. The subjectId random effects appears to have some heavy tails, and this might indicate that modeling these as normal distributed might not be the correct choice. 
 
-```{r hist_2,fig.cap="This graph shows the random effect coefficients presented in a QQ-plot"}
+```{r hist_2,fig.cap="This graph shows the random effect coefficients presented in a QQ-plot", fig.height = 4}
 xtable(intervals(fit1)$fixed)
 fit1 = lme(clo~sex*tInOp+tOut+time2,random=list(~1|subjId,~1|day),data=df,method="REML")
 par(mfrow=c(1,2))
@@ -213,13 +213,13 @@ qqline(ranef(fit1)$subjId[,1])
 
 The residuals are further investigated in figure \ref{fig:res_2} where the standardized residuals are plotted against the fitted values. From this the residuals appears to contain some structure going from small to large residuals when increasing the fitted values.
 
-```{r res_2,fig.cap="This graph shows the residuals of the first fixed effect model with subject Id and day as random effect."}
+```{r res_2,fig.cap="This graph shows the residuals of the first fixed effect model with subject Id and day as random effect.", fig.height = 4}
 plot(fit1)
 ```
 
 We try to investigate the residuals splitted into gender see figure \ref{fig:resid_2}, and it is apparent that the model captures the male clothing behavior better than the females. Some extreme points should be noted from the male qq-plot but as seen in figure \ref{fig:part1_exploratory} also one male appear to have a very different behavior than the rest which could be due to some of these extreme points. When looking at the females clearly some of the variance are not accounted for, and this could be accounted for through a weighted residual structure.
 
-```{r resid_2,fig.cap="This graph displays the residuals splitted into gender presented in a QQ-plot."}
+```{r resid_2,fig.cap="This graph displays the residuals splitted into gender presented in a QQ-plot.", fig.height = 4}
 df$residuals = resid(fit1)
 ggplot(data = df, aes(sample = residuals, col = sex))+
   stat_qq() + stat_qq_line()
@@ -343,7 +343,7 @@ The model intercept is the female contribution as sex(female) = 0 in our model f
 
 The random effect will now be investigated. 
 
-```{r}
+```{r random_effects, fig.cap = "QQ-plot of random effects of the model containing autocorrelation structure", fig.height = 4}
 qqnorm(ranef(init_fit2)[,1])
 qqline(ranef(init_fit2)[,1])
 
@@ -351,18 +351,21 @@ qqline(ranef(init_fit2)[,1])
 
 Here, it the heavy tails should be noted. They might indicate that another distribution for the random effect should be applied where the heavy tails are accounted for. 
 
-```{r variogram, fig.cap="Variograms for Gaussian and Exponential correlation structure.",fig.height=4}
-par(mfrow = c(1, 2))
-gaus = Variogram(fit_gaus_1)
+
+```{r variogram,fig.cap = "Variograms for Gaussian and Exponential correlation structure.", echo=FALSE, out.width='.49\\linewidth', fig.width=4, fig.height=4,fig.show='hold',fig.align='center'}
 exp = Variogram(fit_exp_1)
+gaus = Variogram(fit_gaus_1)
 plot(gaus, main = "Gaussian", add = T)
 plot(exp, main = "Exponential", add =T )
+
 ```
+
+
 
 From figure \ref{fig:variogram}, both the Gaussian and Exponential correlation structure seem to fit well. As AR(1) had the highest likelihood and a AR(1) correlation structure resembles the Exponential correlation structure, it is assumed that the AR(1) is also a good choice for the correlation structure. 
 
 
-```{r res_analysis, fig.cap="Residual analysis of final model. The first plot is the qqplot of the residuals split for each gender. The two bottom plots are the residuals dependent on the outdoor temperature also split for each gender. Additionaly, the residuals are grouped accordingly to the random effect subday and colored according to subjectId."}
+```{r res_analysis, fig.cap="Residual analysis of final model. The first plot is the qqplot of the residuals split for each gender. The two bottom plots are the residuals dependent on the outdoor temperature also split for each gender. Additionaly, the residuals are grouped accordingly to the random effect subday and colored according to subjectId.", fig.height = 6}
 
 library(gridExtra)
 df$residuals <- resid(init_fit2)
