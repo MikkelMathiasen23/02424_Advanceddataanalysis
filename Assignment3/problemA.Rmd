@@ -225,7 +225,26 @@ Now, a mixed effect model with within day autocorrelation will be tested. The in
 $$
 clo_i = \beta_0  + \beta_1sex_i +  \beta_2tOut_i +  \beta_3 tInOp_i+ \beta_4sex_i(tInOp_i) + \beta_5sex_i(tOut_i) + subDay_s +  \epsilon_{ij}
 $$
-where different autocorrelation-structures for time are tested with $subday$ as a random effect. First, the auto-correlation structure will be investigated where a Auto-Regressive(1), Gaussian and exponential correlation structure will be tested. It should be noted, that for the Gaussian and exponential correlations structure time isn't required to be equidistant. For AR(1) time has to be equidistant however. 
+where different autocorrelation-structures for time are tested with $subday$ as a random effect. First, the auto-correlation structure will be investigated where a Auto-Regressive(1), Gaussian and exponential correlation structure will be tested. The Gaussian correlation structure are given by: 
+
+\begin{align}
+  \tau^2 \exp{\left(\dfrac{-(t_{i1}-t_{i2})^2}{\phi^2}\right)}
+\end{align}
+
+where $\tau$ and $\phi$ are correlation parameters to be estimated from the data and $t$ are $time$. The exponential correlation structure are similar to the Gaussian and are given by:
+
+\begin{align}
+  \tau^2 \exp{\left(\dfrac{-|t_{i1}-t_{i2}|}{\phi^2}\right)}
+\end{align}
+
+where the parameters has the same meaning as in the Gaussian. The AR(1) correlation structure are given by: 
+
+\begin{align}
+  \phi^{|i_2 - i_1|}
+\end{align}
+where $\phi$ again are a parameter to be learned from data, and $i$ are the equidistant $time$ using the time from the dataset as a factor. 
+
+It should be noted, that for the Gaussian and exponential correlations structure time isn't required to be equidistant. For AR(1) time has to be equidistant however. 
 
 ```{r}
 df$day = as.numeric(as.character(df$day))
