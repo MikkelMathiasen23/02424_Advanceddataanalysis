@@ -16,66 +16,138 @@ chunk_output_type: console
 
 
 
+## Question 5
+
+We are given the following model: 
+\begin{align}
+clo_{i,j,k}|u_i, v_{ij},\gamma_i \sim& \mathcal{N}(\mu + \beta(sex_i)+u_i + v_{ij}, \sigma^2\alpha(sex_i)/\gamma_i)\\
+u_i \sim& \mathcal{N}(0,\sigma_u^2\alpha(sex_i)/\gamma_i)\\
+v_{ij} \sim& \mathcal{N}(0, \sigma_v^2\alpha(sex_i)/\gamma_i)\\
+\gamma_i \sim& \mathcal{G}(1,\phi)
+\end{align}
+
+In Question 4 we found the marginal likelihood of a normal & gamma distribution. This is not exactly the same for Question 5.
+
+We have to marginalize $u_i$ and $v_{ij}$ out so that we have $f_{clo|\gamma_i}$. We do however already have this marginalization from Question 3:
 
 $$
-
-\sqrt{(clo-X\beta)^T\Sigma^{-1}(clo-X\beta)}
-
+\begin{equation}
+f_{clo|\gamma_i} = N(X\beta,V)
+\end{equation}
 $$
+where $V$ is the full covariance matrix of all subjects.
 
-
-## Q4
-
-
-
-### WORKS!!
-
-Assuming: $ Y_i|\gamma_i \sim \mathcal{N}(\mu,\sigma^2/\gamma_i)$
-https://people.eecs.berkeley.edu/~jordan/courses/260-spring10/lectures/lecture5.pdf
-
+We can therefore replace the univariate normal distribution from Question 4 with this multivariate normal distribution to find our marginal distribution: 
 $$
 \begin{align}
-\int_0^\infty \frac{\sqrt{\gamma}}{\sqrt{2\pi}\cdot(\sigma)}\exp{\left(-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)} 
-\times \frac{\beta^\alpha}{\Gamma(\alpha)}\gamma^{\alpha-1}\exp{(-\gamma\beta)}\\
+L_M(y,\beta,\sigma_u,\sigma_v,\sigma,\phi) = & \int_0^{\infty} f_{clo|\gamma_i} (y;\gamma_i,\beta,\sigma,\sigma_u,\sigma_v)f_{\gamma}(\phi)\\
 
-= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \sqrt{\gamma}\exp{\left(-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)}
-\times\gamma^{\alpha-1}\exp{(-\gamma\beta)} \\
-
-= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma\beta-\frac{1}{2}\frac{\gamma(x-\mu)^2}{\sigma^2}\right)}
- \\
- 
- = \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{(\alpha+\frac{1}{2})-1}\exp{\left(-\gamma \left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right)\right)}
- \\
- 
- = \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \int_0^\infty \gamma^{\hat{\alpha}-1}\exp{\left(-\gamma \hat{\beta}\right)}, \hspace{0.5cm}\hat{\beta}=\left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right), \hat{\alpha}=\alpha+1/2\\
- 
-= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\hat{\alpha})}{\hat{\beta}^{\hat{\alpha}}}\\
- 
- 
-= \frac{1}{\sqrt{(2\pi)}\sigma} \frac{\beta^\alpha}{\Gamma(\alpha)} \frac{\Gamma(\alpha+1/2)}{\left(\beta+\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}\right)^{\alpha+1/2}}\\
- 
+L_M(y,\beta,\sigma_u,\sigma_v,\sigma,\phi) = &\frac{1}{\sqrt{|\alpha(sex_i)V|}}\dfrac{\Gamma(\phi+1/2)}{(2\pi\phi)^{d/2}\Gamma(\phi)}\left( 1 + \dfrac{1}{2\phi}(y-X\beta)^T(\alpha(sex_i)V)^{-1}(y-X\beta)\right)^{-\phi-1/2}  
 \end{align}
 $$
+We once again recognize this as a shifted and scaled multivariate t-distribution. 
 
-$$ 
-\begin{align}
-\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
-\left(\phi+\frac{(x-\mu)^2}{2\sigma^2}\right)^{-\phi-1/2}\\
+Furthermore, we can utilize the grouping structure of $V$ to solve smaller sub-problems of the marginal distribution like in equation (\ref{eq:margin_Q3}).
+```{r}
 
-\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}\phi^\phi
-\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-\phi-1/2}\\
+nllQ5<- function(pars,alpha_sex="male"){
+  #print(c(pars[1:2],exp(pars[3]+pars[4:6]) ))
+  #print(pars)
+  # ML estimation:
+  mu = pars["mu"]
+  sex_male = pars["sex_male"]
+  beta=c(mu,sex_male)
+  alpha = pars['alpha']
+  
+  ll=0
+  for(i in unique(dat$subjId)){
+    #print(i)
+    df = dat[dat$subjId==i,]
+    df$sex
+    if(alpha_sex=="male"){
+      sex = df$sex_male[1]
+    }
+    if(alpha_sex=="female"){
+      sex = df$sex_female[1]
+    }
+    
+    n = nrow(df)
+    days = unique(df$day)
+    
+    if(df$sex[1]=="male"){
+      x = cbind(1,rep(1,n))
+    }else{
+      x = cbind(1,rep(0,n))
+    }
+    
+    sig = diag(n)*exp(sex*alpha+2*pars["sigma"])+exp(sex*alpha+2*pars["sigma_s"])
+    for(k in days){
+      idx = which(df$day==k)
+      sig[idx,idx] = sig[idx,idx]+exp(sex*alpha+2*pars["sigma_sub_day"])
+    }
+    
+    y = df$clo
+    
+    tmp = dmvt(X = y, mu = x%*%beta ,sigma = sig, df = 2*exp(pars["phi"]),log=T)
+    
+
+    ll = ll+tmp
+  }
+  return(-ll)
+}
+#library(mvtnorm)
+library(mvnfast)
+pars=c("mu"=0.59,"sex_male"=-0.08,"alpha"=0,"sigma_sub_day"=0,"sigma_s"=0,"sigma"=0,"phi"=1)
+
+# Fitting male alpha, female=1
+optQ5<-nlminb(pars,nllQ5,alpha_sex="male")
+optQ5$objective
+out_par = optQ5$par
+parQ5 = out_par
+c(out_par[1:2],exp(out_par[3:6]),exp(out_par[7]))
+sqrt(exp(out_par[3]))*exp(out_par[4:6])
+
+# # Fitting male alpha, female=1
+# optQ5<-nlminb(pars,nllQ5,alpha_sex="female")
+# out_par = optQ5$par
+# c(out_par[1:2],exp(out_par[3:6]),exp(out_par[7]))
+# sqrt(exp(out_par[3]))*exp(out_par[4:6])
+
+library(numDeriv)
+H = hessian(nllQ5,optQ5$par)
+
+m = cbind(optQ5$par,
+           optQ5$par+qnorm(0.025)*sqrt(diag(solve(H))),
+           optQ5$par+qnorm(0.975)*sqrt(diag(solve(H))))
+m[3:7,] = exp(m[3:7,])
 
 
-\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi}\Gamma(\phi)}
-\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\cdot \left(\frac{1}{\phi}\right)^{-1/2}\\
+xtable::xtable(m,digits=4)
 
-\frac{1}{\sigma}\frac{\Gamma(\phi+1/2)}{\sqrt{2\pi \phi}\Gamma(\phi)}
-\left(1+\frac{(x-\mu)^2}{2\sigma^2\phi}\right)^{-\phi-1/2}\\
+```
 
-\end{align}
-$$
+Again, we optimized the variance parameters in the log-domain to ensure positive variance, and we did set $\alpha("male") = 1$ and $\alpha("female") = a$. The estimated log-likelihood was: 1698.6 therefore being higher than the previous model. The covariance structure of $\Sigma$ is still the same as in equation (\ref{eq:Sigma_i}). 
 
-$$\frac{1}{\sigma}pdf(\frac{y-\mu}{\sigma},2\phi) = \frac{1}{\sigma} \frac{\Gamma(\phi+\frac{1}{2})}{\sqrt{2\phi \pi}\Gamma(\phi)}\left(1+\frac{(\frac{y-\mu}{\sigma})^2}{2\phi}\right)^{-\phi-\frac{1}{2}} $$
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & Estimate & 2.5\% & 97.5\% \\ 
+  \hline
+$\mu$ & 0.5943 & 0.5458 & 0.6428 \\ 
+  $\beta$ & -0.0881 & -0.1430 & -0.0332 \\ 
+  $\alpha$ & 0.3490 & 0.1270 & 0.9589 \\ 
+  $\sigma_v$ & 0.0875 & 0.0584 & 0.1311 \\ 
+  $\sigma_u$ & 0.0865 & 0.0531 & 0.1408 \\ 
+  $\sigma$ & 0.0073 & 0.0050 & 0.0105 \\ 
+  $\phi$ & 0.3737 & 0.2674 & 0.5222 \\ 
+   \hline
+\end{tabular}
+\caption{This table shows the estimated parameters and their 95\% (Wald) confidence interval.}\label{tab:coef_q6}
+\end{table}
+
+It should be noted that the implementation of $dvmt$ the scaling using the $\Sigma$ matrix are implement implicit in the model and therefore the output does not need to be scaled. 
 
 
 
